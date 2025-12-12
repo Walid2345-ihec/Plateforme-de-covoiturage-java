@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 public class Passager extends User {
     private boolean chercheCovoit;
+    private Conducteur conducteur;
 
     // Constructeur par défaut (interactif)
     public Passager() {
@@ -28,12 +29,14 @@ public class Passager extends User {
                 System.err.println("Erreur: Veuillez répondre par 'oui' ou 'non'.");
             }
         }
+        this.conducteur = null;
     }
 
     // Constructeur paramétré (avec validation)
-    public Passager(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail,boolean chercheCovoit) {
+    public Passager(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail,boolean chercheCovoit,Conducteur conducteur) {
         super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail); // La validation de User est faite ici
         this.chercheCovoit = chercheCovoit;
+        this.conducteur = conducteur;
     }
 
     // Nouveau constructeur qui accepte un objet User
@@ -58,7 +61,8 @@ public class Passager extends User {
             }
         }
     }
-
+    
+    
     // Getters
     public boolean isChercheCovoit() { return chercheCovoit; }
 

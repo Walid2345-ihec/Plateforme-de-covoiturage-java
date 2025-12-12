@@ -56,16 +56,8 @@ public class Trajet {
         System.out.println("Entrez le prix du trajet par personne:");
         this.prix = sc.nextFloat();
         
-        // Initialisation des relations (peut être null ou interactif si nécessaire)
-        System.out.println("Voulez-vous créer un conducteur pour ce trajet ? (oui/non)");
-        if (sc.nextLine().trim().equalsIgnoreCase("oui")) {
-            this.conducteur = new Conducteur();
-        }
-
-        System.out.println("Voulez-vous créer un passager pour ce trajet ? (oui/non)");
-        if (sc.nextLine().trim().equalsIgnoreCase("oui")) {
-            this.passager = new Passager();
-        }
+        this.conducteur = null;
+        this.passager = null;
         
     }
 
