@@ -8,6 +8,7 @@ public class Trajet {
     private String departTrajet;
     private String arriveeTrajet;
     private Duration dureeTrajet;
+    private float prix;
     private boolean trajet_valide;
     private String statusTrajet; // remplacé par String
     private Conducteur conducteur;
@@ -21,7 +22,7 @@ public class Trajet {
 
         System.out.println("Entrez le point de départ du trajet :");
         this.departTrajet = sc.nextLine();
-
+        
         System.out.println("Entrez le point d'arrivée du trajet :");
         this.arriveeTrajet = sc.nextLine();
 
@@ -50,6 +51,11 @@ public class Trajet {
                 System.err.println("Erreur: Statut invalide. Veuillez choisir parmi PENDING, IN_PROGRESS, ou FINISHED.");
             }
         }
+        
+        
+        System.out.println("Entrez le prix du trajet par personne:");
+        this.prix = sc.nextFloat();
+        
         // Initialisation des relations (peut être null ou interactif si nécessaire)
         System.out.println("Voulez-vous créer un conducteur pour ce trajet ? (oui/non)");
         if (sc.nextLine().trim().equalsIgnoreCase("oui")) {
@@ -60,10 +66,11 @@ public class Trajet {
         if (sc.nextLine().trim().equalsIgnoreCase("oui")) {
             this.passager = new Passager();
         }
+        
     }
 
     // Constructeur paramétré (avec validation)
-    public Trajet(String departTrajet, String arriveeTrajet, Duration dureeTrajet, String statusTrajet, Conducteur conducteur, Passager passager) {
+    public Trajet(String departTrajet, String arriveeTrajet, Duration dureeTrajet, String statusTrajet, Float prix, Conducteur conducteur, Passager passager) {
         // Validation des paramètres
         if (departTrajet == null || departTrajet.trim().isEmpty()) {
             throw new IllegalArgumentException("Le point de départ ne peut pas être vide.");
@@ -83,6 +90,7 @@ public class Trajet {
         this.arriveeTrajet = arriveeTrajet;
         this.dureeTrajet = dureeTrajet;
         this.statusTrajet = statusTrajet;
+        this.prix = prix;
         this.conducteur = conducteur;
         this.passager = passager;
         this.trajet_valide = false;
@@ -96,6 +104,8 @@ public class Trajet {
     public boolean isTrajet_valide() { return trajet_valide; }
     public Conducteur getConducteur() { return conducteur; }
     public Passager getPassager() { return passager; }
+    public float getPrix() { return prix; }
+    
     
 
     // Setters
@@ -114,6 +124,8 @@ public class Trajet {
     public void setTrajet_valide(boolean trajet_valide) { this.trajet_valide = trajet_valide; }
     public void setConducteur(Conducteur conducteur) { this.conducteur = conducteur; }
     public void setPassager(Passager passager) { this.passager = passager; }
+    public void setPrix(float prix) { this.prix = prix; } 
+    
     
 
     @Override
@@ -124,6 +136,7 @@ public class Trajet {
                 ", dureeTrajet=" + dureeTrajet.toMinutes() + " minutes" +
                 ", statusTrajet=" + statusTrajet +
                 ", trajet valide=" + trajet_valide +
+                ", prix=" + prix +
                 ", conducteur=" + (conducteur != null ? conducteur.getNom() + " " + conducteur.getPrenom() : "N/A") +
                 ", passager=" + (passager != null ? passager.getNom() + " " + passager.getPrenom() : "N/A") +
                 '}';
