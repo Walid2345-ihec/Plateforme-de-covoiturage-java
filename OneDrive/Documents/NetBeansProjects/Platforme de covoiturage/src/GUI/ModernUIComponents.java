@@ -161,12 +161,20 @@ public class ModernUIComponents {
             g2.setColor(currentColor);
             g2.fillRoundRect(0, 0, width - 1, height - 1 - (int)(2 * animationProgress), radius, radius);
             
-            // Draw text
-            g2.setColor(getForeground());
-            g2.setFont(getFont());
+            // Draw text with enhanced visibility
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            Font buttonFont = getFont().deriveFont(Font.BOLD, 14f);
+            g2.setFont(buttonFont);
             FontMetrics fm = g2.getFontMetrics();
             int textX = (width - fm.stringWidth(getText())) / 2;
             int textY = (height - fm.getHeight()) / 2 + fm.getAscent() - (int)(animationProgress);
+            
+            // Draw text shadow for depth and legibility (dark shadow)
+            g2.setColor(new Color(0, 0, 0, 100));
+            g2.drawString(getText(), textX + 1, textY + 1);
+            
+            // Draw main text in pure white
+            g2.setColor(Color.WHITE);
             g2.drawString(getText(), textX, textY);
             
             g2.dispose();

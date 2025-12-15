@@ -128,7 +128,7 @@ public class EnhancedLoginPanel extends JPanel {
         
         ModernUIComponents.GlassCard card = new ModernUIComponents.GlassCard();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(420, 520));
+        card.setPreferredSize(new Dimension(440, 580));
         
         // Logo and Title
         JLabel logoLabel = new JLabel("🚗");
@@ -226,18 +226,18 @@ public class EnhancedLoginPanel extends JPanel {
         card.add(Box.createVerticalStrut(20));
         
         // Registration buttons
-        JPanel regBtnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        JPanel regBtnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
         regBtnPanel.setOpaque(false);
-        regBtnPanel.setMaximumSize(new Dimension(360, 50));
+        regBtnPanel.setMaximumSize(new Dimension(420, 55));
         
         ModernUIComponents.RoundedButton regDriverBtn = new ModernUIComponents.RoundedButton(
             "Nouveau Conducteur", Colors.ACCENT_MINT);
-        regDriverBtn.setPreferredSize(new Dimension(160, 44));
+        regDriverBtn.setPreferredSize(new Dimension(165, 46));
         regDriverBtn.addActionListener(e -> cardLayout.show(cardPanel, "REGISTER_DRIVER"));
         
         ModernUIComponents.RoundedButton regPassengerBtn = new ModernUIComponents.RoundedButton(
             "Nouveau Passager", Colors.ACCENT_SKY);
-        regPassengerBtn.setPreferredSize(new Dimension(160, 44));
+        regPassengerBtn.setPreferredSize(new Dimension(165, 46));
         regPassengerBtn.addActionListener(e -> cardLayout.show(cardPanel, "REGISTER_PASSENGER"));
         
         regBtnPanel.add(regDriverBtn);
