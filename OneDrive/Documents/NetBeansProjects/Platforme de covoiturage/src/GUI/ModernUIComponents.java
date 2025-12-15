@@ -332,16 +332,26 @@ public class ModernUIComponents {
             
             super.paintComponent(g);
             
-            // Placeholder
-            if (getText().isEmpty() && !isFocused) {
-                Graphics2D g2p = (Graphics2D) getGraphics();
+            // Placeholder - Fixed: draw within paintComponent context
+            if (getText().isEmpty() && !isFocused && placeholder != null) {
+                Graphics2D g2p = (Graphics2D) g.create();
                 g2p.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2p.setColor(Colors.TEXT_LIGHT);
                 g2p.setFont(getFont());
                 int x = iconText != null ? 45 : 15;
-                g2p.drawString(placeholder, x, h / 2 + 5);
+                FontMetrics fm = g2p.getFontMetrics();
+                int y = (h - fm.getHeight()) / 2 + fm.getAscent();
+                g2p.drawString(placeholder, x, y);
                 g2p.dispose();
             }
+        }
+        
+        /**
+         * Gets the current text, returning empty string if it matches placeholder
+         */
+        @Override
+        public String getText() {
+            return super.getText();
         }
     }
     

@@ -238,12 +238,42 @@ public class EnhancedLoginPanel extends JPanel {
     }
     
     private JRadioButton createStyledRadio(String text, boolean selected) {
-        JRadioButton radio = new JRadioButton(text, selected);
-        radio.setFont(Fonts.BODY);
+        JRadioButton radio = new JRadioButton(text, selected) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // Add subtle highlight when selected
+                if (isSelected()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(Colors.PRIMARY_START.getRed(), 
+                                         Colors.PRIMARY_START.getGreen(), 
+                                         Colors.PRIMARY_START.getBlue(), 30));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                    g2.dispose();
+                }
+            }
+        };
+        radio.setFont(Fonts.BODY_BOLD);
         radio.setForeground(Colors.TEXT_DARK);
         radio.setOpaque(false);
         radio.setFocusPainted(false);
         radio.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        radio.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        
+        // Add hover effect
+        radio.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                radio.setForeground(Colors.PRIMARY_START);
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                radio.setForeground(Colors.TEXT_DARK);
+            }
+        });
+        
         return radio;
     }
     
@@ -312,7 +342,7 @@ public class EnhancedLoginPanel extends JPanel {
         formPanel.add(row5);
         
         JPanel row6 = createFormRow();
-        regMatriculeField = addFormField(row6, "Matricule", "123 TUN 4567");
+        regMatriculeField = addFormField(row6, "Matricule", "123TU4567");
         
         // Places spinner
         JPanel placesPanel = new JPanel();
@@ -469,12 +499,42 @@ public class EnhancedLoginPanel extends JPanel {
         ModernUIComponents.ModernTextField field = new ModernUIComponents.ModernTextField(placeholder);
         field.setPreferredSize(new Dimension(200, 42));
         
+        // Add validation hints as tooltips
+        String tooltip = getTooltipForField(label);
+        if (tooltip != null) {
+            field.setToolTipText(tooltip);
+            labelComp.setToolTipText(tooltip);
+        }
+        
         fieldPanel.add(labelComp);
         fieldPanel.add(Box.createVerticalStrut(5));
         fieldPanel.add(field);
         
         row.add(fieldPanel);
         return field;
+    }
+    
+    /**
+     * Returns validation hint tooltip for each field type
+     */
+    private String getTooltipForField(String label) {
+        switch (label) {
+            case "CIN":
+                return "<html><b>CIN:</b> Exactement 8 chiffres<br>Exemple: 12345678</html>";
+            case "Téléphone":
+                return "<html><b>Téléphone:</b> Exactement 8 chiffres<br>Exemple: 98765432</html>";
+            case "Nom":
+            case "Prénom":
+                return "<html><b>" + label + ":</b> Lettres uniquement<br>(caractères français acceptés)</html>";
+            case "Matricule":
+                return "<html><b>Matricule:</b> Format tunisien<br>1-3 chiffres + TU + 4 chiffres<br>Exemple: 123TU4567</html>";
+            case "Email":
+                return "<html><b>Email:</b> Adresse valide<br>@gmail.com ou @*.tn</html>";
+            case "Année Univ.":
+                return "<html><b>Année:</b> 4 chiffres<br>Exemple: 2024</html>";
+            default:
+                return null;
+        }
     }
     
     private JLabel createSectionLabel(String text) {
@@ -491,7 +551,9 @@ public class EnhancedLoginPanel extends JPanel {
         footer.setOpaque(false);
         footer.setPreferredSize(new Dimension(0, 50));
         
-        JLabel footerLabel = new JLabel("© 2024 Plateforme de Covoiturage - IHEC");
+        // Dynamic year for copyright
+        int currentYear = java.time.Year.now().getValue();
+        JLabel footerLabel = new JLabel("© " + currentYear + " Plateforme de Covoiturage - IHEC");
         footerLabel.setFont(Fonts.CAPTION);
         footerLabel.setForeground(new Color(255, 255, 255, 180));
         footer.add(footerLabel);
@@ -695,10 +757,99 @@ public class EnhancedLoginPanel extends JPanel {
     }
     
     private void showModernSuccess(String message) {
-        JOptionPane.showMessageDialog(this, message, "Succès ✓", JOptionPane.INFORMATION_MESSAGE);
+        // Create a custom styled dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Succès", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setUndecorated(true);
+        dialog.getRootPane().setBorder(BorderFactory.createLineBorder(Colors.SUCCESS, 2));
+        
+        JPanel panel = new JPanel();
+        panel.setBackground(Color.WHITE);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(25, 35, 25, 35));
+        
+        JLabel iconLabel = new JLabel("✅");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
+        iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel titleLabel = new JLabel("Succès!");
+        titleLabel.setFont(Fonts.HEADING_2);
+        titleLabel.setForeground(Colors.SUCCESS);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel msgLabel = new JLabel("<html><center>" + message + "</center></html>");
+        msgLabel.setFont(Fonts.BODY);
+        msgLabel.setForeground(Colors.TEXT_DARK);
+        msgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        ModernUIComponents.RoundedButton okBtn = new ModernUIComponents.RoundedButton("OK", Colors.SUCCESS);
+        okBtn.setPreferredSize(new Dimension(120, 40));
+        okBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        okBtn.addActionListener(e -> dialog.dispose());
+        
+        panel.add(iconLabel);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(msgLabel);
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(okBtn);
+        
+        dialog.add(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        
+        // Auto-close after 2 seconds
+        Timer autoClose = new Timer(2000, e -> dialog.dispose());
+        autoClose.setRepeats(false);
+        autoClose.start();
+        
+        dialog.setVisible(true);
     }
     
     private void showModernError(String message) {
-        JOptionPane.showMessageDialog(this, message, "Erreur", JOptionPane.ERROR_MESSAGE);
+        // Create a custom styled error dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Erreur", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setUndecorated(true);
+        dialog.getRootPane().setBorder(BorderFactory.createLineBorder(Colors.DANGER, 2));
+        
+        JPanel panel = new JPanel();
+        panel.setBackground(Color.WHITE);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(25, 35, 25, 35));
+        
+        JLabel iconLabel = new JLabel("❌");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
+        iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel titleLabel = new JLabel("Erreur");
+        titleLabel.setFont(Fonts.HEADING_2);
+        titleLabel.setForeground(Colors.DANGER);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel msgLabel = new JLabel("<html><center>" + message + "</center></html>");
+        msgLabel.setFont(Fonts.BODY);
+        msgLabel.setForeground(Colors.TEXT_DARK);
+        msgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        msgLabel.setPreferredSize(new Dimension(280, 50));
+        
+        ModernUIComponents.RoundedButton okBtn = new ModernUIComponents.RoundedButton("Compris", Colors.DANGER);
+        okBtn.setPreferredSize(new Dimension(120, 40));
+        okBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        okBtn.addActionListener(e -> dialog.dispose());
+        
+        panel.add(iconLabel);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(msgLabel);
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(okBtn);
+        
+        dialog.add(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 }
