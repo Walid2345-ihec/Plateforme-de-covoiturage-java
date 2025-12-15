@@ -4,10 +4,12 @@ import Models.*;
 import Services.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Main application frame with card layout for navigation
- * Enhanced with modern UI components
+ * Enhanced with modern UI components and CSV persistence
  */
 public class MainFrame extends JFrame {
     
@@ -26,8 +28,77 @@ public class MainFrame extends JFrame {
     
     public MainFrame() {
         gestion = new Gestion_covoiturage();
+        
+        // STEP: Load data from CSV files on startup
+        loadDataFromCSV();
+        
         initializeFrame();
         initializePanels();
+        
+        // STEP: Save data to CSV files on close
+        setupAutoSave();
+    }
+    
+    /**
+     * Loads all data from CSV files into the application.
+     * Called when the application starts.
+     */
+    private void loadDataFromCSV() {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🚀 Démarrage de l'application...");
+        CSVDatabase.loadAllData(gestion);
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
+    
+    /**
+     * Sets up automatic saving when the application closes.
+     */
+    private void setupAutoSave() {
+        // Override default close operation
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Ask user before closing
+                int choice = JOptionPane.showConfirmDialog(
+                    MainFrame.this,
+                    "Voulez-vous sauvegarder les données avant de quitter?",
+                    "Quitter l'application",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+                );
+                
+                if (choice == JOptionPane.YES_OPTION) {
+                    // Save and exit
+                    saveDataToCSV();
+                    dispose();
+                    System.exit(0);
+                } else if (choice == JOptionPane.NO_OPTION) {
+                    // Exit without saving
+                    dispose();
+                    System.exit(0);
+                }
+                // Cancel - do nothing, stay in app
+            }
+        });
+    }
+    
+    /**
+     * Saves all data to CSV files.
+     * Can be called manually or automatically on close.
+     */
+    public void saveDataToCSV() {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        CSVDatabase.saveAllData(gestion);
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
+    
+    /**
+     * Exports trajets to a user-friendly CSV file.
+     */
+    public void exportTrajetsToCSV(String filename) {
+        CSVDatabase.exportToExcelCSV(gestion.getTrajets(), filename);
     }
     
     private void initializeFrame() {
