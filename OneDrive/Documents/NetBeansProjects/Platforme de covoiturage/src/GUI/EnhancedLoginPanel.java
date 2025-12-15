@@ -503,8 +503,10 @@ public class EnhancedLoginPanel extends JPanel {
     
     private void performLogin() {
         String cin = loginCinField.getText().trim();
-        if (cin.isEmpty()) {
-            showModernError("Veuillez entrer votre CIN");
+        
+        // Validate CIN format using regex
+        if (!ValidationUtils.isValidCIN(cin)) {
+            showModernError(ValidationUtils.CIN_ERROR);
             return;
         }
         
@@ -544,14 +546,53 @@ public class EnhancedLoginPanel extends JPanel {
         String matricule = regMatriculeField.getText().trim();
         int places = (Integer) regPlacesSpinner.getValue();
         
-        // Validation
-        if (cin.isEmpty() || nom.isEmpty() || prenom.isEmpty() || tel.isEmpty() || 
-            anneeStr.isEmpty() || mail.isEmpty() || nomVoiture.isEmpty() || 
-            marque.isEmpty() || matricule.isEmpty()) {
-            showModernError("Veuillez remplir tous les champs");
+        // ═══════════════════════════════════════════════════════════════════════════
+        // VALIDATION with REGEX - Using ValidationUtils
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // CIN: exactly 8 digits
+        if (!ValidationUtils.isValidCIN(cin)) {
+            showModernError(ValidationUtils.CIN_ERROR);
             return;
         }
         
+        // Nom: letters only
+        if (!ValidationUtils.isValidName(nom)) {
+            showModernError(ValidationUtils.NAME_ERROR);
+            return;
+        }
+        
+        // Prénom: letters only
+        if (!ValidationUtils.isValidName(prenom)) {
+            showModernError(ValidationUtils.PRENOM_ERROR);
+            return;
+        }
+        
+        // Téléphone: exactly 8 digits
+        if (!ValidationUtils.isValidPhone(tel)) {
+            showModernError(ValidationUtils.PHONE_ERROR);
+            return;
+        }
+        
+        // Email: @gmail.com or @*.tn
+        if (!ValidationUtils.isValidEmail(mail)) {
+            showModernError(ValidationUtils.EMAIL_ERROR);
+            return;
+        }
+        
+        // Matricule: format 123TU4567
+        if (!ValidationUtils.isValidMatricule(matricule)) {
+            showModernError(ValidationUtils.MATRICULE_ERROR);
+            return;
+        }
+        
+        // Nom voiture: letters only
+        if (!ValidationUtils.isValidName(nomVoiture)) {
+            showModernError("Le nom de voiture doit contenir uniquement des lettres");
+            return;
+        }
+        
+        // Check if user exists
         if (mainFrame.getGestion().rechercher_user(cin) != null) {
             showModernError("Un utilisateur avec ce CIN existe déjà");
             return;
@@ -562,11 +603,6 @@ public class EnhancedLoginPanel extends JPanel {
             annee = Year.parse(anneeStr);
         } catch (Exception e) {
             showModernError("Format d'année invalide (ex: 2024)");
-            return;
-        }
-        
-        if (!mail.matches("^[A-Za-z0-9._%+-]+@(gmail\\.com|[A-Za-z0-9.-]+\\.tn)$")) {
-            showModernError("Email invalide (gmail.com ou .tn)");
             return;
         }
         
@@ -584,12 +620,42 @@ public class EnhancedLoginPanel extends JPanel {
     
     private void registerPassenger(String cin, String nom, String prenom, String tel, 
                                    String anneeStr, String adresse, String mail) {
-        if (cin.trim().isEmpty() || nom.trim().isEmpty() || prenom.trim().isEmpty() || 
-            tel.trim().isEmpty() || anneeStr.trim().isEmpty() || mail.trim().isEmpty()) {
-            showModernError("Veuillez remplir tous les champs");
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // VALIDATION with REGEX - Using ValidationUtils
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // CIN: exactly 8 digits
+        if (!ValidationUtils.isValidCIN(cin.trim())) {
+            showModernError(ValidationUtils.CIN_ERROR);
             return;
         }
         
+        // Nom: letters only
+        if (!ValidationUtils.isValidName(nom.trim())) {
+            showModernError(ValidationUtils.NAME_ERROR);
+            return;
+        }
+        
+        // Prénom: letters only
+        if (!ValidationUtils.isValidName(prenom.trim())) {
+            showModernError(ValidationUtils.PRENOM_ERROR);
+            return;
+        }
+        
+        // Téléphone: exactly 8 digits
+        if (!ValidationUtils.isValidPhone(tel.trim())) {
+            showModernError(ValidationUtils.PHONE_ERROR);
+            return;
+        }
+        
+        // Email: @gmail.com or @*.tn
+        if (!ValidationUtils.isValidEmail(mail.trim())) {
+            showModernError(ValidationUtils.EMAIL_ERROR);
+            return;
+        }
+        
+        // Check if user exists
         if (mainFrame.getGestion().rechercher_user(cin.trim()) != null) {
             showModernError("Un utilisateur avec ce CIN existe déjà");
             return;
@@ -600,11 +666,6 @@ public class EnhancedLoginPanel extends JPanel {
             annee = Year.parse(anneeStr.trim());
         } catch (Exception e) {
             showModernError("Format d'année invalide (ex: 2024)");
-            return;
-        }
-        
-        if (!mail.trim().matches("^[A-Za-z0-9._%+-]+@(gmail\\.com|[A-Za-z0-9.-]+\\.tn)$")) {
-            showModernError("Email invalide (gmail.com ou .tn)");
             return;
         }
         

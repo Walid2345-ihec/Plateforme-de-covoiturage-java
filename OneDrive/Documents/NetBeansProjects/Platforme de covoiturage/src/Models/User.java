@@ -5,6 +5,15 @@ import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+/**
+ * User - Base class for all users in the carpooling platform
+ * 
+ * VALIDATION RULES:
+ * - CIN: exactly 8 digits (^[0-9]{8}$)
+ * - Phone: exactly 8 digits (^[0-9]{8}$)
+ * - Name/Prénom: letters only including French accents (^[a-zA-ZÀ-ÿ\s'-]+$)
+ * - Email: @gmail.com or @*.tn domain
+ */
 public class User {
     protected String cin;
     protected String nom;
@@ -14,11 +23,10 @@ public class User {
     protected String adresse;
     protected String mail;
 
-    // Expression régulière simple pour la validation d'email
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-    	    "^[A-Z0-9._%+-]+@((gmail\\.com)|([A-Z0-9.-]+\\.tn))$",
-    	    Pattern.CASE_INSENSITIVE
-    	);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Using centralized validation from ValidationUtils class
+    // ═══════════════════════════════════════════════════════════════════════════
+    
     // Constructeur par défaut (interactif avec gestion des exceptions)
     public User() {
         // Utilisation d'un Scanner local. Il est préférable de ne pas le fermer
@@ -59,7 +67,7 @@ public class User {
         while (!mailValide) {
             System.out.println("Entrez votre adresse mail :");
             String mailInput = sc.nextLine();
-            if (EMAIL_PATTERN.matcher(mailInput).matches()) {
+            if (ValidationUtils.isValidEmail(mailInput)) {
                 this.mail = mailInput;
                 mailValide = true;
             } else {
@@ -105,7 +113,7 @@ public class User {
         while (!mailValide) {
             System.out.println("Entrez votre adresse mail :");
             String mailInput = sc.nextLine();
-            if (EMAIL_PATTERN.matcher(mailInput).matches()) {
+            if (ValidationUtils.isValidEmail(mailInput)) {
                 this.mail = mailInput;
                 mailValide = true;
             } else {
@@ -114,21 +122,31 @@ public class User {
         }
     }
 
-    // Constructeur paramétré (avec gestion des exceptions)
+    // Constructeur paramétré (avec validation regex complète)
     public User(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail) {
-        // Validation des paramètres
-        if (cin == null || cin.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le numéro de carte (CIN) ne peut pas être vide.");
-        }
-        if (nom == null || nom.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le nom ne peut pas être vide.");
-        }
+        // ═══════════════════════════════════════════════════════════════════════════
+        // VALIDATION avec expressions régulières
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // Validate CIN: exactly 8 digits
+        ValidationUtils.validateCIN(cin);
+        
+        // Validate Nom: letters only (including French accents)
+        ValidationUtils.validateName(nom, "Nom");
+        
+        // Validate Prénom: letters only (including French accents)
+        ValidationUtils.validateName(prenom, "Prénom");
+        
+        // Validate Phone: exactly 8 digits
+        ValidationUtils.validatePhone(tel);
+        
+        // Validate Year
         if (anneeUniversitaire == null) {
             throw new IllegalArgumentException("L'année universitaire ne peut pas être nulle.");
         }
-        if (mail == null || !EMAIL_PATTERN.matcher(mail).matches()) {
-            throw new IllegalArgumentException("L'adresse mail est invalide.");
-        }
+        
+        // Validate Email: @gmail.com or @*.tn
+        ValidationUtils.validateEmail(mail);
 
         this.cin = cin;
         this.nom = nom;

@@ -43,24 +43,33 @@ public class Conducteur extends User {
     }
     
     
-    // Constructeur paramétré (avec validation)
+    // Constructeur paramétré (avec validation regex)
     public Conducteur(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail,String nomVoiture, String marqueVoiture, String matricule, int placesDisponibles) {
         super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail); // La validation de User est faite ici
 
-        // Validation des paramètres spécifiques au Conducteur
-        if (nomVoiture == null || nomVoiture.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le nom de la voiture ne peut pas être vide.");
+        // ═══════════════════════════════════════════════════════════════════════════
+        // VALIDATION spécifique au Conducteur
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // Validate nom de voiture: letters only
+        ValidationUtils.validateName(nomVoiture, "Nom de voiture");
+        
+        // Validate marque de voiture: letters only
+        if (marqueVoiture != null && !marqueVoiture.trim().isEmpty()) {
+            ValidationUtils.validateName(marqueVoiture, "Marque de voiture");
         }
-        if (matricule == null || matricule.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le matricule de la voiture ne peut pas être vide.");
-        }
+        
+        // Validate matricule: format XXXTUXXXX (1-3 digits + TU + 4 digits)
+        ValidationUtils.validateMatricule(matricule);
+        
+        // Validate places disponibles
         if (placesDisponibles < 1) {
             throw new IllegalArgumentException("Le nombre de places disponibles doit être au moins 1.");
         }
 
         this.nomVoiture = nomVoiture;
         this.marqueVoiture = marqueVoiture;
-        this.matricule = matricule;
+        this.matricule = matricule.toUpperCase(); // Normalize to uppercase
         this.placesDisponibles = placesDisponibles;
     }
 
