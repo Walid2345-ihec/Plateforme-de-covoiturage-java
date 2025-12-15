@@ -21,6 +21,7 @@ public class EnhancedLoginPanel extends JPanel {
     
     // Login components
     private ModernUIComponents.ModernTextField loginCinField;
+    private JPasswordField loginPasswordField;
     private JRadioButton driverRadio;
     private JRadioButton passengerRadio;
     
@@ -32,6 +33,8 @@ public class EnhancedLoginPanel extends JPanel {
     private ModernUIComponents.ModernTextField regAnneeField;
     private ModernUIComponents.ModernTextField regAdresseField;
     private ModernUIComponents.ModernTextField regMailField;
+    private JPasswordField regPasswordField;
+    private JPasswordField regConfirmPasswordField;
     private ModernUIComponents.ModernTextField regNomVoitureField;
     private ModernUIComponents.ModernTextField regMarqueField;
     private ModernUIComponents.ModernTextField regMatriculeField;
@@ -155,6 +158,14 @@ public class EnhancedLoginPanel extends JPanel {
         loginCinField.setMaximumSize(new Dimension(340, 50));
         loginCinField.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(loginCinField);
+        
+        card.add(Box.createVerticalStrut(15));
+        
+        // Password Field
+        JPanel passwordPanel = createPasswordFieldPanel(loginPasswordField = new JPasswordField(), "🔒", "Mot de passe");
+        passwordPanel.setMaximumSize(new Dimension(340, 50));
+        passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(passwordPanel);
         
         card.add(Box.createVerticalStrut(20));
         
@@ -332,13 +343,62 @@ public class EnhancedLoginPanel extends JPanel {
         regAdresseField = addFormField(row4, "Adresse", "Votre adresse");
         formPanel.add(row4);
         
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PASSWORD SECTION - Secure password creation
+        // ═══════════════════════════════════════════════════════════════════════════
+        formPanel.add(Box.createVerticalStrut(15));
+        formPanel.add(createSectionLabel("🔐 Créer un mot de passe"));
+        formPanel.add(Box.createVerticalStrut(10));
+        
+        JPanel passwordRow = createFormRow();
+        
+        // Password field
+        JPanel pwdPanel = new JPanel();
+        pwdPanel.setOpaque(false);
+        pwdPanel.setLayout(new BoxLayout(pwdPanel, BoxLayout.Y_AXIS));
+        JLabel pwdLabel = new JLabel("Mot de passe");
+        pwdLabel.setFont(Fonts.CAPTION);
+        pwdLabel.setForeground(Colors.TEXT_MUTED);
+        regPasswordField = new JPasswordField();
+        regPasswordField.setFont(Fonts.BODY);
+        regPasswordField.setPreferredSize(new Dimension(180, 40));
+        regPasswordField.setToolTipText("<html><b>Mot de passe sécurisé:</b><br>" +
+            "• Minimum 8 caractères<br>" +
+            "• Au moins une majuscule (A-Z)<br>" +
+            "• Au moins une minuscule (a-z)<br>" +
+            "• Au moins un chiffre (0-9)<br>" +
+            "• Au moins un caractère spécial (@#$%^&+=!)</html>");
+        pwdPanel.add(pwdLabel);
+        pwdPanel.add(Box.createVerticalStrut(5));
+        pwdPanel.add(regPasswordField);
+        passwordRow.add(pwdPanel);
+        passwordRow.add(Box.createHorizontalStrut(20));
+        
+        // Confirm password field
+        JPanel confirmPanel = new JPanel();
+        confirmPanel.setOpaque(false);
+        confirmPanel.setLayout(new BoxLayout(confirmPanel, BoxLayout.Y_AXIS));
+        JLabel confirmLabel = new JLabel("Confirmer");
+        confirmLabel.setFont(Fonts.CAPTION);
+        confirmLabel.setForeground(Colors.TEXT_MUTED);
+        regConfirmPasswordField = new JPasswordField();
+        regConfirmPasswordField.setFont(Fonts.BODY);
+        regConfirmPasswordField.setPreferredSize(new Dimension(180, 40));
+        regConfirmPasswordField.setToolTipText("Ressaisissez votre mot de passe");
+        confirmPanel.add(confirmLabel);
+        confirmPanel.add(Box.createVerticalStrut(5));
+        confirmPanel.add(regConfirmPasswordField);
+        passwordRow.add(confirmPanel);
+        
+        formPanel.add(passwordRow);
+        
         formPanel.add(Box.createVerticalStrut(15));
         formPanel.add(createSectionLabel("🚙 Informations Véhicule"));
         formPanel.add(Box.createVerticalStrut(10));
         
         JPanel row5 = createFormRow();
-        regNomVoitureField = addFormField(row5, "Nom Véhicule", "Clio, Golf...");
-        regMarqueField = addFormField(row5, "Marque", "Renault, VW...");
+        regNomVoitureField = addFormField(row5, "Nom Véhicule", "Golf 7, Clio 4...");
+        regMarqueField = addFormField(row5, "Marque", "Peugeot 308...");
         formPanel.add(row5);
         
         JPanel row6 = createFormRow();
@@ -428,6 +488,7 @@ public class EnhancedLoginPanel extends JPanel {
         
         // Create fields for passenger
         ModernUIComponents.ModernTextField pCin, pNom, pPrenom, pTel, pAnnee, pMail, pAdresse;
+        JPasswordField pPassword, pConfirmPassword;
         
         JPanel row1 = createFormRow();
         pCin = addFormField(row1, "CIN", "12345678");
@@ -448,6 +509,55 @@ public class EnhancedLoginPanel extends JPanel {
         pAdresse = addFormField(row4, "Adresse", "Votre adresse");
         formPanel.add(row4);
         
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PASSWORD SECTION - Secure password creation for passenger
+        // ═══════════════════════════════════════════════════════════════════════════
+        formPanel.add(Box.createVerticalStrut(15));
+        formPanel.add(createSectionLabel("🔐 Créer un mot de passe"));
+        formPanel.add(Box.createVerticalStrut(10));
+        
+        JPanel passwordRow = createFormRow();
+        
+        // Password field
+        JPanel pwdPanel = new JPanel();
+        pwdPanel.setOpaque(false);
+        pwdPanel.setLayout(new BoxLayout(pwdPanel, BoxLayout.Y_AXIS));
+        JLabel pwdLabel = new JLabel("Mot de passe");
+        pwdLabel.setFont(Fonts.CAPTION);
+        pwdLabel.setForeground(Colors.TEXT_MUTED);
+        pPassword = new JPasswordField();
+        pPassword.setFont(Fonts.BODY);
+        pPassword.setPreferredSize(new Dimension(180, 40));
+        pPassword.setToolTipText("<html><b>Mot de passe sécurisé:</b><br>" +
+            "• Minimum 8 caractères<br>" +
+            "• Au moins une majuscule (A-Z)<br>" +
+            "• Au moins une minuscule (a-z)<br>" +
+            "• Au moins un chiffre (0-9)<br>" +
+            "• Au moins un caractère spécial (@#$%^&+=!)</html>");
+        pwdPanel.add(pwdLabel);
+        pwdPanel.add(Box.createVerticalStrut(5));
+        pwdPanel.add(pPassword);
+        passwordRow.add(pwdPanel);
+        passwordRow.add(Box.createHorizontalStrut(20));
+        
+        // Confirm password field
+        JPanel confirmPanel = new JPanel();
+        confirmPanel.setOpaque(false);
+        confirmPanel.setLayout(new BoxLayout(confirmPanel, BoxLayout.Y_AXIS));
+        JLabel confirmLabel = new JLabel("Confirmer");
+        confirmLabel.setFont(Fonts.CAPTION);
+        confirmLabel.setForeground(Colors.TEXT_MUTED);
+        pConfirmPassword = new JPasswordField();
+        pConfirmPassword.setFont(Fonts.BODY);
+        pConfirmPassword.setPreferredSize(new Dimension(180, 40));
+        pConfirmPassword.setToolTipText("Ressaisissez votre mot de passe");
+        confirmPanel.add(confirmLabel);
+        confirmPanel.add(Box.createVerticalStrut(5));
+        confirmPanel.add(pConfirmPassword);
+        passwordRow.add(confirmPanel);
+        
+        formPanel.add(passwordRow);
+        
         JScrollPane scrollPane = new JScrollPane(formPanel);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
@@ -464,12 +574,18 @@ public class EnhancedLoginPanel extends JPanel {
         cancelBtn.setPreferredSize(new Dimension(140, 45));
         cancelBtn.addActionListener(e -> cardLayout.show(cardPanel, "LOGIN"));
         
+        // Need final references for lambda
+        final JPasswordField finalPPassword = pPassword;
+        final JPasswordField finalPConfirmPassword = pConfirmPassword;
+        
         ModernUIComponents.GradientButton registerBtn = new ModernUIComponents.GradientButton(
             "S'inscrire", Colors.ACCENT_SKY, Colors.PRIMARY_START);
         registerBtn.setPreferredSize(new Dimension(160, 48));
         registerBtn.addActionListener(e -> {
             registerPassenger(pCin.getText(), pNom.getText(), pPrenom.getText(),
-                pTel.getText(), pAnnee.getText(), pAdresse.getText(), pMail.getText());
+                pTel.getText(), pAnnee.getText(), pAdresse.getText(), pMail.getText(),
+                new String(finalPPassword.getPassword()), 
+                new String(finalPConfirmPassword.getPassword()));
         });
         
         buttonPanel.add(cancelBtn);
@@ -478,6 +594,47 @@ public class EnhancedLoginPanel extends JPanel {
         
         wrapper.add(card);
         return wrapper;
+    }
+    
+    /**
+     * Creates a styled password field panel with icon and placeholder effect.
+     * Used for login and registration forms.
+     */
+    private JPanel createPasswordFieldPanel(JPasswordField passwordField, String icon, String placeholder) {
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw rounded background
+                g2.setColor(Color.WHITE);
+                g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 12, 12));
+                
+                // Draw border
+                g2.setColor(new Color(200, 200, 200));
+                g2.draw(new RoundRectangle2D.Double(0, 0, getWidth()-1, getHeight()-1, 12, 12));
+                
+                g2.dispose();
+            }
+        };
+        panel.setOpaque(false);
+        panel.setLayout(new BorderLayout(10, 0));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        
+        // Icon label
+        JLabel iconLabel = new JLabel(icon);
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+        panel.add(iconLabel, BorderLayout.WEST);
+        
+        // Password field
+        passwordField.setBorder(null);
+        passwordField.setOpaque(false);
+        passwordField.setFont(Fonts.BODY);
+        panel.add(passwordField, BorderLayout.CENTER);
+        
+        return panel;
     }
     
     private JPanel createFormRow() {
@@ -565,10 +722,17 @@ public class EnhancedLoginPanel extends JPanel {
     
     private void performLogin() {
         String cin = loginCinField.getText().trim();
+        String password = new String(loginPasswordField.getPassword());
         
         // Validate CIN format using regex
         if (!ValidationUtils.isValidCIN(cin)) {
             showModernError(ValidationUtils.CIN_ERROR);
+            return;
+        }
+        
+        // Validate password is not empty
+        if (password.isEmpty()) {
+            showModernError("Veuillez entrer votre mot de passe");
             return;
         }
         
@@ -577,18 +741,30 @@ public class EnhancedLoginPanel extends JPanel {
         if (driverRadio.isSelected()) {
             Conducteur conducteur = gestion.rechercher_conducteur(cin);
             if (conducteur != null) {
-                showModernSuccess("Bienvenue " + conducteur.getPrenom() + " !");
-                mainFrame.showDriverPanel(conducteur);
-                loginCinField.setText("");
+                // Verify password
+                if (conducteur.verifyPassword(password)) {
+                    showModernSuccess("Bienvenue " + conducteur.getPrenom() + " !");
+                    mainFrame.showDriverPanel(conducteur);
+                    loginCinField.setText("");
+                    loginPasswordField.setText("");
+                } else {
+                    showModernError("Mot de passe incorrect");
+                }
             } else {
                 showModernError("Aucun conducteur trouvé avec ce CIN");
             }
         } else {
             Passager passager = gestion.rechercher_passager(cin);
             if (passager != null) {
-                showModernSuccess("Bienvenue " + passager.getPrenom() + " !");
-                mainFrame.showPassengerPanel(passager);
-                loginCinField.setText("");
+                // Verify password
+                if (passager.verifyPassword(password)) {
+                    showModernSuccess("Bienvenue " + passager.getPrenom() + " !");
+                    mainFrame.showPassengerPanel(passager);
+                    loginCinField.setText("");
+                    loginPasswordField.setText("");
+                } else {
+                    showModernError("Mot de passe incorrect");
+                }
             } else {
                 showModernError("Aucun passager trouvé avec ce CIN");
             }
@@ -603,6 +779,8 @@ public class EnhancedLoginPanel extends JPanel {
         String anneeStr = regAnneeField.getText().trim();
         String adresse = regAdresseField.getText().trim();
         String mail = regMailField.getText().trim();
+        String password = new String(regPasswordField.getPassword());
+        String confirmPassword = new String(regConfirmPasswordField.getPassword());
         String nomVoiture = regNomVoitureField.getText().trim();
         String marque = regMarqueField.getText().trim();
         String matricule = regMatriculeField.getText().trim();
@@ -648,9 +826,25 @@ public class EnhancedLoginPanel extends JPanel {
             return;
         }
         
-        // Nom voiture: letters only
-        if (!ValidationUtils.isValidName(nomVoiture)) {
-            showModernError("Le nom de voiture doit contenir uniquement des lettres");
+        // Nom voiture: letters AND numbers allowed (e.g., "Golf 7", "Clio 4", "308")
+        if (!ValidationUtils.isValidVehicleName(nomVoiture)) {
+            showModernError("Le nom de voiture doit contenir uniquement des lettres et des chiffres");
+            return;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PASSWORD VALIDATION - Strong password policy
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // Password: must meet strength requirements
+        if (!ValidationUtils.isValidPassword(password)) {
+            showModernError(ValidationUtils.PASSWORD_ERROR);
+            return;
+        }
+        
+        // Confirm password: must match
+        if (!password.equals(confirmPassword)) {
+            showModernError(ValidationUtils.PASSWORD_MISMATCH_ERROR);
             return;
         }
         
@@ -670,7 +864,7 @@ public class EnhancedLoginPanel extends JPanel {
         
         try {
             Conducteur conducteur = new Conducteur(cin, nom, prenom, tel, annee, adresse, mail,
-                nomVoiture, marque, matricule, places);
+                password, nomVoiture, marque, matricule, places);
             mainFrame.getGestion().getUsers().add(conducteur);
             showModernSuccess("Inscription réussie !");
             clearDriverFields();
@@ -681,7 +875,8 @@ public class EnhancedLoginPanel extends JPanel {
     }
     
     private void registerPassenger(String cin, String nom, String prenom, String tel, 
-                                   String anneeStr, String adresse, String mail) {
+                                   String anneeStr, String adresse, String mail, 
+                                   String password, String confirmPassword) {
         
         // ═══════════════════════════════════════════════════════════════════════════
         // VALIDATION with REGEX - Using ValidationUtils
@@ -717,6 +912,22 @@ public class EnhancedLoginPanel extends JPanel {
             return;
         }
         
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PASSWORD VALIDATION - Strong password policy
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // Password: must meet strength requirements
+        if (!ValidationUtils.isValidPassword(password)) {
+            showModernError(ValidationUtils.PASSWORD_ERROR);
+            return;
+        }
+        
+        // Confirm password: must match
+        if (!password.equals(confirmPassword)) {
+            showModernError(ValidationUtils.PASSWORD_MISMATCH_ERROR);
+            return;
+        }
+        
         // Check if user exists
         if (mainFrame.getGestion().rechercher_user(cin.trim()) != null) {
             showModernError("Un utilisateur avec ce CIN existe déjà");
@@ -733,7 +944,7 @@ public class EnhancedLoginPanel extends JPanel {
         
         try {
             Passager passager = new Passager(cin.trim(), nom.trim(), prenom.trim(), tel.trim(), 
-                annee, adresse.trim(), mail.trim(), true, null);
+                annee, adresse.trim(), mail.trim(), password, true, null);
             mainFrame.getGestion().getUsers().add(passager);
             showModernSuccess("Inscription réussie !");
             cardLayout.show(cardPanel, "LOGIN");
@@ -750,6 +961,8 @@ public class EnhancedLoginPanel extends JPanel {
         regAnneeField.setText("");
         regAdresseField.setText("");
         regMailField.setText("");
+        regPasswordField.setText("");
+        regConfirmPasswordField.setText("");
         regNomVoitureField.setText("");
         regMarqueField.setText("");
         regMatriculeField.setText("");

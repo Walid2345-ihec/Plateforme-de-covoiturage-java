@@ -1,1 +1,1 @@
-CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles
+CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles

@@ -33,8 +33,23 @@ public class Passager extends User {
     }
 
     // Constructeur paramétré (avec validation)
-    public Passager(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail,boolean chercheCovoit,Conducteur conducteur) {
-        super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail); // La validation de User est faite ici
+    public Passager(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail, String password, boolean chercheCovoit, Conducteur conducteur) {
+        super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail, password); // La validation de User est faite ici
+        this.chercheCovoit = chercheCovoit;
+        this.conducteur = conducteur;
+    }
+    
+    /**
+     * Constructor for loading from CSV (password already hashed).
+     * This constructor accepts a pre-hashed password for database loading.
+     * 
+     * SECURITY NOTE: Use this constructor ONLY when loading from CSV.
+     * For new passenger registration, use the standard constructor with plain password.
+     */
+    public Passager(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, 
+                    String adresse, String mail, String passwordHash, boolean isHashedPassword,
+                    boolean chercheCovoit, Conducteur conducteur) {
+        super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail, passwordHash, isHashedPassword);
         this.chercheCovoit = chercheCovoit;
         this.conducteur = conducteur;
     }

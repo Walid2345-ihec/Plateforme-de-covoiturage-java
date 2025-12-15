@@ -86,7 +86,7 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW - defines the columns
-            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles");
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles");
             writer.newLine();
             
             // DATA ROWS - one per conducteur
@@ -103,6 +103,7 @@ public class CSVDatabase {
                         String.valueOf(c.getAnneeUniversitaire().getValue()),
                         escapeCSV(c.getAdresse()),
                         escapeCSV(c.getMail()),
+                        escapeCSV(c.getPasswordHash() != null ? c.getPasswordHash() : ""),
                         escapeCSV(c.getNomVoiture()),
                         escapeCSV(c.getMarqueVoiture()),
                         escapeCSV(c.getMatricule()),
@@ -133,7 +134,7 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW
-            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;ChercheCovoit");
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;ChercheCovoit");
             writer.newLine();
             
             // DATA ROWS
@@ -149,6 +150,7 @@ public class CSVDatabase {
                         String.valueOf(p.getAnneeUniversitaire().getValue()),
                         escapeCSV(p.getAdresse()),
                         escapeCSV(p.getMail()),
+                        escapeCSV(p.getPasswordHash() != null ? p.getPasswordHash() : ""),
                         String.valueOf(p.isChercheCovoit())
                     );
                     
@@ -252,7 +254,7 @@ public class CSVDatabase {
                 String[] values = line.split(DELIMITER, -1); // -1 keeps empty values
                 
                 // Validate we have enough columns
-                if (values.length >= 11) {
+                if (values.length >= 12) {
                     try {
                         Conducteur c = new Conducteur(
                             unescapeCSV(values[0]),  // CIN
@@ -262,10 +264,12 @@ public class CSVDatabase {
                             Year.of(Integer.parseInt(values[4])), // AnneeUniv
                             unescapeCSV(values[5]),  // Adresse
                             unescapeCSV(values[6]),  // Mail
-                            unescapeCSV(values[7]),  // NomVoiture
-                            unescapeCSV(values[8]),  // MarqueVoiture
-                            unescapeCSV(values[9]),  // Matricule
-                            Integer.parseInt(values[10]) // PlacesDisponibles
+                            unescapeCSV(values[7]),  // PasswordHash (already hashed)
+                            true,                     // isHashedPassword = true
+                            unescapeCSV(values[8]),  // NomVoiture
+                            unescapeCSV(values[9]),  // MarqueVoiture
+                            unescapeCSV(values[10]), // Matricule
+                            Integer.parseInt(values[11]) // PlacesDisponibles
                         );
                         conducteurs.add(c);
                     } catch (Exception e) {
@@ -313,7 +317,7 @@ public class CSVDatabase {
                 
                 String[] values = line.split(DELIMITER, -1);
                 
-                if (values.length >= 8) {
+                if (values.length >= 9) {
                     try {
                         // Note: Passager constructor requires a Conducteur reference
                         // We pass null initially; relationships are rebuilt when loading trajets
@@ -325,7 +329,9 @@ public class CSVDatabase {
                             Year.of(Integer.parseInt(values[4])), // AnneeUniv
                             unescapeCSV(values[5]),  // Adresse
                             unescapeCSV(values[6]),  // Mail
-                            Boolean.parseBoolean(values[7]), // ChercheCovoit
+                            unescapeCSV(values[7]),  // PasswordHash (already hashed)
+                            true,                     // isHashedPassword = true
+                            Boolean.parseBoolean(values[8]), // ChercheCovoit
                             null  // Conducteur - will be set when loading trajets
                         );
                         passagers.add(p);

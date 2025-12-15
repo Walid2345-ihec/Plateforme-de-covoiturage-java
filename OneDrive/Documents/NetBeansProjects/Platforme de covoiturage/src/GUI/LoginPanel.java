@@ -466,8 +466,9 @@ public class LoginPanel extends JPanel {
         
         try {
             // Create conductor using parameterized constructor
+            // Note: Legacy panel - using default password for backwards compatibility
             Conducteur conducteur = new Conducteur(cin, nom, prenom, tel, annee, adresse, mail,
-                nomVoiture, marqueVoiture, matricule, places);
+                "TempPass@1", nomVoiture, marqueVoiture, matricule, places);
             
             mainFrame.getGestion().getUsers().add(conducteur);
             
@@ -512,8 +513,9 @@ public class LoginPanel extends JPanel {
         
         try {
             // Create passenger using parameterized constructor
+            // Note: Legacy panel - using default password for backwards compatibility
             Passager passager = new Passager(cin.trim(), nom.trim(), prenom.trim(), tel.trim(), 
-                annee, adresse.trim(), mail.trim(), true, null);
+                annee, adresse.trim(), mail.trim(), "TempPass@1", true, null);
             
             mainFrame.getGestion().getUsers().add(passager);
             

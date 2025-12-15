@@ -44,19 +44,19 @@ public class Conducteur extends User {
     
     
     // Constructeur paramétré (avec validation regex)
-    public Conducteur(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail,String nomVoiture, String marqueVoiture, String matricule, int placesDisponibles) {
-        super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail); // La validation de User est faite ici
+    public Conducteur(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail, String password, String nomVoiture, String marqueVoiture, String matricule, int placesDisponibles) {
+        super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail, password); // La validation de User est faite ici
 
         // ═══════════════════════════════════════════════════════════════════════════
         // VALIDATION spécifique au Conducteur
         // ═══════════════════════════════════════════════════════════════════════════
         
-        // Validate nom de voiture: letters only
-        ValidationUtils.validateName(nomVoiture, "Nom de voiture");
+        // Validate nom de voiture: letters AND numbers allowed (e.g., "Golf 7", "308")
+        ValidationUtils.validateVehicleName(nomVoiture, "Nom de voiture");
         
-        // Validate marque de voiture: letters only
+        // Validate marque de voiture: letters AND numbers allowed
         if (marqueVoiture != null && !marqueVoiture.trim().isEmpty()) {
-            ValidationUtils.validateName(marqueVoiture, "Marque de voiture");
+            ValidationUtils.validateVehicleName(marqueVoiture, "Marque de voiture");
         }
         
         // Validate matricule: format XXXTUXXXX (1-3 digits + TU + 4 digits)
@@ -70,6 +70,23 @@ public class Conducteur extends User {
         this.nomVoiture = nomVoiture;
         this.marqueVoiture = marqueVoiture;
         this.matricule = matricule.toUpperCase(); // Normalize to uppercase
+        this.placesDisponibles = placesDisponibles;
+    }
+    
+    /**
+     * Constructor for loading from CSV (password already hashed).
+     * This constructor accepts a pre-hashed password for database loading.
+     * 
+     * SECURITY NOTE: Use this constructor ONLY when loading from CSV.
+     * For new driver registration, use the standard constructor with plain password.
+     */
+    public Conducteur(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, 
+                      String adresse, String mail, String passwordHash, boolean isHashedPassword,
+                      String nomVoiture, String marqueVoiture, String matricule, int placesDisponibles) {
+        super(cin, nom, prenom, tel, anneeUniversitaire, adresse, mail, passwordHash, isHashedPassword);
+        this.nomVoiture = nomVoiture;
+        this.marqueVoiture = marqueVoiture;
+        this.matricule = matricule;
         this.placesDisponibles = placesDisponibles;
     }
 

@@ -22,6 +22,7 @@ public class User {
     protected Year anneeUniversitaire;
     protected String adresse;
     protected String mail;
+    protected String passwordHash; // Stores SHA-256 hash of password - NEVER plain text!
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Using centralized validation from ValidationUtils class
@@ -123,7 +124,7 @@ public class User {
     }
 
     // Constructeur paramétré (avec validation regex complète)
-    public User(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail) {
+    public User(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, String adresse, String mail, String password) {
         // ═══════════════════════════════════════════════════════════════════════════
         // VALIDATION avec expressions régulières
         // ═══════════════════════════════════════════════════════════════════════════
@@ -147,6 +148,15 @@ public class User {
         
         // Validate Email: @gmail.com or @*.tn
         ValidationUtils.validateEmail(mail);
+        
+        // Validate Password strength (if provided)
+        // Note: password can be null when loading from CSV (already hashed)
+        if (password != null && !password.isEmpty()) {
+            ValidationUtils.validatePassword(password);
+            this.passwordHash = ValidationUtils.hashPassword(password);
+        } else {
+            this.passwordHash = null;
+        }
 
         this.cin = cin;
         this.nom = nom;
@@ -155,6 +165,26 @@ public class User {
         this.anneeUniversitaire = anneeUniversitaire;
         this.adresse = adresse;
         this.mail = mail;
+    }
+    
+    /**
+     * Constructor for loading from CSV (password already hashed).
+     * This constructor accepts a pre-hashed password for database loading.
+     * 
+     * SECURITY NOTE: Use this constructor ONLY when loading from CSV.
+     * For new user registration, use the standard constructor with plain password.
+     */
+    public User(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, 
+                String adresse, String mail, String passwordHash, boolean isHashedPassword) {
+        // Minimal validation for CSV loading
+        this.cin = cin;
+        this.nom = nom;
+        this.prenom = prenom;
+        this.tel = tel;
+        this.anneeUniversitaire = anneeUniversitaire;
+        this.adresse = adresse;
+        this.mail = mail;
+        this.passwordHash = isHashedPassword ? passwordHash : ValidationUtils.hashPassword(passwordHash);
     }
 
     // Getters
@@ -165,6 +195,18 @@ public class User {
     public Year getAnneeUniversitaire() { return anneeUniversitaire; }
     public String getAdresse() { return adresse; }
     public String getMail() { return mail; }
+    public String getPasswordHash() { return passwordHash; }
+    
+    /**
+     * Verifies if the provided plain text password matches the stored hash.
+     * Use this method for login authentication.
+     * 
+     * @param plainPassword The password entered by the user
+     * @return true if password matches, false otherwise
+     */
+    public boolean verifyPassword(String plainPassword) {
+        return ValidationUtils.verifyPassword(plainPassword, this.passwordHash);
+    }
 
     // Setters
     public void setCin(String cin) { this.cin = cin; }
@@ -174,6 +216,18 @@ public class User {
     public void setAnneeUniversitaire(Year anneeUniversitaire) { this.anneeUniversitaire = anneeUniversitaire; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
     public void setMail(String mail) { this.mail = mail; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    
+    /**
+     * Sets a new password (will be hashed automatically).
+     * Use this for password changes.
+     * 
+     * @param newPassword The new plain text password
+     */
+    public void setPassword(String newPassword) {
+        ValidationUtils.validatePassword(newPassword);
+        this.passwordHash = ValidationUtils.hashPassword(newPassword);
+    }
 
     @Override
     public String toString() {
