@@ -35,12 +35,16 @@ public class CSVDatabase {
     // ============================================================
     
     private static final String DATA_FOLDER = "data/";
+    private static final String BACKUP_FOLDER = "data/backups/";
     private static final String CONDUCTEURS_FILE = DATA_FOLDER + "conducteurs.csv";
     private static final String PASSAGERS_FILE = DATA_FOLDER + "passagers.csv";
     private static final String TRAJETS_FILE = DATA_FOLDER + "trajets.csv";
     
     // Delimiter - using semicolon to avoid conflicts with French text
     private static final String DELIMITER = ";";
+    
+    // Maximum number of backup files to keep
+    private static final int MAX_BACKUPS = 5;
     
     // ============================================================
     // STEP 1: Initialize the data folder
@@ -57,8 +61,144 @@ public class CSVDatabase {
                 Files.createDirectories(dataPath);
                 System.out.println("✓ Dossier 'data/' créé avec succès");
             }
+            // Also create backup folder
+            Path backupPath = Paths.get(BACKUP_FOLDER);
+            if (!Files.exists(backupPath)) {
+                Files.createDirectories(backupPath);
+            }
         } catch (IOException e) {
             System.err.println("✗ Erreur création dossier: " + e.getMessage());
+        }
+    }
+    
+    // ============================================================
+    // BACKUP & RECOVERY SYSTEM
+    // ============================================================
+    
+    /**
+     * Creates a backup of all CSV files before saving.
+     * Backups are timestamped and rotated (max 5 kept).
+     */
+    public static void createBackup() {
+        initializeDataFolder();
+        
+        String timestamp = java.time.LocalDateTime.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        
+        String[] files = {CONDUCTEURS_FILE, PASSAGERS_FILE, TRAJETS_FILE};
+        
+        for (String file : files) {
+            Path source = Paths.get(file);
+            if (Files.exists(source)) {
+                try {
+                    String fileName = source.getFileName().toString();
+                    String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+                    String backupName = BACKUP_FOLDER + baseName + "_" + timestamp + ".csv";
+                    Files.copy(source, Paths.get(backupName), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    System.err.println("⚠️ Backup échoué pour " + file + ": " + e.getMessage());
+                }
+            }
+        }
+        
+        // Rotate old backups
+        rotateBackups();
+        System.out.println("✓ Backup créé: " + timestamp);
+    }
+    
+    /**
+     * Removes old backup files, keeping only the most recent ones.
+     */
+    private static void rotateBackups() {
+        try {
+            Path backupDir = Paths.get(BACKUP_FOLDER);
+            if (!Files.exists(backupDir)) return;
+            
+            // Group backups by base name and keep only MAX_BACKUPS of each
+            java.util.Map<String, java.util.List<Path>> backupGroups = new java.util.HashMap<>();
+            
+            Files.list(backupDir)
+                .filter(p -> p.toString().endsWith(".csv"))
+                .forEach(p -> {
+                    String name = p.getFileName().toString();
+                    // Extract base name (e.g., "conducteurs" from "conducteurs_20241217_143022.csv")
+                    int underscoreIdx = name.indexOf('_');
+                    if (underscoreIdx > 0) {
+                        String baseName = name.substring(0, underscoreIdx);
+                        backupGroups.computeIfAbsent(baseName, k -> new java.util.ArrayList<>()).add(p);
+                    }
+                });
+            
+            // For each group, sort by modification time and delete oldest if > MAX_BACKUPS
+            for (java.util.List<Path> group : backupGroups.values()) {
+                if (group.size() > MAX_BACKUPS) {
+                    group.sort((a, b) -> {
+                        try {
+                            return Files.getLastModifiedTime(b).compareTo(Files.getLastModifiedTime(a));
+                        } catch (IOException e) {
+                            return 0;
+                        }
+                    });
+                    
+                    // Delete oldest backups
+                    for (int i = MAX_BACKUPS; i < group.size(); i++) {
+                        try {
+                            Files.delete(group.get(i));
+                        } catch (IOException e) {
+                            // Ignore deletion errors
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // Ignore rotation errors
+        }
+    }
+    
+    /**
+     * Attempts to restore data from the most recent backup.
+     * Use this if the main data files are corrupted.
+     * 
+     * @return true if restoration was successful
+     */
+    public static boolean restoreFromBackup() {
+        try {
+            Path backupDir = Paths.get(BACKUP_FOLDER);
+            if (!Files.exists(backupDir)) {
+                System.err.println("✗ Aucun dossier de backup trouvé");
+                return false;
+            }
+            
+            // Find most recent backup for each file type
+            String[] baseNames = {"conducteurs", "passagers", "trajets"};
+            String[] targetFiles = {CONDUCTEURS_FILE, PASSAGERS_FILE, TRAJETS_FILE};
+            
+            for (int i = 0; i < baseNames.length; i++) {
+                final String baseName = baseNames[i];
+                final String targetFile = targetFiles[i];
+                
+                java.util.Optional<Path> latestBackup = Files.list(backupDir)
+                    .filter(p -> p.getFileName().toString().startsWith(baseName + "_"))
+                    .max((a, b) -> {
+                        try {
+                            return Files.getLastModifiedTime(a).compareTo(Files.getLastModifiedTime(b));
+                        } catch (IOException e) {
+                            return 0;
+                        }
+                    });
+                
+                if (latestBackup.isPresent()) {
+                    Files.copy(latestBackup.get(), Paths.get(targetFile), StandardCopyOption.REPLACE_EXISTING);
+                    System.out.println("✓ Restauré: " + targetFile + " depuis " + latestBackup.get().getFileName());
+                }
+            }
+            
+            System.out.println("✓ Restauration depuis backup terminée");
+            return true;
+            
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lors de la restauration: " + e.getMessage());
+            return false;
         }
     }
     

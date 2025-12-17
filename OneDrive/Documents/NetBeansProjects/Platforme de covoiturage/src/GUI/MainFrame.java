@@ -10,6 +10,12 @@ import java.awt.event.WindowEvent;
 /**
  * Main application frame with card layout for navigation
  * Enhanced with modern UI components and CSV persistence
+ * 
+ * AUTO-SAVE FEATURES:
+ * - Periodic auto-save every 5 minutes
+ * - Save on window close with user confirmation
+ * - Shutdown hook for unexpected terminations
+ * - Backup creation before each save
  */
 public class MainFrame extends JFrame {
     
@@ -26,6 +32,11 @@ public class MainFrame extends JFrame {
     private User currentUser;
     private String userType; // "CONDUCTEUR" or "PASSAGER"
     
+    // Auto-save timer
+    private Timer autoSaveTimer;
+    private static final int AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes in ms
+    private boolean hasUnsavedChanges = false;
+    
     public MainFrame() {
         gestion = new Gestion_covoiturage();
         
@@ -35,8 +46,10 @@ public class MainFrame extends JFrame {
         initializeFrame();
         initializePanels();
         
-        // STEP: Save data to CSV files on close
+        // STEP: Setup comprehensive auto-save system
         setupAutoSave();
+        setupPeriodicAutoSave();
+        setupShutdownHook();
     }
     
     /**
@@ -60,28 +73,116 @@ public class MainFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                // Ask user before closing
-                int choice = JOptionPane.showConfirmDialog(
-                    MainFrame.this,
-                    "Voulez-vous sauvegarder les données avant de quitter?",
-                    "Quitter l'application",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
-                );
-                
-                if (choice == JOptionPane.YES_OPTION) {
-                    // Save and exit
-                    saveDataToCSV();
-                    dispose();
-                    System.exit(0);
-                } else if (choice == JOptionPane.NO_OPTION) {
-                    // Exit without saving
-                    dispose();
-                    System.exit(0);
-                }
-                // Cancel - do nothing, stay in app
+                handleApplicationClose();
             }
         });
+    }
+    
+    /**
+     * Handles the application close event with proper cleanup.
+     */
+    private void handleApplicationClose() {
+        // Stop auto-save timer
+        if (autoSaveTimer != null && autoSaveTimer.isRunning()) {
+            autoSaveTimer.stop();
+        }
+        
+        if (hasUnsavedChanges) {
+            int choice = JOptionPane.showConfirmDialog(
+                MainFrame.this,
+                "Vous avez des modifications non sauvegardées.\n" +
+                "Voulez-vous sauvegarder avant de quitter?",
+                "Sauvegarder les modifications",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (choice == JOptionPane.YES_OPTION) {
+                saveDataWithBackup();
+                cleanupAndExit();
+            } else if (choice == JOptionPane.NO_OPTION) {
+                cleanupAndExit();
+            }
+            // Cancel - do nothing, stay in app
+        } else {
+            // No unsaved changes, just confirm exit
+            int choice = JOptionPane.showConfirmDialog(
+                MainFrame.this,
+                "Voulez-vous quitter l'application?",
+                "Quitter",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            if (choice == JOptionPane.YES_OPTION) {
+                saveDataWithBackup();
+                cleanupAndExit();
+            }
+        }
+    }
+    
+    /**
+     * Performs cleanup and exits the application.
+     */
+    private void cleanupAndExit() {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("👋 Fermeture de l'application...");
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        dispose();
+        System.exit(0);
+    }
+    
+    /**
+     * Sets up periodic auto-save every 5 minutes.
+     */
+    private void setupPeriodicAutoSave() {
+        autoSaveTimer = new Timer(AUTO_SAVE_INTERVAL, e -> {
+            if (hasUnsavedChanges) {
+                System.out.println("⏰ Auto-save en cours...");
+                saveDataWithBackup();
+                hasUnsavedChanges = false;
+            }
+        });
+        autoSaveTimer.setRepeats(true);
+        autoSaveTimer.start();
+        System.out.println("✓ Auto-save activé (toutes les 5 minutes)");
+    }
+    
+    /**
+     * Sets up a shutdown hook for unexpected terminations.
+     * This ensures data is saved even if the JVM is killed unexpectedly.
+     */
+    private void setupShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("\n⚠️ Shutdown détecté - Sauvegarde d'urgence...");
+            try {
+                CSVDatabase.saveAllData(gestion);
+                System.out.println("✓ Sauvegarde d'urgence terminée");
+            } catch (Exception ex) {
+                System.err.println("✗ Erreur sauvegarde d'urgence: " + ex.getMessage());
+            }
+        }, "ShutdownHook-SaveData"));
+    }
+    
+    /**
+     * Marks that there are unsaved changes.
+     * Call this after any data modification.
+     */
+    public void markUnsavedChanges() {
+        this.hasUnsavedChanges = true;
+    }
+    
+    /**
+     * Saves all data with backup creation.
+     */
+    public void saveDataWithBackup() {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        // Create backup before saving
+        CSVDatabase.createBackup();
+        // Save current data
+        CSVDatabase.saveAllData(gestion);
+        hasUnsavedChanges = false;
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
     
     /**
@@ -91,6 +192,7 @@ public class MainFrame extends JFrame {
     public void saveDataToCSV() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         CSVDatabase.saveAllData(gestion);
+        hasUnsavedChanges = false;
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
     
