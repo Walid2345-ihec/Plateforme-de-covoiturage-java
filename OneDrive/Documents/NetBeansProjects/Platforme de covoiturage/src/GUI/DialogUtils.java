@@ -127,7 +127,9 @@ public class DialogUtils {
         contentPanel.setOpaque(false);
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         
-        addDetailRow(contentPanel, "CIN", user.getCin());
+        // PRIVACY: Mask CIN - show only last 3 digits
+        String maskedCin = "*****" + user.getCin().substring(Math.max(0, user.getCin().length() - 3));
+        addDetailRow(contentPanel, "CIN", maskedCin);
         addDetailRow(contentPanel, "Téléphone", user.getTel());
         addDetailRow(contentPanel, "Email", user.getMail());
         addDetailRow(contentPanel, "Adresse", user.getAdresse() != null ? user.getAdresse() : "Non spécifiée");
@@ -139,7 +141,9 @@ public class DialogUtils {
             contentPanel.add(Box.createVerticalStrut(15));
             addSectionHeader(contentPanel, "Informations Véhicule");
             addDetailRow(contentPanel, "Véhicule", c.getMarqueVoiture() + " " + c.getNomVoiture());
-            addDetailRow(contentPanel, "Matricule", c.getMatricule());
+            // PRIVACY: Mask vehicle matricule - show only last 4 chars
+            String maskedMatricule = "***" + c.getMatricule().substring(Math.max(0, c.getMatricule().length() - 4));
+            addDetailRow(contentPanel, "Matricule", maskedMatricule);
             addDetailRow(contentPanel, "Places Disponibles", String.valueOf(c.getPlacesDisponibles()));
         }
         

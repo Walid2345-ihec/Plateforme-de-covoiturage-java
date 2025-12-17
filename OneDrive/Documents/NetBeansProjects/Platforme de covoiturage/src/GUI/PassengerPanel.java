@@ -501,14 +501,22 @@ public class PassengerPanel extends JPanel {
                 if (count == selectedRow) {
                     Conducteur c = t.getConducteur();
                     
-                    // Show contact info
+                    // PRIVACY: Show limited info until reservation is confirmed
+                    // Mask phone and email partially
+                    String maskedPhone = "****" + c.getTel().substring(Math.max(0, c.getTel().length() - 4));
+                    String maskedEmail = maskEmailForDisplay(c.getMail());
+                    String maskedMatricule = "***" + c.getMatricule().substring(Math.max(0, c.getMatricule().length() - 4));
+                    
+                    // Show contact info with privacy protection
                     JOptionPane.showMessageDialog(this,
                         "📞 Informations du Conducteur\n\n" +
-                        "Nom: " + c.getNom() + " " + c.getPrenom() + "\n" +
-                        "Téléphone: " + c.getTel() + "\n" +
-                        "Email: " + c.getMail() + "\n" +
+                        "Nom: " + c.getNom() + " " + c.getPrenom().charAt(0) + ".\n" +
+                        "Téléphone: " + maskedPhone + "\n" +
+                        "Email: " + maskedEmail + "\n" +
                         "Véhicule: " + c.getMarqueVoiture() + " " + c.getNomVoiture() + "\n" +
-                        "Matricule: " + c.getMatricule(),
+                        "Matricule: " + maskedMatricule + "\n\n" +
+                        "💡 Les coordonnées complètes seront\n" +
+                        "disponibles après confirmation de réservation.",
                         "Contact Conducteur",
                         JOptionPane.INFORMATION_MESSAGE);
                     return;
@@ -516,6 +524,16 @@ public class PassengerPanel extends JPanel {
                 count++;
             }
         }
+    }
+    
+    // Privacy helper method
+    private String maskEmailForDisplay(String email) {
+        if (email == null || !email.contains("@")) return "***@***";
+        int atIndex = email.indexOf("@");
+        String local = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (local.length() <= 2) return local + "***" + domain;
+        return local.substring(0, 2) + "***" + domain;
     }
     
     // ==================== Refresh Methods ====================
