@@ -627,21 +627,50 @@ public class DriverPanel extends JPanel {
     private void refreshDemandesTable() {
         demandesTableModel.setRowCount(0);
         
-        // Show all passengers who are looking for carpool as potential demandes
-        for (User u : mainFrame.getGestion().getUsers()) {
-            if (u instanceof Passager) {
-                Passager p = (Passager) u;
-                if (p.isChercheCovoit()) {
-                    demandesTableModel.addRow(new Object[]{
-                        p.getCin(),
-                        p.getNom(),
-                        p.getPrenom(),
-                        p.getTel(),
-                        p.getMail()
-                    });
+        Conducteur conducteur = mainFrame.getCurrentConducteur();
+        if (conducteur == null) return;
+        
+        // PRIVACY FIX: Only show passengers who are searching for carpool
+        // AND only for this conductor's available trajets
+        java.util.Set<String> shownPassengers = new java.util.HashSet<>();
+        
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            // Only show for trajets belonging to this conductor that are pending
+            if (t.getConducteur() != null && 
+                t.getConducteur().getCin().equals(conducteur.getCin()) &&
+                t.getStatusTrajet().equals("PENDING") &&
+                t.getPassager() == null) {
+                
+                for (User u : mainFrame.getGestion().getUsers()) {
+                    if (u instanceof Passager) {
+                        Passager p = (Passager) u;
+                        if (p.isChercheCovoit() && !shownPassengers.contains(p.getCin())) {
+                            shownPassengers.add(p.getCin());
+                            // PRIVACY: Mask sensitive data
+                            String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
+                            String maskedPhone = "****" + p.getTel().substring(Math.max(0, p.getTel().length() - 4));
+                            String maskedEmail = maskEmail(p.getMail());
+                            demandesTableModel.addRow(new Object[]{
+                                maskedCin,
+                                p.getNom(),
+                                p.getPrenom().charAt(0) + ".",
+                                maskedPhone,
+                                maskedEmail
+                            });
+                        }
+                    }
                 }
             }
         }
+    }
+    
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***@***";
+        int atIndex = email.indexOf("@");
+        String local = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (local.length() <= 2) return local + "***" + domain;
+        return local.substring(0, 2) + "***" + domain;
     }
     
     private void refreshPassagersAcceptesTable() {
@@ -656,12 +685,14 @@ public class DriverPanel extends JPanel {
                 t.getConducteur().getCin().equals(conducteur.getCin()) &&
                 t.getPassager() != null) {
                 Passager p = t.getPassager();
+                // PRIVACY: Mask CIN even for accepted passengers
+                String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
                 passagersAcceptesTableModel.addRow(new Object[]{
-                    p.getCin(),
+                    maskedCin,
                     p.getNom(),
                     p.getPrenom(),
-                    p.getTel(),
-                    p.getMail(),
+                    p.getTel(),  // Full phone for accepted passengers (they need to contact)
+                    p.getMail(), // Full email for accepted passengers
                     p.getAdresse()
                 });
             }
