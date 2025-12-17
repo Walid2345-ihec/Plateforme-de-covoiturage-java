@@ -14,6 +14,18 @@ public class Trajet {
     private Conducteur conducteur;
     private Passager passager;
 
+    // ==================== STATUS CONSTANTS ====================
+    /**
+     * PENDING: Trajet available for reservation (no passenger assigned)
+     * PENDING_APPROVAL: Passenger has requested reservation, waiting for driver approval
+     * IN_PROGRESS: Driver accepted the passenger, trajet is confirmed
+     * FINISHED: Trajet completed
+     */
+    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_PENDING_APPROVAL = "PENDING_APPROVAL";
+    public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
+    public static final String STATUS_FINISHED = "FINISHED";
+    
     // Constructeur par défaut (interactif)
     public Trajet() {
         Scanner sc = new Scanner(System.in);
@@ -42,13 +54,13 @@ public class Trajet {
         // Saisie du statut (simplifiée pour l'interactivité)
         boolean statusValide = false;
         while (!statusValide) {
-            System.out.println("Entrez le statut du trajet (PENDING, IN_PROGRESS, FINISHED) :");
+            System.out.println("Entrez le statut du trajet (PENDING, PENDING_APPROVAL, IN_PROGRESS, FINISHED) :");
             String statusInput = sc.nextLine().toUpperCase();
-            if (statusInput.equals("PENDING") || statusInput.equals("IN_PROGRESS") || statusInput.equals("FINISHED")) {
+            if (isValidStatus(statusInput)) {
                 this.statusTrajet = statusInput;
                 statusValide = true;
             } else {
-                System.err.println("Erreur: Statut invalide. Veuillez choisir parmi PENDING, IN_PROGRESS, ou FINISHED.");
+                System.err.println("Erreur: Statut invalide. Veuillez choisir parmi PENDING, PENDING_APPROVAL, IN_PROGRESS, ou FINISHED.");
             }
         }
         
@@ -73,9 +85,8 @@ public class Trajet {
         if (dureeTrajet == null || dureeTrajet.isNegative() || dureeTrajet.isZero()) {
             throw new IllegalArgumentException("La durée du trajet doit être positive.");
         }
-        if (statusTrajet == null || 
-            !(statusTrajet.equals("PENDING") || statusTrajet.equals("IN_PROGRESS") || statusTrajet.equals("FINISHED"))) {
-            throw new IllegalArgumentException("Le statut du trajet doit être PENDING, IN_PROGRESS ou FINISHED.");
+        if (!isValidStatus(statusTrajet)) {
+            throw new IllegalArgumentException("Le statut du trajet doit être PENDING, PENDING_APPROVAL, IN_PROGRESS ou FINISHED.");
         }
 
         this.departTrajet = departTrajet;
@@ -86,6 +97,16 @@ public class Trajet {
         this.conducteur = conducteur;
         this.passager = passager;
         this.trajet_valide = false;
+    }
+    
+    // Helper method to validate status
+    private static boolean isValidStatus(String status) {
+        return status != null && (
+            status.equals(STATUS_PENDING) || 
+            status.equals(STATUS_PENDING_APPROVAL) || 
+            status.equals(STATUS_IN_PROGRESS) || 
+            status.equals(STATUS_FINISHED)
+        );
     }
 
     // Getters
@@ -105,13 +126,18 @@ public class Trajet {
     public void setArriveeTrajet(String arriveeTrajet) { this.arriveeTrajet = arriveeTrajet; }
     public void setDureeTrajet(Duration dureeTrajet) { this.dureeTrajet = dureeTrajet; }
     public void setStatusTrajet(String statusTrajet) {
-        if (statusTrajet != null && 
-            (statusTrajet.equals("PENDING") || statusTrajet.equals("IN_PROGRESS") || statusTrajet.equals("FINISHED"))) {
+        if (isValidStatus(statusTrajet)) {
             this.statusTrajet = statusTrajet;
         } else {
-            throw new IllegalArgumentException("Statut invalide. Utilisez PENDING, IN_PROGRESS ou FINISHED.");
+            throw new IllegalArgumentException("Statut invalide. Utilisez PENDING, PENDING_APPROVAL, IN_PROGRESS ou FINISHED.");
         }
     }
+    
+    // Convenience methods for status checks
+    public boolean isPending() { return STATUS_PENDING.equals(statusTrajet); }
+    public boolean isPendingApproval() { return STATUS_PENDING_APPROVAL.equals(statusTrajet); }
+    public boolean isInProgress() { return STATUS_IN_PROGRESS.equals(statusTrajet); }
+    public boolean isFinished() { return STATUS_FINISHED.equals(statusTrajet); }
 
     public void setTrajet_valide(boolean trajet_valide) { this.trajet_valide = trajet_valide; }
     public void setConducteur(Conducteur conducteur) { this.conducteur = conducteur; }

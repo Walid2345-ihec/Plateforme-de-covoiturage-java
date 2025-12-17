@@ -595,37 +595,64 @@ public class EnhancedDriverPanel extends JPanel {
     private void acceptPassenger() {
         int row = demandesTable.getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un passager", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner une demande", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
         Conducteur conducteur = mainFrame.getCurrentConducteur();
+        if (conducteur == null) return;
+        
         if (conducteur.getPlacesDisponibles() <= 0) {
             JOptionPane.showMessageDialog(this, "Plus de places disponibles !", "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
-        String cin = (String) demandesModel.getValueAt(row, 0);
-        Passager passager = mainFrame.getGestion().rechercher_passager(cin);
-        
-        if (passager != null) {
-            conducteur.setPlacesDisponibles(conducteur.getPlacesDisponibles() - 1);
-            mainFrame.getGestion().getPassagers_acceptes().add(passager);
-            
-            for (Trajet t : mainFrame.getGestion().getTrajets()) {
-                if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin()) && t.getPassager() == null) {
-                    t.setPassager(passager);
-                    break;
+        // Find the corresponding trajet with PENDING_APPROVAL status
+        int count = 0;
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            if (t.getConducteur() != null && 
+                t.getConducteur().getCin().equals(conducteur.getCin()) &&
+                t.isPendingApproval() &&
+                t.getPassager() != null) {
+                
+                if (count == row) {
+                    Passager passager = t.getPassager();
+                    
+                    int confirm = JOptionPane.showConfirmDialog(this,
+                        "Accepter la demande de " + passager.getPrenom() + " " + passager.getNom() + " ?\n\n" +
+                        "Trajet: " + t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
+                        "Prix: " + String.format("%.2f", t.getPrix()) + " TND",
+                        "Confirmer", JOptionPane.YES_NO_OPTION);
+                    
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        // Update trajet status to IN_PROGRESS
+                        t.setStatusTrajet("IN_PROGRESS");
+                        t.setTrajet_valide(true);
+                        
+                        // Decrease available places
+                        conducteur.setPlacesDisponibles(conducteur.getPlacesDisponibles() - 1);
+                        
+                        // Add to accepted passengers list
+                        mainFrame.getGestion().getPassagers_acceptes().add(passager);
+                        
+                        JOptionPane.showMessageDialog(this, 
+                            "✅ Passager accepté !\n\n" +
+                            passager.getPrenom() + " " + passager.getNom() + "\n" +
+                            "Téléphone: " + passager.getTel() + "\n\n" +
+                            "Places restantes: " + conducteur.getPlacesDisponibles(),
+                            "Succès", JOptionPane.INFORMATION_MESSAGE);
+                        
+                        refreshDemandesTable();
+                        refreshPassagersTable();
+                        refreshDashboard();
+                    }
+                    return;
                 }
+                count++;
             }
-            
-            JOptionPane.showMessageDialog(this, 
-                "Passager " + passager.getPrenom() + " accepté !\nPlaces restantes: " + conducteur.getPlacesDisponibles(),
-                "Succès ✓", JOptionPane.INFORMATION_MESSAGE);
-            
-            refreshDemandesTable();
-            refreshDashboard();
         }
+        
+        JOptionPane.showMessageDialog(this, "Erreur: Demande non trouvée", "Erreur", JOptionPane.ERROR_MESSAGE);
     }
     
     // ==================== Refresh Methods ====================
@@ -680,35 +707,28 @@ public class EnhancedDriverPanel extends JPanel {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
         
-        // PRIVACY FIX: Only show passengers who have pending requests
-        // for THIS conductor's available trajets (not all passengers)
-        java.util.Set<String> shownPassengers = new java.util.HashSet<>();
-        
+        // FIXED: Only show passengers who have requested THIS driver's trajets
+        // and are awaiting approval (PENDING_APPROVAL status)
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // Only show for trajets belonging to this conductor that are pending
+            // Only show demandes for:
+            // 1. Trajets belonging to this conductor
+            // 2. With PENDING_APPROVAL status (passenger has requested)
+            // 3. With a passenger assigned
             if (t.getConducteur() != null && 
                 t.getConducteur().getCin().equals(conducteur.getCin()) &&
-                t.getStatusTrajet().equals("PENDING") &&
-                t.getPassager() == null) {
+                t.isPendingApproval() &&
+                t.getPassager() != null) {
                 
-                // Find passengers interested in this route (simplified: show passengers searching for carpool)
-                for (User u : mainFrame.getGestion().getUsers()) {
-                    if (u instanceof Passager) {
-                        Passager p = (Passager) u;
-                        if (p.isChercheCovoit() && !shownPassengers.contains(p.getCin())) {
-                            shownPassengers.add(p.getCin());
-                            // PRIVACY: Mask CIN - only show last 3 digits
-                            String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
-                            demandesModel.addRow(new Object[]{
-                                maskedCin, 
-                                p.getNom(), 
-                                p.getPrenom().charAt(0) + ".", // Only first initial
-                                maskPhone(p.getTel()), 
-                                maskEmail(p.getMail())
-                            });
-                        }
-                    }
-                }
+                Passager p = t.getPassager();
+                // PRIVACY: Mask CIN - only show last 3 digits
+                String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
+                demandesModel.addRow(new Object[]{
+                    maskedCin, 
+                    p.getNom(), 
+                    p.getPrenom(),
+                    maskPhone(p.getTel()), 
+                    maskEmail(p.getMail())
+                });
             }
         }
     }
@@ -733,8 +753,13 @@ public class EnhancedDriverPanel extends JPanel {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
         
+        // Only show accepted passengers (IN_PROGRESS or FINISHED status)
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin()) && t.getPassager() != null) {
+            if (t.getConducteur() != null && 
+                t.getConducteur().getCin().equals(conducteur.getCin()) && 
+                (t.isInProgress() || t.isFinished()) &&
+                t.getPassager() != null) {
+                
                 Passager p = t.getPassager();
                 // For accepted passengers, show full contact info (they have a confirmed booking)
                 // But still mask CIN for privacy

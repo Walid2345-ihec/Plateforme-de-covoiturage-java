@@ -21,11 +21,14 @@ public class PassengerPanel extends JPanel {
     // Tables
     private JTable trajetsDisponiblesTable;
     private DefaultTableModel trajetsDisponiblesModel;
+    private JTable mesDemandesTable;
+    private DefaultTableModel mesDemandesModel;
     private JTable mesReservationsTable;
     private DefaultTableModel mesReservationsModel;
     
     // Stats labels
     private JLabel trajetsCountLabel;
+    private JLabel demandesCountLabel;
     private JLabel reservationsCountLabel;
     
     public PassengerPanel(MainFrame mainFrame) {
@@ -50,6 +53,7 @@ public class PassengerPanel extends JPanel {
         
         contentPanel.add(createDashboardView(), "DASHBOARD");
         contentPanel.add(createTrajetsDisponiblesView(), "TRAJETS");
+        contentPanel.add(createMesDemandesView(), "DEMANDES");
         contentPanel.add(createMesReservationsView(), "RESERVATIONS");
         contentPanel.add(createRechercheTrajetView(), "RECHERCHE");
         
@@ -107,7 +111,8 @@ public class PassengerPanel extends JPanel {
         // Menu items
         addMenuItem(panel, "📊 Tableau de Bord", "DASHBOARD");
         addMenuItem(panel, "🚗 Trajets Disponibles", "TRAJETS");
-        addMenuItem(panel, "📋 Mes Réservations", "RESERVATIONS");
+        addMenuItem(panel, "⏳ Demandes Envoyées", "DEMANDES");
+        addMenuItem(panel, "✅ Réservations Acceptées", "RESERVATIONS");
         addMenuItem(panel, "🔍 Rechercher un Trajet", "RECHERCHE");
         
         panel.add(Box.createVerticalGlue());
@@ -140,6 +145,7 @@ public class PassengerPanel extends JPanel {
         button.addActionListener(e -> {
             contentLayout.show(contentPanel, cardName);
             if (cardName.equals("TRAJETS")) refreshTrajetsDisponibles();
+            if (cardName.equals("DEMANDES")) refreshMesDemandes();
             if (cardName.equals("RESERVATIONS")) refreshMesReservations();
             if (cardName.equals("DASHBOARD")) refreshDashboard();
         });
@@ -157,7 +163,7 @@ public class PassengerPanel extends JPanel {
         panel.add(titleLabel, BorderLayout.NORTH);
         
         // Stats cards
-        JPanel statsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         statsPanel.setOpaque(false);
         statsPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         
@@ -166,8 +172,13 @@ public class PassengerPanel extends JPanel {
         trajetsCountLabel = (JLabel) ((JPanel) trajetsCard.getComponent(0)).getComponent(1);
         statsPanel.add(trajetsCard);
         
-        // Mes réservations card
-        JPanel reservationsCard = createStatCard("📋", "Mes Réservations", "0", StyleUtils.ACCENT_COLOR);
+        // Demandes en attente card
+        JPanel demandesCard = createStatCard("⏳", "Demandes En Attente", "0", StyleUtils.WARNING_COLOR);
+        demandesCountLabel = (JLabel) ((JPanel) demandesCard.getComponent(0)).getComponent(1);
+        statsPanel.add(demandesCard);
+        
+        // Réservations acceptées card
+        JPanel reservationsCard = createStatCard("✅", "Réservations Acceptées", "0", StyleUtils.ACCENT_COLOR);
         reservationsCountLabel = (JLabel) ((JPanel) reservationsCard.getComponent(0)).getComponent(1);
         statsPanel.add(reservationsCard);
         
@@ -267,17 +278,72 @@ public class PassengerPanel extends JPanel {
         return panel;
     }
     
+    private JPanel createMesDemandesView() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(StyleUtils.BACKGROUND_COLOR);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        
+        // Title
+        JLabel titleLabel = StyleUtils.createTitleLabel("⏳ Demandes Envoyées - En Attente d'Approbation");
+        panel.add(titleLabel, BorderLayout.NORTH);
+        
+        // Info label
+        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        infoPanel.setOpaque(false);
+        JLabel infoLabel = new JLabel("Ces demandes sont en attente d'acceptation par le conducteur");
+        infoLabel.setFont(StyleUtils.REGULAR_FONT);
+        infoLabel.setForeground(StyleUtils.TEXT_SECONDARY);
+        infoPanel.add(infoLabel);
+        
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.setOpaque(false);
+        northPanel.add(titleLabel, BorderLayout.NORTH);
+        northPanel.add(infoPanel, BorderLayout.SOUTH);
+        panel.add(northPanel, BorderLayout.NORTH);
+        
+        // Table
+        String[] columns = {"Conducteur", "Départ", "Arrivée", "Prix (TND)", "Durée", "Statut"};
+        mesDemandesModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        mesDemandesTable = StyleUtils.createStyledTable(new Object[0][0], columns);
+        mesDemandesTable.setModel(mesDemandesModel);
+        
+        JScrollPane scrollPane = StyleUtils.createStyledScrollPane(mesDemandesTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        panel.add(scrollPane, BorderLayout.CENTER);
+        
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        buttonPanel.setOpaque(false);
+        
+        JButton cancelBtn = StyleUtils.createDangerButton("❌ Annuler la Demande");
+        cancelBtn.addActionListener(e -> annulerDemande());
+        buttonPanel.add(cancelBtn);
+        
+        JButton refreshBtn = StyleUtils.createSecondaryButton("🔄 Actualiser");
+        refreshBtn.addActionListener(e -> refreshMesDemandes());
+        buttonPanel.add(refreshBtn);
+        
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        return panel;
+    }
+    
     private JPanel createMesReservationsView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(StyleUtils.BACKGROUND_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
         // Title
-        JLabel titleLabel = StyleUtils.createTitleLabel("Mes Réservations");
+        JLabel titleLabel = StyleUtils.createTitleLabel("✅ Réservations Acceptées");
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Table
-        String[] columns = {"Conducteur", "Téléphone", "Départ", "Arrivée", "Prix (TND)", "Statut"};
+        // Table - Now shows FULL contact info since driver accepted
+        String[] columns = {"Conducteur", "Téléphone", "Email", "Départ", "Arrivée", "Prix (TND)"};
         mesReservationsModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -381,7 +447,8 @@ public class PassengerPanel extends JPanel {
             
             for (Trajet t : mainFrame.getGestion().getTrajets()) {
                 if (t.getConducteur() != null && 
-                    t.getStatusTrajet().equals("PENDING") &&
+                    t.isPending() &&
+                    t.getPassager() == null &&
                     t.getConducteur().getPlacesDisponibles() > 0 &&
                     t.getPrix() <= maxPrice) {
                     
@@ -448,32 +515,29 @@ public class PassengerPanel extends JPanel {
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
-                t.getStatusTrajet().equals("PENDING") &&
+                t.isPending() &&
+                t.getPassager() == null &&
                 t.getConducteur().getPlacesDisponibles() > 0) {
                 
                 if (count == selectedRow) {
                     if (StyleUtils.showConfirm(this, 
-                        "Réserver le trajet:\n" + 
+                        "Demander la réservation pour le trajet:\n" + 
                         t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
                         "Prix: " + t.getPrix() + " TND\n\n" +
-                        "Confirmer la réservation ?")) {
+                        "Envoyer la demande au conducteur ?")) {
                         
-                        // Mark trajet as in progress and assign passenger
-                        t.setTrajet_valide(true);
-                        t.setStatusTrajet("IN_PROGRESS");
+                        // Mark trajet as pending approval and assign passenger
+                        t.setStatusTrajet("PENDING_APPROVAL");
                         t.setPassager(passager);
                         
-                        // Decrease driver's available seats
-                        t.getConducteur().setPlacesDisponibles(
-                            t.getConducteur().getPlacesDisponibles() - 1);
-                        
                         StyleUtils.showSuccess(this, 
-                            "Réservation confirmée !\n\n" +
-                            "Conducteur: " + t.getConducteur().getNom() + " " + 
-                            t.getConducteur().getPrenom() + "\n" +
-                            "Téléphone: " + t.getConducteur().getTel());
+                            "Demande envoyée !\n\n" +
+                            "Votre demande a été envoyée au conducteur:\n" +
+                            t.getConducteur().getNom() + " " + t.getConducteur().getPrenom() + "\n\n" +
+                            "Vous serez notifié lorsque le conducteur\nacceptera votre demande.");
                         
                         refreshTrajetsDisponibles();
+                        refreshMesDemandes();
                         refreshMesReservations();
                         refreshDashboard();
                     }
@@ -495,7 +559,8 @@ public class PassengerPanel extends JPanel {
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
-                t.getStatusTrajet().equals("PENDING") &&
+                t.isPending() &&
+                t.getPassager() == null &&
                 t.getConducteur().getPlacesDisponibles() > 0) {
                 
                 if (count == selectedRow) {
@@ -541,16 +606,20 @@ public class PassengerPanel extends JPanel {
     public void refresh() {
         refreshDashboard();
         refreshTrajetsDisponibles();
+        refreshMesDemandes();
         refreshMesReservations();
         contentLayout.show(contentPanel, "DASHBOARD");
     }
     
     private void refreshDashboard() {
-        // Count available trajets
+        Passager passager = mainFrame.getCurrentPassager();
+        
+        // Count available trajets (PENDING status, no passenger assigned)
         int trajetsCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
-                t.getStatusTrajet().equals("PENDING") &&
+                t.isPending() &&
+                t.getPassager() == null &&
                 t.getConducteur().getPlacesDisponibles() > 0) {
                 trajetsCount++;
             }
@@ -559,13 +628,28 @@ public class PassengerPanel extends JPanel {
             trajetsCountLabel.setText(String.valueOf(trajetsCount));
         }
         
-        // Count my reservations
-        Passager passager = mainFrame.getCurrentPassager();
+        // Count my pending demands (PENDING_APPROVAL status)
+        int demandesCount = 0;
+        if (passager != null) {
+            for (Trajet t : mainFrame.getGestion().getTrajets()) {
+                if (t.getPassager() != null && 
+                    t.getPassager().getCin().equals(passager.getCin()) &&
+                    t.isPendingApproval()) {
+                    demandesCount++;
+                }
+            }
+        }
+        if (demandesCountLabel != null) {
+            demandesCountLabel.setText(String.valueOf(demandesCount));
+        }
+        
+        // Count my accepted reservations (IN_PROGRESS or FINISHED status)
         int reservationsCount = 0;
         if (passager != null) {
             for (Trajet t : mainFrame.getGestion().getTrajets()) {
                 if (t.getPassager() != null && 
-                    t.getPassager().getCin().equals(passager.getCin())) {
+                    t.getPassager().getCin().equals(passager.getCin()) &&
+                    (t.isInProgress() || t.isFinished())) {
                     reservationsCount++;
                 }
             }
@@ -578,9 +662,13 @@ public class PassengerPanel extends JPanel {
     private void refreshTrajetsDisponibles() {
         trajetsDisponiblesModel.setRowCount(0);
         
+        Passager passager = mainFrame.getCurrentPassager();
+        
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            // Only show trajets that are PENDING and have no passenger assigned
             if (t.getConducteur() != null && 
-                t.getStatusTrajet().equals("PENDING") &&
+                t.isPending() &&
+                t.getPassager() == null &&
                 t.getConducteur().getPlacesDisponibles() > 0) {
                 
                 Conducteur c = t.getConducteur();
@@ -596,6 +684,41 @@ public class PassengerPanel extends JPanel {
         }
     }
     
+    /**
+     * Refresh "Demandes Envoyées" table
+     * Shows only trajets with PENDING_APPROVAL status for current passenger
+     */
+    private void refreshMesDemandes() {
+        mesDemandesModel.setRowCount(0);
+        
+        Passager passager = mainFrame.getCurrentPassager();
+        if (passager == null) return;
+        
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            // Only show this passenger's pending approval requests
+            if (t.getPassager() != null && 
+                t.getPassager().getCin().equals(passager.getCin()) &&
+                t.isPendingApproval() &&
+                t.getConducteur() != null) {
+                
+                Conducteur c = t.getConducteur();
+                mesDemandesModel.addRow(new Object[]{
+                    c.getNom() + " " + c.getPrenom(),
+                    t.getDepartTrajet(),
+                    t.getArriveeTrajet(),
+                    String.format("%.2f", t.getPrix()),
+                    t.getDureeTrajet().toMinutes() + " min",
+                    "⏳ En attente"
+                });
+            }
+        }
+    }
+    
+    /**
+     * Refresh "Réservations Acceptées" table
+     * Shows only trajets with IN_PROGRESS or FINISHED status for current passenger
+     * Full contact info is displayed since driver has accepted
+     */
     private void refreshMesReservations() {
         mesReservationsModel.setRowCount(0);
         
@@ -603,19 +726,64 @@ public class PassengerPanel extends JPanel {
         if (passager == null) return;
         
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            // Only show accepted reservations (IN_PROGRESS or FINISHED)
             if (t.getPassager() != null && 
                 t.getPassager().getCin().equals(passager.getCin()) &&
+                (t.isInProgress() || t.isFinished()) &&
                 t.getConducteur() != null) {
                 
                 Conducteur c = t.getConducteur();
+                // Full contact info displayed - driver has accepted!
                 mesReservationsModel.addRow(new Object[]{
                     c.getNom() + " " + c.getPrenom(),
                     c.getTel(),
+                    c.getMail(),
                     t.getDepartTrajet(),
                     t.getArriveeTrajet(),
-                    String.format("%.2f", t.getPrix()),
-                    t.getStatusTrajet()
+                    String.format("%.2f", t.getPrix())
                 });
+            }
+        }
+    }
+    
+    /**
+     * Cancel a pending approval request
+     */
+    private void annulerDemande() {
+        int selectedRow = mesDemandesTable.getSelectedRow();
+        if (selectedRow == -1) {
+            StyleUtils.showError(this, "Veuillez sélectionner une demande à annuler");
+            return;
+        }
+        
+        if (!StyleUtils.showConfirm(this, "Voulez-vous vraiment annuler cette demande ?")) {
+            return;
+        }
+        
+        Passager passager = mainFrame.getCurrentPassager();
+        if (passager == null) return;
+        
+        // Find the corresponding trajet
+        int count = 0;
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            if (t.getPassager() != null && 
+                t.getPassager().getCin().equals(passager.getCin()) &&
+                t.isPendingApproval() &&
+                t.getConducteur() != null) {
+                
+                if (count == selectedRow) {
+                    // Reset trajet to pending status
+                    t.setStatusTrajet("PENDING");
+                    t.setPassager(null);
+                    
+                    StyleUtils.showSuccess(this, "Demande annulée avec succès !");
+                    
+                    refreshTrajetsDisponibles();
+                    refreshMesDemandes();
+                    refreshDashboard();
+                    return;
+                }
+                count++;
             }
         }
     }

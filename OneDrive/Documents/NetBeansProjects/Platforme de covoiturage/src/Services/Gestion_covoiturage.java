@@ -529,7 +529,8 @@ public class Gestion_covoiturage {
         int compteur = 1;
         for (Trajet t : trajets) {
             if (t.getConducteur() != null && 
-                t.getStatusTrajet().equals("PENDING") &&
+                t.isPending() &&
+                t.getPassager() == null &&
                 t.getConducteur().getPlacesDisponibles() > 0) {
                 System.out.println("\n" + compteur + ") " + t.toString());
                 compteur++;
