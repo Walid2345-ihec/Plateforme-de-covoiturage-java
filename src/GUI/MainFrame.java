@@ -259,6 +259,34 @@ public class MainFrame extends JFrame {
     public void showDriverPanel(Conducteur conducteur) {
         this.currentUser = conducteur;
         this.userType = "CONDUCTEUR";
+        // Synchronize gestion indices for console compatibility
+        if (conducteur != null) {
+            // find index of conducteur in gestion.users
+            int idx = -1;
+            for (int i = 0; i < gestion.getUsers().size(); i++) {
+                User u = gestion.getUsers().get(i);
+                if (u instanceof Conducteur && u.getCin().equals(conducteur.getCin())) {
+                    idx = i; break;
+                }
+            }
+            try {
+                // reflect to set private Index_conducteur and Index_trajet_conducteur
+                java.lang.reflect.Field f = gestion.getClass().getDeclaredField("Index_conducteur");
+                f.setAccessible(true);
+                f.setInt(gestion, idx);
+
+                // set Index_trajet_conducteur to first trajet of conducteur if any
+                int trajetIndex = -1;
+                for (int i = 0; i < gestion.getTrajets().size(); i++) {
+                    Trajet t = gestion.getTrajets().get(i);
+                    if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) { trajetIndex = i; break; }
+                }
+                java.lang.reflect.Field ft = gestion.getClass().getDeclaredField("Index_trajet_conducteur");
+                ft.setAccessible(true);
+                ft.setInt(gestion, trajetIndex);
+            } catch (Exception ignored) {}
+
+        }
         driverPanel.refresh();
         cardLayout.show(mainPanel, "DRIVER");
     }
@@ -266,6 +294,19 @@ public class MainFrame extends JFrame {
     public void showPassengerPanel(Passager passager) {
         this.currentUser = passager;
         this.userType = "PASSAGER";
+        // Synchronize gestion Index_passager
+        if (passager != null) {
+            int idx = -1;
+            for (int i = 0; i < gestion.getUsers().size(); i++) {
+                User u = gestion.getUsers().get(i);
+                if (u instanceof Passager && u.getCin().equals(passager.getCin())) { idx = i; break; }
+            }
+            try {
+                java.lang.reflect.Field f = gestion.getClass().getDeclaredField("Index_passager");
+                f.setAccessible(true);
+                f.setInt(gestion, idx);
+            } catch (Exception ignored) {}
+        }
         passengerPanel.refresh();
         cardLayout.show(mainPanel, "PASSENGER");
     }
@@ -300,7 +341,19 @@ public class MainFrame extends JFrame {
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
-    
+
+    /**
+     * Notify all panels that underlying data changed and they should refresh.
+     */
+    public void notifyDataChanged() {
+        try {
+            if (driverPanel != null) driverPanel.refreshModels();
+        } catch (Exception ignored) {}
+        try {
+            if (passengerPanel != null) passengerPanel.refreshModels();
+        } catch (Exception ignored) {}
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();

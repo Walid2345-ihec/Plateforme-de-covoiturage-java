@@ -54,12 +54,14 @@ public class DialogUtils {
                 " " + trajet.getConducteur().getNomVoiture());
         }
         
-        if (trajet.getPassager() != null) {
+        // Show passengers (if any accepted)
+        if (!trajet.getPassagersAcceptes().isEmpty()) {
             contentPanel.add(Box.createVerticalStrut(15));
-            addSectionHeader(contentPanel, "Passager");
-            addDetailRow(contentPanel, "Nom", trajet.getPassager().getNom() + " " + 
-                trajet.getPassager().getPrenom());
-            addDetailRow(contentPanel, "Téléphone", trajet.getPassager().getTel());
+            addSectionHeader(contentPanel, "Passagers acceptés");
+            for (Passager p : trajet.getPassagersAcceptes()) {
+                addDetailRow(contentPanel, "Nom", p.getNom() + " " + p.getPrenom());
+                addDetailRow(contentPanel, "Téléphone", p.getTel());
+            }
         }
         
         JScrollPane scrollPane = new JScrollPane(contentPanel);

@@ -275,10 +275,16 @@ public class EnhancedDriverPanel extends JPanel {
             "🔄 Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshTrajetsTable());
-        
+
+        ModernUIComponents.RoundedButton finishBtn = new ModernUIComponents.RoundedButton(
+            "🏁 Finir Trajet", Colors.ACCENT_CORAL);
+        finishBtn.setPreferredSize(new Dimension(150, 42));
+        finishBtn.addActionListener(e -> finishSelectedTrajet());
+
         buttonPanel.add(editBtn);
         buttonPanel.add(deleteBtn);
         buttonPanel.add(refreshBtn);
+        buttonPanel.add(finishBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
@@ -612,49 +618,118 @@ public class EnhancedDriverPanel extends JPanel {
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
                 t.getConducteur().getCin().equals(conducteur.getCin()) &&
-                t.isPendingApproval() &&
-                t.getPassager() != null) {
-                
-                if (count == row) {
-                    Passager passager = t.getPassager();
-                    
-                    int confirm = JOptionPane.showConfirmDialog(this,
-                        "Accepter la demande de " + passager.getPrenom() + " " + passager.getNom() + " ?\n\n" +
-                        "Trajet: " + t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
-                        "Prix: " + String.format("%.2f", t.getPrix()) + " TND",
-                        "Confirmer", JOptionPane.YES_NO_OPTION);
-                    
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        // Update trajet status to IN_PROGRESS
-                        t.setStatusTrajet("IN_PROGRESS");
-                        t.setTrajet_valide(true);
-                        
-                        // Decrease available places
-                        conducteur.setPlacesDisponibles(conducteur.getPlacesDisponibles() - 1);
-                        
-                        // Add to accepted passengers list
-                        mainFrame.getGestion().getPassagers_acceptes().add(passager);
-                        
-                        JOptionPane.showMessageDialog(this, 
-                            "✅ Passager accepté !\n\n" +
-                            passager.getPrenom() + " " + passager.getNom() + "\n" +
-                            "Téléphone: " + passager.getTel() + "\n\n" +
-                            "Places restantes: " + conducteur.getPlacesDisponibles(),
-                            "Succès", JOptionPane.INFORMATION_MESSAGE);
-                        
-                        refreshDemandesTable();
-                        refreshPassagersTable();
-                        refreshDashboard();
+                // show demandes irrespective of the trajet status, as long as there are demandes and places
+                !t.getPassagersDemandes().isEmpty() &&
+                t.getAvailablePlaces() > 0) {
+
+                for (Passager passager : t.getPassagersDemandes()) {
+                    if (count == row) {
+                        int confirm = JOptionPane.showConfirmDialog(this,
+                            "Accepter la demande de " + passager.getPrenom() + " " + passager.getNom() + " ?\n\n" +
+                            "Trajet: " + t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
+                            "Prix: " + String.format("%.2f", t.getPrix()) + " TND",
+                            "Confirmer", JOptionPane.YES_NO_OPTION);
+
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            boolean accepted = mainFrame.getGestion().accepter_passager_pour_trajet(t, passager.getCin());
+                            if (accepted) {
+                                JOptionPane.showMessageDialog(this,
+                                    "✅ Passager accepté !\n\n" +
+                                    passager.getPrenom() + " " + passager.getNom() + "\n" +
+                                    "Téléphone: " + passager.getTel() + "\n\n" +
+                                    "Places restantes: " + conducteur.getPlacesDisponibles(),
+                                    "Succès", JOptionPane.INFORMATION_MESSAGE);
+
+                                refreshDemandesTable();
+                                refreshPassagersTable();
+                                refreshDashboard();
+
+                                // Notify other panels (passenger) to refresh their models/views
+                                if (mainFrame != null) mainFrame.notifyDataChanged();
+
+                            } else {
+                                JOptionPane.showMessageDialog(this, "Impossible d'accepter le passager (place peut-être déjà prise).", "Erreur", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                        return;
                     }
-                    return;
+                    count++;
                 }
-                count++;
             }
         }
         
         JOptionPane.showMessageDialog(this, "Erreur: Demande non trouvée", "Erreur", JOptionPane.ERROR_MESSAGE);
     }
     
+    /**
+     * Finish the selected trajet: mark FINISHED, restore conducteur places,
+     * set chercheCovoit=true for accepted passengers, and refresh views.
+     */
+    private void finishSelectedTrajet() {
+        int row = trajetsTable.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un trajet", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Conducteur conducteur = mainFrame.getCurrentConducteur();
+        if (conducteur == null) {
+            JOptionPane.showMessageDialog(this, "Erreur: Conducteur non connecté", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
+        int count = 0;
+        for (Trajet t : trajets) {
+            if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
+                if (count == row) {
+                    int acceptedCount = (t.getPassagersAcceptes() != null) ? t.getPassagersAcceptes().size() : 0;
+
+                    // Restore places: prefer trajet.maxPlaces if defined, otherwise add acceptedCount to current
+                    int restoredPlaces = -1;
+                    try {
+                        restoredPlaces = t.getMaxPlaces();
+                    } catch (Exception ignored) {}
+                    if (restoredPlaces <= 0) {
+                        restoredPlaces = conducteur.getPlacesDisponibles() + acceptedCount;
+                    }
+
+                    // Set status FINISHED
+                    try {
+                        t.setStatusTrajet(Trajet.STATUS_FINISHED);
+                    } catch (Exception ex) {
+                        // fallback to direct assignment if setter rejects but constant valid
+                        // (shouldn't happen)
+                        // ignore
+                    }
+                    t.setTrajet_valide(false);
+
+                    // Reset passagers chercheCovoit to true
+                    if (t.getPassagersAcceptes() != null) {
+                        for (Passager p : t.getPassagersAcceptes()) {
+                            if (p != null) p.setChercheCovoit(true);
+                        }
+                    }
+
+                    // Restore conducteur places
+                    conducteur.setPlacesDisponibles(restoredPlaces);
+
+                    JOptionPane.showMessageDialog(this, "Trajet terminé. Places restaurées et passagers remis en recherche.", "Succès", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Refresh local views and notify other panels
+                    refreshTrajetsTable();
+                    refreshPassagersTable();
+                    refreshDashboard();
+                    if (mainFrame != null) mainFrame.notifyDataChanged();
+                    return;
+                }
+                count++;
+            }
+        }
+
+        JOptionPane.showMessageDialog(this, "Trajet non trouvé", "Erreur", JOptionPane.ERROR_MESSAGE);
+    }
+
     // ==================== Refresh Methods ====================
     
     public void refresh() {
@@ -665,7 +740,17 @@ public class EnhancedDriverPanel extends JPanel {
         updateSidebarSelection(0);
         contentLayout.show(contentPanel, "DASHBOARD");
     }
-    
+
+    /**
+     * Refresh only data models/tables without changing the visible card.
+     */
+    public void refreshModels() {
+        refreshDashboard();
+        refreshTrajetsTable();
+        refreshDemandesTable();
+        refreshPassagersTable();
+    }
+
     private void refreshDashboard() {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
@@ -695,7 +780,7 @@ public class EnhancedDriverPanel extends JPanel {
                     t.getDureeTrajet().toMinutes() + " min",
                     String.format("%.2f", t.getPrix()),
                     t.getStatusTrajet(),
-                    t.getPassager() != null ? t.getPassager().getNom() : "En attente"
+                    t.getPassagersAcceptes().isEmpty() ? "En attente" : t.getPassagersAcceptes().size() + " accepté(s)"
                 });
             }
         }
@@ -713,22 +798,23 @@ public class EnhancedDriverPanel extends JPanel {
             // Only show demandes for:
             // 1. Trajets belonging to this conductor
             // 2. With PENDING_APPROVAL status (passenger has requested)
-            // 3. With a passenger assigned
-            if (t.getConducteur() != null && 
+            // 3. With one or more passengers in demandes list
+            if (t.getConducteur() != null &&
                 t.getConducteur().getCin().equals(conducteur.getCin()) &&
-                t.isPendingApproval() &&
-                t.getPassager() != null) {
-                
-                Passager p = t.getPassager();
-                // PRIVACY: Mask CIN - only show last 3 digits
-                String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
-                demandesModel.addRow(new Object[]{
-                    maskedCin, 
-                    p.getNom(), 
-                    p.getPrenom(),
-                    maskPhone(p.getTel()), 
-                    maskEmail(p.getMail())
-                });
+                !t.getPassagersDemandes().isEmpty() &&
+                t.getAvailablePlaces() > 0) {
+
+                for (Passager p : t.getPassagersDemandes()) {
+                    // PRIVACY: Mask CIN - only show last 3 digits
+                    String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
+                    demandesModel.addRow(new Object[]{
+                        maskedCin,
+                        p.getNom(),
+                        p.getPrenom(),
+                        maskPhone(p.getTel()),
+                        maskEmail(p.getMail())
+                    });
+                }
             }
         }
     }
@@ -758,15 +844,16 @@ public class EnhancedDriverPanel extends JPanel {
             if (t.getConducteur() != null && 
                 t.getConducteur().getCin().equals(conducteur.getCin()) && 
                 (t.isInProgress() || t.isFinished()) &&
-                t.getPassager() != null) {
-                
-                Passager p = t.getPassager();
-                // For accepted passengers, show full contact info (they have a confirmed booking)
-                // But still mask CIN for privacy
-                String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
-                passagersModel.addRow(new Object[]{
-                    maskedCin, p.getNom(), p.getPrenom(), p.getTel(), p.getMail(), p.getAdresse()
-                });
+                !t.getPassagersAcceptes().isEmpty()) {
+
+                for (Passager p : t.getPassagersAcceptes()) {
+                    // For accepted passengers, show full contact info (they have a confirmed booking)
+                    // But still mask CIN for privacy
+                    String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
+                    passagersModel.addRow(new Object[]{
+                        maskedCin, p.getNom(), p.getPrenom(), p.getTel(), p.getMail(), p.getAdresse()
+                    });
+                }
             }
         }
     }

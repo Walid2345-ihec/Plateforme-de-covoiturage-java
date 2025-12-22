@@ -1,10 +1,10 @@
 package Services;
 
 import Models.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Vector;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * Classe de gestion du système de covoiturage
@@ -19,16 +19,16 @@ public class Gestion_covoiturage {
     private Vector<User> passagers_acceptes = new Vector<>();
     // demandes par conducteur : clé = CIN du conducteur, valeur = liste des CINs des passagers ayant demandé ce conducteur
     private Map<String, Vector<String>> demandes_par_conducteur = new HashMap<>();
-    
+
     // Getters
     public Vector<User> getUsers() { return users; }
     public Vector<Trajet> getTrajets() { return trajets; }
     public Vector<User> getPassagers_acceptes() { return passagers_acceptes; }
-    
+
     // Setters
     public void setUsers(Vector<User> users) { this.users = users; }
     public void setTrajets(Vector<Trajet> trajets) { this.trajets = trajets; }
-    
+
     /**
      * Recherche un utilisateur par son CIN
      */
@@ -40,7 +40,7 @@ public class Gestion_covoiturage {
         }
         return null;
     }
-    
+
     /**
      * Recherche un conducteur par son CIN
      */
@@ -51,7 +51,7 @@ public class Gestion_covoiturage {
         }
         return null;
     }
-    
+
     /**
      * Recherche un passager par son CIN
      */
@@ -62,9 +62,9 @@ public class Gestion_covoiturage {
         }
         return null;
     }
-    
+
     /**
-     * Recherche un trajet par ses critères
+     * Recherche un trajet par ses critères (depart+arrivee)
      */
     public Trajet rechercher_trajet(String depart, String arrivee) {
         for (Trajet t : trajets) {
@@ -321,7 +321,8 @@ public class Gestion_covoiturage {
         
         boolean trouve = false;
         for (Trajet t : trajets) {
-            if (t.getPassager() != null && t.getConducteur() == null) {
+            // Un trajet est considéré comme "demandé" si des passagers ont fait une demande
+            if (!t.getPassagersDemandes().isEmpty() && t.getConducteur() == null) {
                 System.out.println(t.toString());
                 trouve = true;
             }
@@ -399,42 +400,174 @@ public class Gestion_covoiturage {
         System.out.println("✓ Trajet modifié avec succès !");
     }
     
+    // ==================== GESTION DES DEMANDES/ACCEPTATIONS ====================
     /**
-     * Accepter un passager avec vérification du CIN et de la demande (doit avoir demandé ce conducteur)
+     * Notifier le conducteur avec vérification du CIN
+     * La demande est désormais associée au conducteur ciblé.
+     */
+    public void notifier_conducteur() {
+        if (Index_passager == -1 || !(users.get(Index_passager) instanceof Passager)) {
+            System.out.println("Erreur: Vous devez être connecté en tant que passager.");
+            return;
+        }
+
+        Scanner sc = new Scanner(System.in);
+        System.out.println("\n=== NOTIFIER UN CONDUCTEUR ===");
+
+        // Afficher la liste des conducteurs disponibles
+        afficher_conducteurs();
+
+        String cinConducteur;
+        Conducteur conducteurTrouve = null;
+
+        // Boucle de validation du CIN
+        do {
+            System.out.println("\nEntrez le CIN du conducteur que vous souhaitez notifier :");
+            cinConducteur = sc.nextLine();
+
+            conducteurTrouve = rechercher_conducteur(cinConducteur);
+
+            if (conducteurTrouve == null) {
+                System.out.println("❌ Aucun conducteur trouvé avec le CIN : " + cinConducteur);
+                System.out.println("Veuillez réessayer.");
+            }
+        } while (conducteurTrouve == null);
+
+        // Ajouter la demande pour CE conducteur
+        String cinPassager = users.get(Index_passager).getCin();
+        Vector<String> demandes = demandes_par_conducteur.computeIfAbsent(conducteurTrouve.getCin(), k -> new Vector<>());
+        if (!demandes.contains(cinPassager)) {
+            demandes.add(cinPassager);
+            System.out.println("✓ Votre demande a été envoyée au conducteur " +
+                             conducteurTrouve.getNom() + " " + conducteurTrouve.getPrenom() + " !");
+        } else {
+            System.out.println("Vous avez déjà envoyé une demande à ce conducteur.");
+        }
+    }
+
+    /**
+     * Ajouter une demande pour un conducteur (utilisé par l'interface GUI)
+     */
+    public void ajouter_demande_pour_conducteur(String cinConducteur, String cinPassager) {
+        Vector<String> demandes = demandes_par_conducteur.computeIfAbsent(cinConducteur, k -> new Vector<>());
+        if (!demandes.contains(cinPassager)) {
+            demandes.add(cinPassager);
+        }
+    }
+
+    /**
+     * Supprimer une demande pour un conducteur (utilisé par GUI)
+     */
+    public void supprimer_demande_pour_conducteur(String cinConducteur, String cinPassager) {
+        Vector<String> demandes = demandes_par_conducteur.get(cinConducteur);
+        if (demandes != null) {
+            demandes.removeIf(s -> s.equalsIgnoreCase(cinPassager));
+            if (demandes.isEmpty()) {
+                demandes_par_conducteur.remove(cinConducteur);
+            }
+        }
+    }
+
+    /**
+     * Ajouter une demande pour un trajet spécifique (utilisé par GUI/business logic)
+     */
+    public boolean ajouter_demande_pour_trajet(Trajet t, String cinPassager) {
+        if (t == null || cinPassager == null || cinPassager.trim().isEmpty()) return false;
+        Passager p = rechercher_passager(cinPassager);
+        if (p == null) return false;
+
+        // Ajouter dans la liste du trajet
+        boolean added = t.addDemand(p);
+        // Mettre à jour mapping demandes_par_conducteur pour affichage rapide
+        if (t.getConducteur() != null) {
+            Vector<String> demandes = demandes_par_conducteur.computeIfAbsent(t.getConducteur().getCin(), k -> new Vector<>());
+            if (!demandes.contains(cinPassager)) demandes.add(cinPassager);
+        }
+        return added;
+    }
+
+    /**
+     * Accepter un passager pour un trajet (utilisé par GUI ou console)
+     * Retourne true si l'acceptation a réussi.
+     */
+    public boolean accepter_passager_pour_trajet(Trajet t, String cinPassager) {
+        if (t == null || cinPassager == null || cinPassager.trim().isEmpty()) return false;
+        // Removed dependency on Index_conducteur (console-oriented). Use the conducteur assigned to the trajet.
+        if (t.getConducteur() == null) return false;
+
+        Passager p = rechercher_passager(cinPassager);
+        if (p == null) return false;
+
+        // Use the conducteur associated with the trajet
+        Conducteur conducteur = t.getConducteur();
+
+        // Vérifier places disponibles au niveau du trajet
+        if (t.getAvailablePlaces() <= 0) return false;
+
+        // Essayer d'accepter via l'objet trajet
+        boolean accepted = t.acceptPassenger(p);
+        if (!accepted) return false;
+
+        // Mark passenger as no longer searching -> reserved
+        try {
+            p.setChercheCovoit(false);
+        } catch (Exception ignored) {}
+
+        // Mettre à jour places du conducteur global
+        try {
+            conducteur.setPlacesDisponibles(Math.max(0, conducteur.getPlacesDisponibles() - 1));
+        } catch (Exception ignored) {}
+
+        // Retirer de mapping demandes_par_conducteur
+        Vector<String> demandes = demandes_par_conducteur.get(conducteur.getCin());
+        if (demandes != null) demandes.remove(cinPassager);
+
+        // Ajouter à historique global
+        passagers_acceptes.add(p);
+
+        // Mise à jour statut et validité
+        t.setTrajet_valide(true);
+        if (!t.getPassagersAcceptes().isEmpty()) t.setStatusTrajet(Trajet.STATUS_IN_PROGRESS);
+
+        return true;
+    }
+
+    /**
+     * Version console interactive: accepter un passager (ancienne API adaptée)
      */
     public void accepter_passager() {
         if (Index_conducteur == -1 || !(users.get(Index_conducteur) instanceof Conducteur)) {
             System.out.println("Erreur: Vous devez être connecté en tant que conducteur.");
             return;
         }
-        
+
         if (Index_trajet_conducteur == -1) {
             System.out.println("Erreur: Vous devez d'abord créer un trajet.");
             return;
         }
-        
-        String Cin;
+
         Scanner sc = new Scanner(System.in);
         System.out.println("\n=== ACCEPTER UN PASSAGER ===");
-        
+
         // Afficher les demandes en attente pour ce conducteur
         voir_propositions();
-        
+
         Passager passagerTrouve = null;
-        
+        String Cin;
+
         // Boucle de validation du CIN
         do {
             System.out.println("\nEntrez le CIN du passager à accepter :");
             Cin = sc.nextLine();
-            
+
             passagerTrouve = rechercher_passager(Cin);
-            
+
             if (passagerTrouve == null) {
                 System.out.println("❌ Aucun passager trouvé avec le CIN : " + Cin);
                 System.out.println("Veuillez réessayer.");
                 continue;
             }
-            
+
             // Vérifier que ce passager a bien demandé CE conducteur
             Conducteur conducteur = (Conducteur) users.get(Index_conducteur);
             Vector<String> demandes = demandes_par_conducteur.get(conducteur.getCin());
@@ -442,35 +575,29 @@ public class Gestion_covoiturage {
                 System.out.println("❌ Ce passager n'a pas demandé votre trajet. Vous ne pouvez pas l'accepter.");
                 passagerTrouve = null; // force la boucle à continuer
             }
-            
+
         } while (passagerTrouve == null);
-        
+
         // Récupérer le conducteur actuel
         Conducteur conducteur = (Conducteur) users.get(Index_conducteur);
-        
-        // Vérifier les places disponibles
+
+        // Vérifier les places disponibles (global)
         if (conducteur.getPlacesDisponibles() <= 0) {
             System.out.println("Désolé, vous n'avez plus de places disponibles.");
             return;
         }
-        
-        // Mettre à jour les places disponibles
-        conducteur.setPlacesDisponibles(conducteur.getPlacesDisponibles() - 1);
-        
-        // Ajouter le passager à la liste des acceptés (historique global)
-        passagers_acceptes.add(passagerTrouve);
-        
-        // Retirer de la liste des demandes pour CE conducteur
-        Vector<String> demandesThis = demandes_par_conducteur.get(conducteur.getCin());
-        if (demandesThis != null) {
-            demandesThis.remove(Cin);
-        }
-        
-        // Associer le passager au trajet du conducteur (index courant)
+
+        // Récupérer le trajet courant
         Trajet trajet = trajets.get(Index_trajet_conducteur);
-        trajet.setPassager(passagerTrouve);
-        
-        System.out.println("✓ Le passager " + passagerTrouve.getPrenom() + " " + 
+
+        // Essayer d'accepter via l'objet trajet
+        boolean accepted = accepter_passager_pour_trajet(trajet, passagerTrouve.getCin());
+        if (!accepted) {
+            System.out.println("Impossible d'accepter le passager (place peut-être déjà prise).");
+            return;
+        }
+
+        System.out.println("✓ Le passager " + passagerTrouve.getPrenom() + " " +
                          passagerTrouve.getNom() + " a été accepté pour votre trajet !");
         System.out.println("Places restantes : " + conducteur.getPlacesDisponibles());
     }
@@ -492,8 +619,8 @@ public class Gestion_covoiturage {
 
         for (Trajet t : trajets) {
             if (t.getConducteur() != null && t.getConducteur().getCin().equalsIgnoreCase(conducteurCourant.getCin())) {
-                Passager p = t.getPassager();
-                if (p != null) {
+                // Afficher tous les passagers acceptés pour ce trajet
+                for (Passager p : t.getPassagersAcceptes()) {
                     any = true;
                     System.out.println("────────────────────────────────────");
                     System.out.println("Nom: " + p.getNom() + " " + p.getPrenom());
@@ -519,94 +646,27 @@ public class Gestion_covoiturage {
      */
     public void voir_trajets_disponibles() {
         System.out.println("\n=== TRAJETS DISPONIBLES ===");
-        
+
         if (this.trajets.isEmpty()) {
             System.out.println("Aucun trajet disponible pour le moment.");
             return;
         }
-        
+
         boolean trouve = false;
         int compteur = 1;
         for (Trajet t : trajets) {
             if (t.getConducteur() != null && 
                 t.isPending() &&
-                t.getPassager() == null &&
-                t.getConducteur().getPlacesDisponibles() > 0) {
+                t.getAvailablePlaces() > 0) {
                 System.out.println("\n" + compteur + ") " + t.toString());
                 compteur++;
                 trouve = true;
             }
         }
-        
+
         if (!trouve) {
             System.out.println("Aucun trajet avec places disponibles.");
         }
-    }
-    
-    /**
-     * Notifier le conducteur avec vérification du CIN
-     * La demande est désormais associée au conducteur ciblé.
-     */
-    public void notifier_conducteur() {
-        if (Index_passager == -1 || !(users.get(Index_passager) instanceof Passager)) {
-            System.out.println("Erreur: Vous devez être connecté en tant que passager.");
-            return;
-        }
-        
-        Scanner sc = new Scanner(System.in);
-        System.out.println("\n=== NOTIFIER UN CONDUCTEUR ===");
-        
-        // Afficher la liste des conducteurs disponibles
-        afficher_conducteurs();
-        
-        String cinConducteur;
-        Conducteur conducteurTrouve = null;
-        
-        // Boucle de validation du CIN
-        do {
-            System.out.println("\nEntrez le CIN du conducteur que vous souhaitez notifier :");
-            cinConducteur = sc.nextLine();
-            
-            conducteurTrouve = rechercher_conducteur(cinConducteur);
-            
-            if (conducteurTrouve == null) {
-                System.out.println("❌ Aucun conducteur trouvé avec le CIN : " + cinConducteur);
-                System.out.println("Veuillez réessayer.");
-            }
-        } while (conducteurTrouve == null);
-        
-        // Ajouter la demande pour CE conducteur
-        String cinPassager = users.get(Index_passager).getCin();
-        Vector<String> demandes = demandes_par_conducteur.computeIfAbsent(conducteurTrouve.getCin(), k -> new Vector<>());
-        if (!demandes.contains(cinPassager)) {
-            demandes.add(cinPassager);
-            System.out.println("✓ Votre demande a été envoyée au conducteur " + 
-                             conducteurTrouve.getNom() + " " + conducteurTrouve.getPrenom() + " !");
-        } else {
-            System.out.println("Vous avez déjà envoyé une demande à ce conducteur.");
-        }
-    }
-    
-    /**
-     * Ajouter un trajet voulu (le passager spécifie son trajet souhaité)
-     */
-    public void ajouter_trajet_voulu() {
-        if (Index_passager == -1 || !(users.get(Index_passager) instanceof Passager)) {
-            System.out.println("Erreur: Vous devez être connecté en tant que passager.");
-            return;
-        }
-        
-        System.out.println("\n=== AJOUTER VOTRE TRAJET RECHERCHÉ ===");
-        Trajet trajetVoulu = new Trajet();
-        
-        // Assigner le passager au trajet
-        Passager passager = (Passager) users.get(Index_passager);
-        trajetVoulu.setPassager(passager);
-        trajetVoulu.setStatusTrajet("PENDING");
-        
-        this.trajets.add(trajetVoulu);
-        System.out.println("✓ Votre recherche de trajet a été enregistrée !");
-        System.out.println("Les conducteurs pourront voir votre demande.");
     }
     
     /**
@@ -642,9 +702,9 @@ public class Gestion_covoiturage {
             return;
         }
         
-        // Marquer le trajet comme validé pour ce passager
-        trajetTrouve.setTrajet_valide(true);
-        trajetTrouve.setStatusTrajet("IN_PROGRESS");
+        // Marquer la demande comme en attente d'approbation par le conducteur
+        trajetTrouve.setTrajet_valide(false);
+        trajetTrouve.setStatusTrajet("PENDING_APPROVAL");
         
         // Notifier le conducteur : ajouter la demande pour CE conducteur
         String cinPassager = users.get(Index_passager).getCin();
@@ -654,7 +714,7 @@ public class Gestion_covoiturage {
             demandes.add(cinPassager);
         }
         
-        System.out.println("✓ Trajet confirmé ! Le conducteur a été notifié de votre demande.");
+        System.out.println("✓ Trajet confirmé ! Le conducteur a été notifié de votre demande (en attente d'approbation).");
     }
     
     /**

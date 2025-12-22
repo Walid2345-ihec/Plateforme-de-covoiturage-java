@@ -1,13 +1,10 @@
 package GUI;
 
 import Models.*;
-import Services.*;
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.time.Duration;
-import java.util.Vector;
+import javax.swing.*;
+import javax.swing.table.*;
 
 /**
  * Passenger Dashboard Panel
@@ -442,21 +439,21 @@ public class PassengerPanel extends JPanel {
             String depart = departField.getText().trim().toLowerCase();
             String arrivee = arriveeField.getText().trim().toLowerCase();
             double maxPrice = (Double) maxPriceSpinner.getValue();
-            
+
             searchResultsModel.setRowCount(0);
-            
+
             for (Trajet t : mainFrame.getGestion().getTrajets()) {
-                if (t.getConducteur() != null && 
-                    t.isPending() &&
-                    t.getPassager() == null &&
-                    t.getConducteur().getPlacesDisponibles() > 0 &&
+                // Show trajets that have a conductor and available places and match price
+                if (t.getConducteur() != null &&
+                    t.getAvailablePlaces() > 0 &&
+                    !t.isFinished() &&
                     t.getPrix() <= maxPrice) {
-                    
-                    boolean matchDepart = depart.isEmpty() || 
+
+                    boolean matchDepart = depart.isEmpty() ||
                         t.getDepartTrajet().toLowerCase().contains(depart);
-                    boolean matchArrivee = arrivee.isEmpty() || 
+                    boolean matchArrivee = arrivee.isEmpty() ||
                         t.getArriveeTrajet().toLowerCase().contains(arrivee);
-                    
+
                     if (matchDepart && matchArrivee) {
                         Conducteur c = t.getConducteur();
                         searchResultsModel.addRow(new Object[]{
@@ -464,12 +461,12 @@ public class PassengerPanel extends JPanel {
                             t.getDepartTrajet(),
                             t.getArriveeTrajet(),
                             String.format("%.2f", t.getPrix()),
-                            c.getPlacesDisponibles()
+                            t.getAvailablePlaces()
                         });
                     }
                 }
             }
-            
+
             if (searchResultsModel.getRowCount() == 0) {
                 StyleUtils.showWarning(this, "Aucun trajet trouvé pour ces critères");
             }
@@ -504,38 +501,43 @@ public class PassengerPanel extends JPanel {
             StyleUtils.showError(this, "Veuillez sélectionner un trajet");
             return;
         }
-        
+
         Passager passager = mainFrame.getCurrentPassager();
         if (passager == null) {
             StyleUtils.showError(this, "Erreur: Passager non connecté");
             return;
         }
-        
+
         // Find the selected trajet
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getConducteur() != null && 
-                t.isPending() &&
-                t.getPassager() == null &&
-                t.getConducteur().getPlacesDisponibles() > 0) {
-                
+            if (t.getConducteur() != null &&
+                t.getAvailablePlaces() > 0 &&
+                !t.isFinished()) {
+
                 if (count == selectedRow) {
-                    if (StyleUtils.showConfirm(this, 
-                        "Demander la réservation pour le trajet:\n" + 
+                    if (StyleUtils.showConfirm(this,
+                        "Demander la réservation pour le trajet:\n" +
                         t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
                         "Prix: " + t.getPrix() + " TND\n\n" +
                         "Envoyer la demande au conducteur ?")) {
-                        
-                        // Mark trajet as pending approval and assign passenger
-                        t.setStatusTrajet("PENDING_APPROVAL");
-                        t.setPassager(passager);
-                        
-                        StyleUtils.showSuccess(this, 
-                            "Demande envoyée !\n\n" +
-                            "Votre demande a été envoyée au conducteur:\n" +
-                            t.getConducteur().getNom() + " " + t.getConducteur().getPrenom() + "\n\n" +
-                            "Vous serez notifié lorsque le conducteur\nacceptera votre demande.");
-                        
+
+                        boolean added = mainFrame.getGestion().ajouter_demande_pour_trajet(t, passager.getCin());
+                        // Also keep the conductor-level mapping for backward compatibility
+                        if (t.getConducteur() != null) {
+                            mainFrame.getGestion().ajouter_demande_pour_conducteur(t.getConducteur().getCin(), passager.getCin());
+                        }
+
+                        if (added) {
+                            StyleUtils.showSuccess(this,
+                                "Demande envoyée !\n\n" +
+                                "Votre demande a été envoyée au conducteur:\n" +
+                                t.getConducteur().getNom() + " " + t.getConducteur().getPrenom() + "\n\n" +
+                                "Vous serez notifié lorsque le conducteur\nacceptera votre demande.");
+                        } else {
+                            StyleUtils.showWarning(this, "Vous avez déjà une demande ou une réservation pour ce trajet.");
+                        }
+
                         refreshTrajetsDisponibles();
                         refreshMesDemandes();
                         refreshMesReservations();
@@ -547,31 +549,30 @@ public class PassengerPanel extends JPanel {
             }
         }
     }
-    
+
     private void notifierConducteur() {
         int selectedRow = trajetsDisponiblesTable.getSelectedRow();
         if (selectedRow == -1) {
             StyleUtils.showError(this, "Veuillez sélectionner un trajet");
             return;
         }
-        
+
         // Find the selected trajet
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getConducteur() != null && 
-                t.isPending() &&
-                t.getPassager() == null &&
-                t.getConducteur().getPlacesDisponibles() > 0) {
-                
+            if (t.getConducteur() != null &&
+                t.getAvailablePlaces() > 0 &&
+                !t.isFinished()) {
+
                 if (count == selectedRow) {
                     Conducteur c = t.getConducteur();
-                    
+
                     // PRIVACY: Show limited info until reservation is confirmed
                     // Mask phone and email partially
                     String maskedPhone = "****" + c.getTel().substring(Math.max(0, c.getTel().length() - 4));
                     String maskedEmail = maskEmailForDisplay(c.getMail());
                     String maskedMatricule = "***" + c.getMatricule().substring(Math.max(0, c.getMatricule().length() - 4));
-                    
+
                     // Show contact info with privacy protection
                     JOptionPane.showMessageDialog(this,
                         "📞 Informations du Conducteur\n\n" +
@@ -584,6 +585,13 @@ public class PassengerPanel extends JPanel {
                         "disponibles après confirmation de réservation.",
                         "Contact Conducteur",
                         JOptionPane.INFORMATION_MESSAGE);
+
+                    // Also add a conductor-level notification mapping
+                    Passager passager = mainFrame.getCurrentPassager();
+                    if (passager != null) {
+                        mainFrame.getGestion().ajouter_demande_pour_conducteur(c.getCin(), passager.getCin());
+                        StyleUtils.showSuccess(this, "Le conducteur a été notifié de votre intérêt.");
+                    }
                     return;
                 }
                 count++;
@@ -613,44 +621,45 @@ public class PassengerPanel extends JPanel {
     
     private void refreshDashboard() {
         Passager passager = mainFrame.getCurrentPassager();
-        
-        // Count available trajets (PENDING status, no passenger assigned)
+
+        // Count available trajets (with available places)
         int trajetsCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getConducteur() != null && 
-                t.isPending() &&
-                t.getPassager() == null &&
-                t.getConducteur().getPlacesDisponibles() > 0) {
+            if (t.getConducteur() != null &&
+                t.getAvailablePlaces() > 0 &&
+                !t.isFinished()) {
                 trajetsCount++;
             }
         }
         if (trajetsCountLabel != null) {
             trajetsCountLabel.setText(String.valueOf(trajetsCount));
         }
-        
-        // Count my pending demands (PENDING_APPROVAL status)
+
+        // Count my pending demands (where current passenger is in demandes list)
         int demandesCount = 0;
         if (passager != null) {
             for (Trajet t : mainFrame.getGestion().getTrajets()) {
-                if (t.getPassager() != null && 
-                    t.getPassager().getCin().equals(passager.getCin()) &&
-                    t.isPendingApproval()) {
-                    demandesCount++;
+                for (Passager p : t.getPassagersDemandes()) {
+                    if (p.getCin().equals(passager.getCin())) {
+                        demandesCount++;
+                        break;
+                    }
                 }
             }
         }
         if (demandesCountLabel != null) {
             demandesCountLabel.setText(String.valueOf(demandesCount));
         }
-        
-        // Count my accepted reservations (IN_PROGRESS or FINISHED status)
+
+        // Count my accepted reservations (where passenger is in accepted list)
         int reservationsCount = 0;
         if (passager != null) {
             for (Trajet t : mainFrame.getGestion().getTrajets()) {
-                if (t.getPassager() != null && 
-                    t.getPassager().getCin().equals(passager.getCin()) &&
-                    (t.isInProgress() || t.isFinished())) {
-                    reservationsCount++;
+                for (Passager p : t.getPassagersAcceptes()) {
+                    if (p.getCin().equals(passager.getCin())) {
+                        reservationsCount++;
+                        break;
+                    }
                 }
             }
         }
@@ -661,16 +670,15 @@ public class PassengerPanel extends JPanel {
     
     private void refreshTrajetsDisponibles() {
         trajetsDisponiblesModel.setRowCount(0);
-        
+
         Passager passager = mainFrame.getCurrentPassager();
-        
+
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // Only show trajets that are PENDING and have no passenger assigned
-            if (t.getConducteur() != null && 
-                t.isPending() &&
-                t.getPassager() == null &&
-                t.getConducteur().getPlacesDisponibles() > 0) {
-                
+            // Only show trajets that have available places
+            if (t.getConducteur() != null &&
+                t.getAvailablePlaces() > 0 &&
+                !t.isFinished()) {
+
                 Conducteur c = t.getConducteur();
                 trajetsDisponiblesModel.addRow(new Object[]{
                     c.getNom() + " " + c.getPrenom(),
@@ -678,112 +686,99 @@ public class PassengerPanel extends JPanel {
                     t.getArriveeTrajet(),
                     t.getDureeTrajet().toMinutes() + " min",
                     String.format("%.2f", t.getPrix()),
-                    c.getPlacesDisponibles()
+                    t.getAvailablePlaces()
                 });
             }
         }
     }
-    
-    /**
-     * Refresh "Demandes Envoyées" table
-     * Shows only trajets with PENDING_APPROVAL status for current passenger
-     */
+
     private void refreshMesDemandes() {
         mesDemandesModel.setRowCount(0);
-        
+
         Passager passager = mainFrame.getCurrentPassager();
         if (passager == null) return;
-        
+
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // Only show this passenger's pending approval requests
-            if (t.getPassager() != null && 
-                t.getPassager().getCin().equals(passager.getCin()) &&
-                t.isPendingApproval() &&
-                t.getConducteur() != null) {
-                
-                Conducteur c = t.getConducteur();
-                mesDemandesModel.addRow(new Object[]{
-                    c.getNom() + " " + c.getPrenom(),
-                    t.getDepartTrajet(),
-                    t.getArriveeTrajet(),
-                    String.format("%.2f", t.getPrix()),
-                    t.getDureeTrajet().toMinutes() + " min",
-                    "⏳ En attente"
-                });
+            // Show rows where current passenger has an outstanding demande
+            for (Passager p : t.getPassagersDemandes()) {
+                if (p.getCin().equals(passager.getCin()) && t.getConducteur() != null) {
+                    Conducteur c = t.getConducteur();
+                    mesDemandesModel.addRow(new Object[]{
+                        c.getNom() + " " + c.getPrenom(),
+                        t.getDepartTrajet(),
+                        t.getArriveeTrajet(),
+                        String.format("%.2f", t.getPrix()),
+                        t.getDureeTrajet().toMinutes() + " min",
+                        "⏳ En attente"
+                    });
+                    break;
+                }
             }
         }
     }
-    
-    /**
-     * Refresh "Réservations Acceptées" table
-     * Shows only trajets with IN_PROGRESS or FINISHED status for current passenger
-     * Full contact info is displayed since driver has accepted
-     */
+
     private void refreshMesReservations() {
         mesReservationsModel.setRowCount(0);
-        
+
         Passager passager = mainFrame.getCurrentPassager();
         if (passager == null) return;
-        
+
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // Only show accepted reservations (IN_PROGRESS or FINISHED)
-            if (t.getPassager() != null && 
-                t.getPassager().getCin().equals(passager.getCin()) &&
-                (t.isInProgress() || t.isFinished()) &&
-                t.getConducteur() != null) {
-                
-                Conducteur c = t.getConducteur();
-                // Full contact info displayed - driver has accepted!
-                mesReservationsModel.addRow(new Object[]{
-                    c.getNom() + " " + c.getPrenom(),
-                    c.getTel(),
-                    c.getMail(),
-                    t.getDepartTrajet(),
-                    t.getArriveeTrajet(),
-                    String.format("%.2f", t.getPrix())
-                });
+            // Show rows where current passenger has been accepted
+            for (Passager p : t.getPassagersAcceptes()) {
+                if (p.getCin().equals(passager.getCin()) && t.getConducteur() != null) {
+                    Conducteur c = t.getConducteur();
+                    // Full contact info displayed - driver has accepted!
+                    mesReservationsModel.addRow(new Object[]{
+                        c.getNom() + " " + c.getPrenom(),
+                        c.getTel(),
+                        c.getMail(),
+                        t.getDepartTrajet(),
+                        t.getArriveeTrajet(),
+                        String.format("%.2f", t.getPrix())
+                    });
+                    break;
+                }
             }
         }
     }
-    
-    /**
-     * Cancel a pending approval request
-     */
+
     private void annulerDemande() {
         int selectedRow = mesDemandesTable.getSelectedRow();
         if (selectedRow == -1) {
             StyleUtils.showError(this, "Veuillez sélectionner une demande à annuler");
             return;
         }
-        
+
         if (!StyleUtils.showConfirm(this, "Voulez-vous vraiment annuler cette demande ?")) {
             return;
         }
-        
+
         Passager passager = mainFrame.getCurrentPassager();
         if (passager == null) return;
-        
+
         // Find the corresponding trajet
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getPassager() != null && 
-                t.getPassager().getCin().equals(passager.getCin()) &&
-                t.isPendingApproval() &&
-                t.getConducteur() != null) {
-                
-                if (count == selectedRow) {
-                    // Reset trajet to pending status
-                    t.setStatusTrajet("PENDING");
-                    t.setPassager(null);
-                    
-                    StyleUtils.showSuccess(this, "Demande annulée avec succès !");
-                    
-                    refreshTrajetsDisponibles();
-                    refreshMesDemandes();
-                    refreshDashboard();
-                    return;
+            for (Passager p : t.getPassagersDemandes()) {
+                if (p.getCin().equals(passager.getCin())) {
+                    if (count == selectedRow) {
+                        // Remove demande from trajet
+                        t.removeDemand(passager);
+                        // Also remove from mapping
+                        if (t.getConducteur() != null) {
+                            // use the newly added remove helper
+                            mainFrame.getGestion().supprimer_demande_pour_conducteur(t.getConducteur().getCin(), passager.getCin());
+                        }
+                        StyleUtils.showSuccess(this, "Demande annulée avec succès !");
+
+                        refreshTrajetsDisponibles();
+                        refreshMesDemandes();
+                        refreshDashboard();
+                        return;
+                    }
+                    count++;
                 }
-                count++;
             }
         }
     }

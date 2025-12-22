@@ -1,1 +1,1 @@
-Depart;Arrivee;DureeMinutes;Status;Prix;ConducteurCIN;PassagerCIN
+Depart;Arrivee;DureeMinutes;Status;Prix;ConducteurCIN;PassagerCIN;MaxPlaces;AcceptedCINs;PendingCINs

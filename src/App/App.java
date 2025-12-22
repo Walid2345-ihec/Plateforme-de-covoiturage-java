@@ -183,9 +183,6 @@ public class App {
                 case 2:
                     gestion.notifier_conducteur();
                     break;
-                case 3:
-                    gestion.ajouter_trajet_voulu();
-                    break;
                 case 4:
                     gestion.confirmer_trajet();
                     break;

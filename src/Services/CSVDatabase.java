@@ -12,20 +12,20 @@ import java.util.Vector;
 
 /**
  * CSVDatabase - A utility class for reading and writing data to CSV files.
- * 
+ *
  * STEP-BY-STEP EXPLANATION:
- * 
+ *
  * 1. CSV Structure:
  *    - Each file represents a "table"
  *    - First row = column headers
  *    - Subsequent rows = data records
  *    - Values separated by semicolons (;) to handle French text with commas
- * 
+ *
  * 2. Key Operations:
  *    - READ: Load data from CSV into Java objects
  *    - WRITE: Save Java objects to CSV files
  *    - APPEND: Add new records without overwriting
- * 
+ *
  * @author Student Guide
  */
 public class CSVDatabase {
@@ -208,14 +208,14 @@ public class CSVDatabase {
     
     /**
      * Saves all conducteurs to CSV file.
-     * 
+     *
      * HOW IT WORKS:
      * 1. Open a BufferedWriter (efficient for writing text)
      * 2. Write the header row first
      * 3. Loop through each Conducteur and write their data
-     * 4. Each field is separated by our DELIMITER
-     * 
-     * @param conducteurs List of conducteurs to save
+     *  * Each field is separated by our DELIMITER
+     *
+     * @param users Vector of User objects (only Conducteur instances are saved by this method)
      */
     public static void saveConducteurs(Vector<User> users) {
         initializeDataFolder();
@@ -318,14 +318,22 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW
-            writer.write("Depart;Arrivee;DureeMinutes;Status;Prix;ConducteurCIN;PassagerCIN");
+            // Nouveau format: ajout de MaxPlaces;AcceptedCINs;PendingCINs
+            writer.write("Depart;Arrivee;DureeMinutes;Status;Prix;ConducteurCIN;PassagerCIN;MaxPlaces;AcceptedCINs;PendingCINs");
             writer.newLine();
             
             // DATA ROWS
             for (Trajet t : trajets) {
                 String conducteurCIN = (t.getConducteur() != null) ? t.getConducteur().getCin() : "";
-                String passagerCIN = (t.getPassager() != null) ? t.getPassager().getCin() : "";
-                
+                // For backward compatibility provide first accepted passager CIN in the old column
+                String passagerCIN = "";
+                if (!t.getPassagersAcceptes().isEmpty()) {
+                    passagerCIN = t.getPassagersAcceptes().get(0).getCin();
+                }
+                String maxPlaces = String.valueOf(t.getMaxPlaces());
+                String accepted = t.getPassagersAcceptesCINs();
+                String pending = t.getPassagersDemandesCINs();
+
                 String line = String.join(DELIMITER,
                     escapeCSV(t.getDepartTrajet()),
                     escapeCSV(t.getArriveeTrajet()),
@@ -333,7 +341,10 @@ public class CSVDatabase {
                     escapeCSV(t.getStatusTrajet()),
                     String.valueOf(t.getPrix()),
                     escapeCSV(conducteurCIN),
-                    escapeCSV(passagerCIN)
+                    escapeCSV(passagerCIN),
+                    escapeCSV(maxPlaces),
+                    escapeCSV(accepted),
+                    escapeCSV(pending)
                 );
                 
                 writer.write(line);
@@ -526,7 +537,42 @@ public class CSVDatabase {
                         // Find conductor and passenger by CIN
                         Conducteur conducteur = findConducteurByCIN(users, values[5]);
                         Passager passager = findPassagerByCIN(users, values[6]);
-                        
+
+                        // If newer format (with maxPlaces and lists)
+                        int maxPlaces = 1;
+                        Vector<Passager> accepted = new Vector<>();
+                        Vector<Passager> pending = new Vector<>();
+
+                        if (values.length >= 10) {
+                            try {
+                                maxPlaces = Integer.parseInt(values[7].trim().isEmpty() ? "1" : values[7].trim());
+                            } catch (NumberFormatException e) {
+                                maxPlaces = (conducteur != null) ? conducteur.getPlacesDisponibles() : 1;
+                            }
+                            // parse accepted CINs
+                            String acceptedStr = unescapeCSV(values[8]);
+                            if (!acceptedStr.isEmpty()) {
+                                String[] ac = acceptedStr.split(",");
+                                for (String cin : ac) {
+                                    Passager p = findPassagerByCIN(users, cin.trim());
+                                    if (p != null) accepted.add(p);
+                                }
+                            }
+                            // parse pending CINs
+                            String pendingStr = unescapeCSV(values[9]);
+                            if (!pendingStr.isEmpty()) {
+                                String[] pc = pendingStr.split(",");
+                                for (String cin : pc) {
+                                    Passager p = findPassagerByCIN(users, cin.trim());
+                                    if (p != null) pending.add(p);
+                                }
+                            }
+                        } else {
+                            // Old format: if passager not null, add as accepted
+                            if (passager != null) accepted.add(passager);
+                            maxPlaces = (conducteur != null) ? conducteur.getPlacesDisponibles() : 1;
+                        }
+
                         Trajet t = new Trajet(
                             unescapeCSV(values[0]),  // Depart
                             unescapeCSV(values[1]),  // Arrivee
@@ -534,8 +580,13 @@ public class CSVDatabase {
                             unescapeCSV(values[3]),  // Status
                             Float.parseFloat(values[4]), // Prix
                             conducteur,
-                            passager
+                            maxPlaces
                         );
+
+                        // Attach accepted and pending lists
+                        for (Passager p : accepted) t.getPassagersAcceptes().add(p);
+                        for (Passager p : pending) t.getPassagersDemandes().add(p);
+
                         trajets.add(t);
                     } catch (Exception e) {
                         System.err.println("⚠ Erreur parsing trajet: " + e.getMessage());
@@ -686,10 +737,19 @@ public class CSVDatabase {
                 String conducteur = (t.getConducteur() != null) 
                     ? t.getConducteur().getNom() + " " + t.getConducteur().getPrenom() 
                     : "Non assigné";
-                String passager = (t.getPassager() != null) 
-                    ? t.getPassager().getNom() + " " + t.getPassager().getPrenom() 
-                    : "En attente";
-                
+                String passager;
+                if (!t.getPassagersAcceptes().isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < t.getPassagersAcceptes().size(); i++) {
+                        Passager p = t.getPassagersAcceptes().get(i);
+                        if (i > 0) sb.append(", ");
+                        sb.append(p.getNom()).append(" ").append(p.getPrenom());
+                    }
+                    passager = sb.toString();
+                } else {
+                    passager = "En attente";
+                }
+
                 String line = String.join(";",
                     t.getDepartTrajet(),
                     t.getArriveeTrajet(),
