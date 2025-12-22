@@ -764,7 +764,14 @@ public class EnhancedDriverPanel extends JPanel {
             }
         }
         trajetsCard.setValue(String.valueOf(trajetCount));
-        demandesCard.setValue("0");
+        // Count total demandes for this conducteur (across all their trajets)
+        int demandesCount = 0;
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
+                if (t.getPassagersDemandes() != null) demandesCount += t.getPassagersDemandes().size();
+            }
+        }
+        demandesCard.setValue(String.valueOf(demandesCount));
     }
     
     private void refreshTrajetsTable() {
