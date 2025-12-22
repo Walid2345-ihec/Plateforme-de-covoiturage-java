@@ -1,5 +1,8 @@
 README — Plateforme de covoiturage (français)
 
+
+Projet réalisé par: Walid Saheb Ettaba / Hassen Achour / Ahmed Chermiti / Ahmed Zribi / Ela Slama
+                    Etudiants en 2ème année BI à l'IHEC Carthage
 Résumé rapide
 ------------
 Ce dépôt contient une petite application Java Swing pour gérer une plateforme de covoiturage locale (CRUD + demandes / acceptations). Le code suit une architecture simple inspirée de MVC (Models, Views/GUI, Services) pour séparer les responsabilités.
