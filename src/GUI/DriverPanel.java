@@ -1,13 +1,12 @@
 package GUI;
 
 import Models.*;
-import Services.*;
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.time.Duration;
 import java.util.Vector;
+import javax.swing.*;
+import javax.swing.table.*;
 
 /**
  * Driver Dashboard Panel
@@ -109,11 +108,11 @@ public class DriverPanel extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         
         // Menu items
-        addMenuItem(panel, "📊 Tableau de Bord", "DASHBOARD");
-        addMenuItem(panel, "🛣️ Mes Trajets", "TRAJETS");
-        addMenuItem(panel, "📋 Demandes Reçues", "DEMANDES");
-        addMenuItem(panel, "👥 Passagers Acceptés", "PASSAGERS");
-        addMenuItem(panel, "➕ Nouveau Trajet", "NEW_TRAJET");
+        addMenuItem(panel, "Tableau de Bord", "DASHBOARD");
+        addMenuItem(panel, "Mes Trajets", "TRAJETS");
+        addMenuItem(panel, "Demandes Reçues", "DEMANDES");
+        addMenuItem(panel, "Passagers Acceptés", "PASSAGERS");
+        addMenuItem(panel, "Nouveau Trajet", "NEW_TRAJET");
         
         panel.add(Box.createVerticalGlue());
         
@@ -168,17 +167,17 @@ public class DriverPanel extends JPanel {
         statsPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
         
         // Places card
-        JPanel placesCard = createStatCard("🪑", "Places Disponibles", "0", StyleUtils.ACCENT_COLOR);
+        JPanel placesCard = createStatCard("", "Places Disponibles", "0", StyleUtils.ACCENT_COLOR);
         placesLabel = (JLabel) ((JPanel) placesCard.getComponent(0)).getComponent(1);
         statsPanel.add(placesCard);
         
         // Trajets card
-        JPanel trajetsCard = createStatCard("🛣️", "Mes Trajets", "0", StyleUtils.PRIMARY_COLOR);
+        JPanel trajetsCard = createStatCard("", "Mes Trajets", "0", StyleUtils.PRIMARY_COLOR);
         trajetsCountLabel = (JLabel) ((JPanel) trajetsCard.getComponent(0)).getComponent(1);
         statsPanel.add(trajetsCard);
         
         // Demandes card
-        JPanel demandesCard = createStatCard("📋", "Demandes Reçues", "0", StyleUtils.WARNING_COLOR);
+        JPanel demandesCard = createStatCard("", "Demandes Reçues", "0", StyleUtils.WARNING_COLOR);
         demandesCountLabel = (JLabel) ((JPanel) demandesCard.getComponent(0)).getComponent(1);
         statsPanel.add(demandesCard);
         
@@ -188,11 +187,11 @@ public class DriverPanel extends JPanel {
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         actionsPanel.setOpaque(false);
         
-        JButton newTrajetBtn = StyleUtils.createPrimaryButton("➕ Créer un Trajet");
+        JButton newTrajetBtn = StyleUtils.createPrimaryButton("Créer un Trajet");
         newTrajetBtn.addActionListener(e -> contentLayout.show(contentPanel, "NEW_TRAJET"));
         actionsPanel.add(newTrajetBtn);
         
-        JButton viewDemandesBtn = StyleUtils.createSecondaryButton("📋 Voir les Demandes");
+        JButton viewDemandesBtn = StyleUtils.createSecondaryButton("Voir les Demandes");
         viewDemandesBtn.addActionListener(e -> {
             refreshDemandesTable();
             contentLayout.show(contentPanel, "DEMANDES");
@@ -261,15 +260,15 @@ public class DriverPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setOpaque(false);
         
-        JButton editPriceBtn = StyleUtils.createSecondaryButton("💰 Modifier Prix");
+        JButton editPriceBtn = StyleUtils.createSecondaryButton("Modifier Prix");
         editPriceBtn.addActionListener(e -> modifyTrajetPrice());
         buttonPanel.add(editPriceBtn);
         
-        JButton deleteBtn = StyleUtils.createDangerButton("🗑️ Supprimer");
+        JButton deleteBtn = StyleUtils.createDangerButton("Supprimer");
         deleteBtn.addActionListener(e -> deleteTrajet());
         buttonPanel.add(deleteBtn);
         
-        JButton refreshBtn = StyleUtils.createSecondaryButton("🔄 Actualiser");
+        JButton refreshBtn = StyleUtils.createSecondaryButton("Actualiser");
         refreshBtn.addActionListener(e -> refreshTrajetsTable());
         buttonPanel.add(refreshBtn);
         
@@ -306,11 +305,11 @@ public class DriverPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setOpaque(false);
         
-        JButton acceptBtn = StyleUtils.createSuccessButton("✅ Accepter");
+        JButton acceptBtn = StyleUtils.createSuccessButton("Accepter");
         acceptBtn.addActionListener(e -> acceptPassenger());
         buttonPanel.add(acceptBtn);
         
-        JButton refreshBtn = StyleUtils.createSecondaryButton("🔄 Actualiser");
+        JButton refreshBtn = StyleUtils.createSecondaryButton("Actualiser");
         refreshBtn.addActionListener(e -> refreshDemandesTable());
         buttonPanel.add(refreshBtn);
         
@@ -346,7 +345,7 @@ public class DriverPanel extends JPanel {
         // Refresh button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setOpaque(false);
-        JButton refreshBtn = StyleUtils.createSecondaryButton("🔄 Actualiser");
+        JButton refreshBtn = StyleUtils.createSecondaryButton("Actualiser");
         refreshBtn.addActionListener(e -> refreshPassagersAcceptesTable());
         buttonPanel.add(refreshBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -406,7 +405,7 @@ public class DriverPanel extends JPanel {
         // Create button
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
         gbc.insets = new Insets(30, 10, 10, 10);
-        JButton createBtn = StyleUtils.createSuccessButton("✅ Créer le Trajet");
+        JButton createBtn = StyleUtils.createSuccessButton("Créer le Trajet");
         createBtn.addActionListener(e -> {
             String depart = departField.getText().trim();
             String arrivee = arriveeField.getText().trim();
@@ -559,7 +558,7 @@ public class DriverPanel extends JPanel {
                             boolean accepted = mainFrame.getGestion().accepter_passager_pour_trajet(t, passager.getCin());
                             if (accepted) {
                                 StyleUtils.showSuccess(this,
-                                    "✅ Passager accepté !\n\n" +
+                                    "Passager accepté !\n\n" +
                                     passager.getPrenom() + " " + passager.getNom() + "\n" +
                                     "Téléphone: " + passager.getTel() + "\n\n" +
                                     "Places restantes: " + conducteur.getPlacesDisponibles());

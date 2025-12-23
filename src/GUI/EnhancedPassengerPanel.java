@@ -1,14 +1,11 @@
 package GUI;
 
+import GUI.ModernUIComponents.Colors;
+import GUI.ModernUIComponents.Fonts;
 import Models.*;
-import Services.*;
-import GUI.ModernUIComponents.*;
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.time.Duration;
-import java.util.Vector;
 
 /**
  * Enhanced Modern Passenger Dashboard Panel
@@ -107,9 +104,9 @@ public class EnhancedPassengerPanel extends JPanel {
         sidebar.add(Box.createVerticalStrut(20));
         
         // Menu items
-        addSidebarButton(sidebar, "📊  Tableau de Bord", "DASHBOARD", true);
-        addSidebarButton(sidebar, "🔍  Rechercher Trajets", "SEARCH", false);
-        addSidebarButton(sidebar, "🎫  Mes Réservations", "RESERVATIONS", false);
+        addSidebarButton(sidebar, "Tableau de Bord", "DASHBOARD", true);
+        addSidebarButton(sidebar, "Rechercher Trajets", "SEARCH", false);
+        addSidebarButton(sidebar, "Mes Réservations", "RESERVATIONS", false);
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -201,7 +198,7 @@ public class EnhancedPassengerPanel extends JPanel {
         actionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
         
         ModernUIComponents.GradientButton searchBtn = new ModernUIComponents.GradientButton(
-            "🔍 Rechercher un Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
+            "Rechercher un Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
         searchBtn.addActionListener(e -> {
             updateSidebarSelection(1);
             refreshTrajetsTable();
@@ -210,7 +207,7 @@ public class EnhancedPassengerPanel extends JPanel {
         actionsPanel.add(searchBtn);
         
         ModernUIComponents.RoundedButton reservationsBtn = new ModernUIComponents.RoundedButton(
-            "🎫 Voir mes Réservations", Colors.ACCENT_SKY);
+            "Voir mes Réservations", Colors.ACCENT_SKY);
         reservationsBtn.addActionListener(e -> {
             updateSidebarSelection(2);
             refreshReservationsTable();
@@ -229,7 +226,7 @@ public class EnhancedPassengerPanel extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
         // Header with title
-        JLabel titleLabel = new JLabel("🔍 Rechercher des Trajets");
+        JLabel titleLabel = new JLabel("Rechercher des Trajets");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -295,12 +292,12 @@ public class EnhancedPassengerPanel extends JPanel {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
         
         ModernUIComponents.GradientButton reserveBtn = new ModernUIComponents.GradientButton(
-            "✅ Réserver ce Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
+            "Réserver ce Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
         reserveBtn.setPreferredSize(new Dimension(200, 50));
         reserveBtn.addActionListener(e -> reserveTrajet());
         
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "🔄 Actualiser", Colors.TEXT_MUTED);
+            "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 45));
         refreshBtn.addActionListener(e -> refreshTrajetsTable());
         
@@ -340,12 +337,12 @@ public class EnhancedPassengerPanel extends JPanel {
         infoPanel.setOpaque(false);
         
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "🔄 Actualiser", Colors.TEXT_MUTED);
+            "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshReservationsTable());
         infoPanel.add(refreshBtn);
         
-        JLabel infoLabel = new JLabel("ℹ️ Contactez le conducteur pour confirmer votre réservation");
+        JLabel infoLabel = new JLabel("Contactez le conducteur pour confirmer votre réservation");
         infoLabel.setFont(Fonts.BODY);
         infoLabel.setForeground(Colors.TEXT_MUTED);
         infoLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
@@ -451,9 +448,9 @@ public class EnhancedPassengerPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(this,
             "Confirmer la demande de réservation ?\n\n" +
-            "🚗 Conducteur: " + conducteurName + "\n" +
+            "Conducteur: " + conducteurName + "\n" +
             "📍 " + depart + " → " + arrivee + "\n" +
-            "💰 Prix: " + prix + " TND",
+            "Prix: " + prix + " TND",
             "Demande de Réservation",
             JOptionPane.YES_NO_OPTION);
 
@@ -482,7 +479,7 @@ public class EnhancedPassengerPanel extends JPanel {
                         }
 
                         JOptionPane.showMessageDialog(this,
-                            "✅ Demande envoyée !\n\n" +
+                            "Demande envoyée !\n\n" +
                             "Le conducteur sera notifié et pourra accepter votre demande.",
                             "Succès", JOptionPane.INFORMATION_MESSAGE);
                     } else {

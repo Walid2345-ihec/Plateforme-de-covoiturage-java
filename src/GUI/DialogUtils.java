@@ -1,10 +1,8 @@
 package GUI;
 
 import Models.*;
-import javax.swing.*;
-import javax.swing.border.*;
 import java.awt.*;
-import java.time.Year;
+import javax.swing.*;
 
 /**
  * Utility class for creating custom dialogs
@@ -26,7 +24,7 @@ public class DialogUtils {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Header
-        JLabel headerLabel = new JLabel("🛣️ Détails du Trajet");
+        JLabel headerLabel = new JLabel("Détails du Trajet");
         headerLabel.setFont(StyleUtils.SUBTITLE_FONT);
         headerLabel.setForeground(StyleUtils.PRIMARY_COLOR);
         headerLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
@@ -102,7 +100,7 @@ public class DialogUtils {
         headerPanel.setOpaque(false);
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         
-        JLabel avatarLabel = new JLabel(user instanceof Conducteur ? "🚗" : "👤");
+        JLabel avatarLabel = new JLabel(user instanceof Conducteur ? "Conducteur" : "Passager");
         avatarLabel.setFont(new Font("Segoe UI", Font.PLAIN, 48));
         avatarLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         

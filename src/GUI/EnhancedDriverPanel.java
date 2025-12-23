@@ -1,14 +1,13 @@
 package GUI;
 
+import GUI.ModernUIComponents.Colors;
+import GUI.ModernUIComponents.Fonts;
 import Models.*;
-import Services.*;
-import GUI.ModernUIComponents.*;
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.time.Duration;
 import java.util.Vector;
+import javax.swing.*;
+import javax.swing.table.*;
 
 /**
  * Enhanced Modern Driver Dashboard Panel
@@ -111,11 +110,11 @@ public class EnhancedDriverPanel extends JPanel {
         sidebar.add(Box.createVerticalStrut(20));
         
         // Menu items
-        addSidebarButton(sidebar, "📊  Tableau de Bord", "DASHBOARD", true);
-        addSidebarButton(sidebar, "🛣️  Mes Trajets", "TRAJETS", false);
-        addSidebarButton(sidebar, "📋  Demandes Reçues", "DEMANDES", false);
-        addSidebarButton(sidebar, "👥  Passagers Acceptés", "PASSAGERS", false);
-        addSidebarButton(sidebar, "➕  Nouveau Trajet", "NEW_TRAJET", false);
+        addSidebarButton(sidebar, "Tableau de Bord", "DASHBOARD", true);
+        addSidebarButton(sidebar, "Mes Trajets", "TRAJETS", false);
+        addSidebarButton(sidebar, "Demandes Reçues", "DEMANDES", false);
+        addSidebarButton(sidebar, "Passagers Acceptés", "PASSAGERS", false);
+        addSidebarButton(sidebar, "Nouveau Trajet", "NEW_TRAJET", false);
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -194,9 +193,9 @@ public class EnhancedDriverPanel extends JPanel {
         statsPanel.setOpaque(false);
         statsPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
         
-        placesCard = new ModernUIComponents.StatCard("🪑", "Places Disponibles", "0", Colors.ACCENT_MINT);
-        trajetsCard = new ModernUIComponents.StatCard("🛣️", "Mes Trajets", "0", Colors.PRIMARY_START);
-        demandesCard = new ModernUIComponents.StatCard("📋", "Demandes", "0", Colors.ACCENT_GOLD);
+        placesCard = new ModernUIComponents.StatCard("", "Places Disponibles", "0", Colors.ACCENT_MINT);
+        trajetsCard = new ModernUIComponents.StatCard("", "Mes Trajets", "0", Colors.PRIMARY_START);
+        demandesCard = new ModernUIComponents.StatCard("", "Demandes", "0", Colors.ACCENT_GOLD);
         
         statsPanel.add(placesCard);
         statsPanel.add(trajetsCard);
@@ -210,7 +209,7 @@ public class EnhancedDriverPanel extends JPanel {
         actionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
         
         ModernUIComponents.GradientButton newTrajetBtn = new ModernUIComponents.GradientButton(
-            "➕ Créer un Trajet", Colors.PRIMARY_START, Colors.PRIMARY_END);
+            "Créer un Trajet", Colors.PRIMARY_START, Colors.PRIMARY_END);
         newTrajetBtn.addActionListener(e -> {
             updateSidebarSelection(4);
             contentLayout.show(contentPanel, "NEW_TRAJET");
@@ -218,7 +217,7 @@ public class EnhancedDriverPanel extends JPanel {
         actionsPanel.add(newTrajetBtn);
         
         ModernUIComponents.RoundedButton viewDemandesBtn = new ModernUIComponents.RoundedButton(
-            "📋 Voir les Demandes", Colors.ACCENT_SKY);
+            "Voir les Demandes", Colors.ACCENT_SKY);
         viewDemandesBtn.addActionListener(e -> {
             updateSidebarSelection(2);
             refreshDemandesTable();
@@ -237,7 +236,7 @@ public class EnhancedDriverPanel extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
         // Header
-        JLabel titleLabel = new JLabel("🛣️ Mes Trajets");
+        JLabel titleLabel = new JLabel("Mes Trajets");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -262,22 +261,22 @@ public class EnhancedDriverPanel extends JPanel {
         buttonPanel.setOpaque(false);
         
         ModernUIComponents.RoundedButton editBtn = new ModernUIComponents.RoundedButton(
-            "💰 Modifier Prix", Colors.ACCENT_SKY);
+            "Modifier Prix", Colors.ACCENT_SKY);
         editBtn.setPreferredSize(new Dimension(150, 42));
         editBtn.addActionListener(e -> modifyTrajetPrice());
         
         ModernUIComponents.RoundedButton deleteBtn = new ModernUIComponents.RoundedButton(
-            "🗑️ Supprimer", Colors.ACCENT_CORAL);
+            "Supprimer", Colors.ACCENT_CORAL);
         deleteBtn.setPreferredSize(new Dimension(130, 42));
         deleteBtn.addActionListener(e -> deleteTrajet());
         
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "🔄 Actualiser", Colors.TEXT_MUTED);
+            "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshTrajetsTable());
 
         ModernUIComponents.RoundedButton finishBtn = new ModernUIComponents.RoundedButton(
-            "🏁 Finir Trajet", Colors.ACCENT_CORAL);
+            "Finir Trajet", Colors.ACCENT_CORAL);
         finishBtn.setPreferredSize(new Dimension(150, 42));
         finishBtn.addActionListener(e -> finishSelectedTrajet());
 
@@ -295,7 +294,7 @@ public class EnhancedDriverPanel extends JPanel {
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
-        JLabel titleLabel = new JLabel("📋 Demandes Reçues");
+        JLabel titleLabel = new JLabel("Demandes Reçues");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -318,12 +317,12 @@ public class EnhancedDriverPanel extends JPanel {
         buttonPanel.setOpaque(false);
         
         ModernUIComponents.GradientButton acceptBtn = new ModernUIComponents.GradientButton(
-            "✅ Accepter", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
+            "Accepter", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
         acceptBtn.setPreferredSize(new Dimension(150, 45));
         acceptBtn.addActionListener(e -> acceptPassenger());
         
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "🔄 Actualiser", Colors.TEXT_MUTED);
+            "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshDemandesTable());
         
@@ -339,7 +338,7 @@ public class EnhancedDriverPanel extends JPanel {
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
-        JLabel titleLabel = new JLabel("👥 Passagers Acceptés");
+        JLabel titleLabel = new JLabel("Passagers Acceptés");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -361,7 +360,7 @@ public class EnhancedDriverPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setOpaque(false);
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "🔄 Actualiser", Colors.TEXT_MUTED);
+            "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshPassagersTable());
         buttonPanel.add(refreshBtn);
@@ -375,7 +374,7 @@ public class EnhancedDriverPanel extends JPanel {
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
-        JLabel titleLabel = new JLabel("➕ Créer un Nouveau Trajet");
+        JLabel titleLabel = new JLabel("Créer un Nouveau Trajet");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -391,7 +390,7 @@ public class EnhancedDriverPanel extends JPanel {
         
         // Departure
         gbc.gridx = 0; gbc.gridy = 0;
-        formCard.add(createFormLabel("📍 Point de Départ"), gbc);
+        formCard.add(createFormLabel("Point de Départ"), gbc);
         gbc.gridx = 1;
         ModernUIComponents.ModernTextField departField = new ModernUIComponents.ModernTextField("Tunis, Sousse...");
         departField.setPreferredSize(new Dimension(280, 45));
@@ -399,14 +398,14 @@ public class EnhancedDriverPanel extends JPanel {
         
         // Arrival
         gbc.gridx = 0; gbc.gridy = 1;
-        formCard.add(createFormLabel("🎯 Point d'Arrivée"), gbc);
+        formCard.add(createFormLabel("Point d'Arrivée"), gbc);
         gbc.gridx = 1;
         ModernUIComponents.ModernTextField arriveeField = new ModernUIComponents.ModernTextField("Destination...");
         formCard.add(arriveeField, gbc);
         
         // Duration
         gbc.gridx = 0; gbc.gridy = 2;
-        formCard.add(createFormLabel("⏱️ Durée (minutes)"), gbc);
+        formCard.add(createFormLabel("Durée (minutes)"), gbc);
         gbc.gridx = 1;
         JSpinner dureeSpinner = new JSpinner(new SpinnerNumberModel(30, 5, 480, 5));
         dureeSpinner.setFont(Fonts.BODY);
@@ -415,7 +414,7 @@ public class EnhancedDriverPanel extends JPanel {
         
         // Price
         gbc.gridx = 0; gbc.gridy = 3;
-        formCard.add(createFormLabel("💰 Prix (TND)"), gbc);
+        formCard.add(createFormLabel("Prix (TND)"), gbc);
         gbc.gridx = 1;
         JSpinner prixSpinner = new JSpinner(new SpinnerNumberModel(5.0, 1.0, 100.0, 0.5));
         prixSpinner.setFont(Fonts.BODY);
@@ -427,7 +426,7 @@ public class EnhancedDriverPanel extends JPanel {
         gbc.insets = new Insets(30, 12, 12, 12);
         
         ModernUIComponents.GradientButton createBtn = new ModernUIComponents.GradientButton(
-            "✅ Créer le Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
+            "Créer le Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
         createBtn.setPreferredSize(new Dimension(250, 50));
         createBtn.addActionListener(e -> {
             String depart = departField.getText().trim();
@@ -634,7 +633,7 @@ public class EnhancedDriverPanel extends JPanel {
                             boolean accepted = mainFrame.getGestion().accepter_passager_pour_trajet(t, passager.getCin());
                             if (accepted) {
                                 JOptionPane.showMessageDialog(this,
-                                    "✅ Passager accepté !\n\n" +
+                                    "Passager accepté !\n\n" +
                                     passager.getPrenom() + " " + passager.getNom() + "\n" +
                                     "Téléphone: " + passager.getTel() + "\n\n" +
                                     "Places restantes: " + conducteur.getPlacesDisponibles(),

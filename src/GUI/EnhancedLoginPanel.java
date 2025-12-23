@@ -1,14 +1,14 @@
 package GUI;
 
+import GUI.ModernUIComponents.Colors;
+import GUI.ModernUIComponents.Fonts;
 import Models.*;
 import Services.*;
-import GUI.ModernUIComponents.*;
-import javax.swing.*;
-import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.time.Year;
+import javax.swing.*;
 
 /**
  * Enhanced Modern Login Panel with beautiful animations and design
@@ -185,8 +185,8 @@ public class EnhancedLoginPanel extends JPanel {
         typePanel.setOpaque(false);
         typePanel.setMaximumSize(new Dimension(340, 40));
         
-        driverRadio = createStyledRadio("🚗 Conducteur", true);
-        passengerRadio = createStyledRadio("👤 Passager", false);
+        driverRadio = createStyledRadio("Conducteur", true);
+        passengerRadio = createStyledRadio("Passager", false);
         
         ButtonGroup group = new ButtonGroup();
         group.add(driverRadio);
@@ -338,7 +338,7 @@ public class EnhancedLoginPanel extends JPanel {
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         
         // Personal info section
-        formPanel.add(createSectionLabel("👤 Informations Personnelles"));
+        formPanel.add(createSectionLabel("Informations Personnelles"));
         formPanel.add(Box.createVerticalStrut(10));
         
         JPanel row1 = createFormRow();
@@ -364,7 +364,7 @@ public class EnhancedLoginPanel extends JPanel {
         // PASSWORD SECTION - Secure password creation
         // ═══════════════════════════════════════════════════════════════════════════
         formPanel.add(Box.createVerticalStrut(15));
-        formPanel.add(createSectionLabel("🔐 Créer un mot de passe"));
+        formPanel.add(createSectionLabel("Créer un mot de passe"));
         formPanel.add(Box.createVerticalStrut(10));
         
         JPanel passwordRow = createFormRow();
@@ -410,12 +410,12 @@ public class EnhancedLoginPanel extends JPanel {
         formPanel.add(passwordRow);
         
         formPanel.add(Box.createVerticalStrut(15));
-        formPanel.add(createSectionLabel("🚙 Informations Véhicule"));
+        formPanel.add(createSectionLabel("Informations Véhicule"));
         formPanel.add(Box.createVerticalStrut(10));
         
         JPanel row5 = createFormRow();
         regNomVoitureField = addFormField(row5, "Nom Véhicule", "Golf 7, Clio 4...");
-        regMarqueField = addFormField(row5, "Marque", "Peugeot 308...");
+        regMarqueField = addFormField(row5, "Marque", "Peugeot, Renault...");
         formPanel.add(row5);
         
         JPanel row6 = createFormRow();
@@ -500,7 +500,7 @@ public class EnhancedLoginPanel extends JPanel {
         formPanel.setOpaque(false);
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         
-        formPanel.add(createSectionLabel("👤 Informations Personnelles"));
+        formPanel.add(createSectionLabel("Informations Personnelles"));
         formPanel.add(Box.createVerticalStrut(10));
         
         // Create fields for passenger
@@ -527,7 +527,7 @@ public class EnhancedLoginPanel extends JPanel {
         // PASSWORD SECTION - Secure password creation for passenger
         // ═══════════════════════════════════════════════════════════════════════════
         formPanel.add(Box.createVerticalStrut(15));
-        formPanel.add(createSectionLabel("🔐 Créer un mot de passe"));
+        formPanel.add(createSectionLabel("Créer un mot de passe"));
         formPanel.add(Box.createVerticalStrut(10));
         
         JPanel passwordRow = createFormRow();

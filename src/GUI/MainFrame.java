@@ -2,10 +2,10 @@ package GUI;
 
 import Models.*;
 import Services.*;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.*;
 
 /**
  * Main application frame with card layout for navigation
@@ -58,7 +58,7 @@ public class MainFrame extends JFrame {
      */
     private void loadDataFromCSV() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🚀 Démarrage de l'application...");
+        System.out.println("Démarrage de l'application...");
         CSVDatabase.loadAllData(gestion);
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
@@ -126,7 +126,7 @@ public class MainFrame extends JFrame {
      */
     private void cleanupAndExit() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("👋 Fermeture de l'application...");
+        System.out.println("Fermeture de l'application...");
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         dispose();
         System.exit(0);
@@ -154,7 +154,7 @@ public class MainFrame extends JFrame {
      */
     private void setupShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\n⚠️ Shutdown détecté - Sauvegarde d'urgence...");
+            System.out.println("\n Shutdown détecté - Sauvegarde d'urgence...");
             try {
                 CSVDatabase.saveAllData(gestion);
                 System.out.println("✓ Sauvegarde d'urgence terminée");

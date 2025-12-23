@@ -2,11 +2,9 @@ package GUI;
 
 import Models.*;
 import Services.*;
-import javax.swing.*;
-import javax.swing.border.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.time.Year;
+import javax.swing.*;
 
 /**
  * Login and Registration Panel
@@ -229,7 +227,7 @@ public class LoginPanel extends JPanel {
         // Title
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         titlePanel.setOpaque(false);
-        JLabel titleLabel = new JLabel("📝 Inscription Conducteur");
+        JLabel titleLabel = new JLabel("Inscription Conducteur");
         titleLabel.setFont(StyleUtils.SUBTITLE_FONT);
         titleLabel.setForeground(StyleUtils.PRIMARY_COLOR);
         titlePanel.add(titleLabel);
@@ -307,7 +305,7 @@ public class LoginPanel extends JPanel {
         // Title
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         titlePanel.setOpaque(false);
-        JLabel titleLabel = new JLabel("📝 Inscription Passager");
+        JLabel titleLabel = new JLabel("Inscription Passager");
         titleLabel.setFont(StyleUtils.SUBTITLE_FONT);
         titleLabel.setForeground(StyleUtils.PRIMARY_COLOR);
         titlePanel.add(titleLabel);
