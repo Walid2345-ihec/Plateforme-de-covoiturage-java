@@ -5,156 +5,49 @@ import java.security.NoSuchAlgorithmException;
 import java.util.regex.Pattern;
 
 /**
- * ValidationUtils - Utility class containing regular expressions for data validation
- * 
- * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║                    REGULAR EXPRESSIONS REFERENCE GUIDE                       ║
- * ╠══════════════════════════════════════════════════════════════════════════════╣
- * ║                                                                              ║
- * ║  1. PHONE NUMBER                                                             ║
- * ║  ─────────────────────────────────────────────────────────────────────────── ║
- * ║  Description: Must be exactly 8 digits                                       ║
- * ║  Regex:       ^[0-9]{8}$                                                     ║
- * ║  Explanation:                                                                ║
- * ║    • ^        → Start of string                                              ║
- * ║    • [0-9]    → Any digit from 0 to 9                                        ║
- * ║    • {8}      → Exactly 8 occurrences                                        ║
- * ║    • $        → End of string                                                ║
- * ║  Examples:    ✓ 98765432  ✓ 12345678  ✗ 1234567  ✗ 123456789                 ║
- * ║                                                                              ║
- * ║  2. CIN NUMBER (Carte d'Identité Nationale)                                  ║
- * ║  ─────────────────────────────────────────────────────────────────────────── ║
- * ║  Description: Must be exactly 8 digits                                       ║
- * ║  Regex:       ^[0-9]{8}$                                                     ║
- * ║  Explanation:                                                                ║
- * ║    • ^        → Start of string                                              ║
- * ║    • [0-9]    → Any digit from 0 to 9                                        ║
- * ║    • {8}      → Exactly 8 occurrences                                        ║
- * ║    • $        → End of string                                                ║
- * ║  Examples:    ✓ 07654321  ✓ 12345678  ✗ 1234567  ✗ 12345678A                 ║
- * ║                                                                              ║
- * ║  3. NAME / LAST NAME                                                         ║
- * ║  ─────────────────────────────────────────────────────────────────────────── ║
- * ║  Description: Only alphabetic characters (including French accents)         ║
- * ║  Regex:       ^[a-zA-ZÀ-ÿ\\s'-]+$                                            ║
- * ║  Explanation:                                                                ║
- * ║    • ^        → Start of string                                              ║
- * ║    • [a-zA-Z] → Any letter (uppercase or lowercase)                          ║
- * ║    • À-ÿ      → French accented characters (é, è, ê, ë, à, ù, ç, etc.)      ║
- * ║    • \\s      → Whitespace (for compound names like "Ben Ali")               ║
- * ║    • '-       → Hyphen and apostrophe (for names like "O'Brien", "Al-Farsi") ║
- * ║    • +        → One or more characters                                       ║
- * ║    • $        → End of string                                                ║
- * ║  Examples:    ✓ Mohamed  ✓ Ben Ali  ✓ François  ✗ Ali123  ✗ @Ahmed           ║
- * ║                                                                              ║
- * ║  4. CAR MATRICULATION (Tunisian Format)                                      ║
- * ║  ─────────────────────────────────────────────────────────────────────────── ║
- * ║  Description: Up to 3 digits + "TU" + 4 digits                               ║
- * ║  Regex:       ^[0-9]{1,3}TU[0-9]{4}$                                         ║
- * ║  Explanation:                                                                ║
- * ║    • ^        → Start of string                                              ║
- * ║    • [0-9]    → Any digit                                                    ║
- * ║    • {1,3}    → Between 1 and 3 occurrences (e.g., 1, 12, 123)               ║
- * ║    • TU       → Literal "TU" (Tunisia code)                                  ║
- * ║    • [0-9]    → Any digit                                                    ║
- * ║    • {4}      → Exactly 4 occurrences                                        ║
- * ║    • $        → End of string                                                ║
- * ║  Examples:    ✓ 123TU4567  ✓ 1TU1234  ✓ 99TU9999  ✗ 1234TU567  ✗ TUNIS123   ║
- * ║                                                                              ║
- * ║  5. EMAIL (Gmail or .tn domain)                                              ║
- * ║  ─────────────────────────────────────────────────────────────────────────── ║
- * ║  Description: Valid email ending with @gmail.com or @*.tn                    ║
- * ║  Regex:       ^[A-Z0-9._%+-]+@((gmail\\.com)|([A-Z0-9.-]+\\.tn))$           ║
- * ║  Explanation:                                                                ║
- * ║    • ^[A-Z0-9._%+-]+  → Username (letters, numbers, dots, etc.)              ║
- * ║    • @                → Literal "@" symbol                                   ║
- * ║    • gmail\\.com      → Literal "gmail.com"                                  ║
- * ║    • |                → OR                                                   ║
- * ║    • [A-Z0-9.-]+\\.tn → Any domain ending in ".tn"                          ║
- * ║  Examples:    ✓ user@gmail.com  ✓ ali@univ.tn  ✗ test@yahoo.fr              ║
- * ║                                                                              ║
- * ╠══════════════════════════════════════════════════════════════════════════════╣
- * ║                                                                              ║
- * ║  6. PASSWORD (Strong password policy)                                        ║
- * ║  ─────────────────────────────────────────────────────────────────────────── ║
- * ║  Description: Secure password with minimum requirements                      ║
- * ║  Regex:       ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$        ║
- * ║  Explanation:                                                                ║
- * ║    • (?=.*[a-z])      → At least one lowercase letter                        ║
- * ║    • (?=.*[A-Z])      → At least one uppercase letter                        ║
- * ║    • (?=.*\d)         → At least one digit                                   ║
- * ║    • (?=.*[@#$%^&+=!])→ At least one special character                       ║
- * ║    • .{8,}            → Minimum 8 characters                                 ║
- * ║  Examples:    ✓ MyPass@123  ✓ Secure#1  ✗ password  ✗ 12345678              ║
- * ║                                                                              ║
- * ║  SECURITY FEATURES:                                                          ║
- * ║    • Passwords are hashed using SHA-256 before storage                       ║
- * ║    • Plain text passwords are NEVER stored in CSV files                      ║
- * ║    • Hash comparison is used for authentication                              ║
- * ║                                                                              ║
- * ╚══════════════════════════════════════════════════════════════════════════════╝
- * 
- * @author Student - Java Validation Guide
+ * ValidationUtils - Contient les expréssions régulières et les méthodes de validation.
  */
 public class ValidationUtils {
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // REGEX PATTERNS - Compiled for better performance
+    // EXPRESSIONS RÉGULIÈRES (Patterns compilés pour de meilleures performances)
     // ═══════════════════════════════════════════════════════════════════════════
     
     /**
-     * Phone number pattern: Exactly 8 digits
-     * Regex: ^[0-9]{8}$
+     * Numéro de téléphone : exactement 8 chiffres
+     * Regex : ^[0-9]{8}$
      */
     public static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9]{8}$");
     
     /**
-     * CIN pattern: Exactly 8 digits
-     * Regex: ^[0-9]{8}$
+     * CIN (Carte d'Identité) : exactement 8 chiffres
+     * Regex : ^[0-9]{8}$
      */
     public static final Pattern CIN_PATTERN = Pattern.compile("^[0-9]{8}$");
     
     /**
-     * Name pattern: Only letters (including French accents), spaces, hyphens, apostrophes
-     * Regex: ^[a-zA-ZÀ-ÿ\s'-]+$
+     * Nom/Prénom : uniquement des lettres (incluant les accents français), espaces, tirets et apostrophes
+     * Regex : ^[a-zA-ZÀ-ÿ\s'-]+$
      */
     public static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-ZÀ-ÿ\\s'-]+$");
     
     /**
-     * Vehicle name pattern: Letters AND numbers (alphanumeric), spaces, hyphens
-     * Regex: ^[a-zA-Z0-9À-ÿ\s'-]+$
-     * 
-     * MODIFICATION EXPLANATION:
-     * ────────────────────────────────────────────────────────────────────────────
-     * Original: Only allowed letters [a-zA-ZÀ-ÿ]
-     * Modified: Now allows letters AND numbers [a-zA-Z0-9À-ÿ]
-     * 
-     * Why this change?
-     * - Many vehicle models include numbers (e.g., "Peugeot 308", "Golf 7", "Clio 4")
-     * - Allows realistic vehicle naming while maintaining input validation
-     * 
-     * Pattern breakdown:
-     * • ^           → Start of string
-     * • [a-zA-Z]    → Letters (uppercase and lowercase)
-     * • [0-9]       → Digits (0 to 9) ← NEW ADDITION
-     * • [À-ÿ]       → French accented characters
-     * • [\s]        → Whitespace (for multi-word names)
-     * • ['-]        → Hyphen and apostrophe
-     * • +           → One or more characters
-     * • $           → End of string
-     * ────────────────────────────────────────────────────────────────────────────
+     * Nom de véhicule : lettres ET chiffres autorisés, espaces, tirets et apostrophes
+     * Regex : ^[a-zA-Z0-9À-ÿ\s'-]+$
+     *
+     * Pourquoi ? De nombreux modèles comportent des chiffres (ex : "Peugeot 308").
      */
     public static final Pattern VEHICLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9À-ÿ\\s'-]+$");
     
     /**
-     * Tunisian car matriculation pattern: 1-3 digits + "TU" + 4 digits
-     * Regex: ^[0-9]{1,3}TU[0-9]{4}$
+     * Matricule tunisienne : 1 à 3 chiffres + "TU" + 4 chiffres
+     * Regex : ^[0-9]{1,3}TU[0-9]{4}$
      */
     public static final Pattern MATRICULE_PATTERN = Pattern.compile("^[0-9]{1,3}TU[0-9]{4}$");
     
     /**
-     * Email pattern: Gmail or Tunisian domain (.tn)
-     * Regex: ^[A-Z0-9._%+-]+@((gmail\.com)|([A-Z0-9.-]+\.tn))$
+     * Email : domaine Gmail ou domaine tunisien (.tn)
+     * Regex : ^[A-Z0-9._%+-]+@((gmail\.com)|([A-Z0-9.-]+\.tn))$
      */
     public static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[A-Z0-9._%+-]+@((gmail\\.com)|([A-Z0-9.-]+\\.tn))$",
@@ -162,44 +55,25 @@ public class ValidationUtils {
     );
     
     /**
-     * Password pattern: Strong password requirements
-     * Regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$
-     * 
-     * SECURITY EXPLANATION:
-     * ────────────────────────────────────────────────────────────────────────────
-     * This regex enforces a STRONG PASSWORD POLICY:
-     * 
-     * Pattern breakdown:
-     * • ^                  → Start of string
-     * • (?=.*[a-z])        → Positive lookahead: at least one lowercase letter
-     * • (?=.*[A-Z])        → Positive lookahead: at least one uppercase letter
-     * • (?=.*\d)           → Positive lookahead: at least one digit (0-9)
-     * • (?=.*[@#$%^&+=!])  → Positive lookahead: at least one special character
-     * • .{8,}              → Match any character, minimum 8 times (min length)
-     * • $                  → End of string
-     * 
-     * Why use lookaheads?
-     * - Lookaheads (?=...) check for conditions WITHOUT consuming characters
-     * - This allows checking multiple conditions at any position in the string
-     * - All conditions must be satisfied for the password to be valid
-     * 
-     * Valid examples:   Password1!  Secure#123  MyPass@99
-     * Invalid examples: password (no uppercase), PASSWORD1 (no lowercase),
-     *                   Password (no digit/special), Pass1! (too short)
-     * ────────────────────────────────────────────────────────────────────────────
+     * Mot de passe : politique de sécurité forte
+     * Regex : ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$
+     *
+     * Explication :
+     * - Au moins une minuscule, une majuscule, un chiffre et un caractère spécial
+     * - Longueur minimale : 8 caractères
      */
     public static final Pattern PASSWORD_PATTERN = Pattern.compile(
         "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$"
     );
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // VALIDATION METHODS - Return boolean
+    // MÉTHODES DE VALIDATION SIMPLES (retournent boolean)
     // ═══════════════════════════════════════════════════════════════════════════
     
     /**
-     * Validates a phone number (8 digits).
-     * @param phone The phone number to validate
-     * @return true if valid, false otherwise
+     * Valide un numéro de téléphone (8 chiffres).
+     * @param phone Le numéro de téléphone à valider
+     * @return true si valide, false sinon
      */
     public static boolean isValidPhone(String phone) {
         if (phone == null) return false;
@@ -207,9 +81,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates a CIN number (8 digits).
-     * @param cin The CIN to validate
-     * @return true if valid, false otherwise
+     * Valide un CIN (8 chiffres).
+     * @param cin Le CIN à valider
+     * @return true si valide, false sinon
      */
     public static boolean isValidCIN(String cin) {
         if (cin == null) return false;
@@ -217,9 +91,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates a name (letters only, including French accents).
-     * @param name The name to validate
-     * @return true if valid, false otherwise
+     * Valide un nom ou prénom (lettres et accents).
+     * @param name Le nom à valider
+     * @return true si valide, false sinon
      */
     public static boolean isValidName(String name) {
         if (name == null || name.trim().isEmpty()) return false;
@@ -227,9 +101,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates a vehicle name (letters AND numbers allowed).
-     * @param vehicleName The vehicle name to validate
-     * @return true if valid, false otherwise
+     * Valide un nom de véhicule (lettres et chiffres autorisés).
+     * @param vehicleName Le nom du véhicule
+     * @return true si valide, false sinon
      */
     public static boolean isValidVehicleName(String vehicleName) {
         if (vehicleName == null || vehicleName.trim().isEmpty()) return false;
@@ -237,9 +111,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates a Tunisian car matriculation (1-3 digits + TU + 4 digits).
-     * @param matricule The matriculation to validate
-     * @return true if valid, false otherwise
+     * Valide une immatriculation tunisienne.
+     * @param matricule L'immatriculation à valider
+     * @return true si valide, false sinon
      */
     public static boolean isValidMatricule(String matricule) {
         if (matricule == null) return false;
@@ -247,9 +121,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates an email (Gmail or .tn domain).
-     * @param email The email to validate
-     * @return true if valid, false otherwise
+     * Valide un email (gmail ou domaine en .tn).
+     * @param email L'email à valider
+     * @return true si valide, false sinon
      */
     public static boolean isValidEmail(String email) {
         if (email == null) return false;
@@ -257,16 +131,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates a password for strength requirements.
-     * Requirements:
-     * - Minimum 8 characters
-     * - At least one lowercase letter
-     * - At least one uppercase letter
-     * - At least one digit
-     * - At least one special character (@#$%^&+=!)
-     * 
-     * @param password The password to validate
-     * @return true if valid, false otherwise
+     * Valide la force d'un mot de passe selon la politique définie.
+     * @param password Le mot de passe à valider
+     * @return true si respecte la politique, false sinon
      */
     public static boolean isValidPassword(String password) {
         if (password == null || password.isEmpty()) return false;
@@ -274,31 +141,31 @@ public class ValidationUtils {
     }
     
     /**
-     * Returns a detailed password strength analysis.
-     * Useful for providing feedback to users during registration.
-     * 
-     * @param password The password to analyze
-     * @return Array of boolean: [hasLowercase, hasUppercase, hasDigit, hasSpecial, hasMinLength]
+     * Retourne une analyse détaillée de la force du mot de passe.
+     * Utile pour fournir un retour utilisateur lors de l'inscription.
+     *
+     * @param password Le mot de passe à analyser
+     * @return Tableau de booléens : [hasLowercase, hasUppercase, hasDigit, hasSpecial, hasMinLength]
      */
     public static boolean[] getPasswordStrengthDetails(String password) {
         if (password == null) password = "";
         return new boolean[] {
-            password.matches(".*[a-z].*"),           // Has lowercase
-            password.matches(".*[A-Z].*"),           // Has uppercase
-            password.matches(".*\\d.*"),             // Has digit
-            password.matches(".*[@#$%^&+=!].*"),     // Has special char
-            password.length() >= 8                    // Has min length
+            password.matches(".*[a-z].*"),           // contient une minuscule
+            password.matches(".*[A-Z].*"),           // contient une majuscule
+            password.matches(".*\\d.*"),             // contient un chiffre
+            password.matches(".*[@#$%^&+=!].*"),     // contient un caractère spécial
+            password.length() >= 8                    // longueur minimale
         };
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // VALIDATION METHODS WITH EXCEPTIONS - For strict validation
+    // MÉTHODES DE VALIDATION STRICTES (lancent IllegalArgumentException)
     // ═══════════════════════════════════════════════════════════════════════════
     
     /**
-     * Validates phone and throws exception if invalid.
-     * @param phone The phone number
-     * @throws IllegalArgumentException if invalid
+     * Valide le téléphone et lance IllegalArgumentException en cas d'erreur.
+     * @param phone Le numéro de téléphone
+     * @throws IllegalArgumentException si invalide
      */
     public static void validatePhone(String phone) throws IllegalArgumentException {
         if (!isValidPhone(phone)) {
@@ -310,9 +177,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates CIN and throws exception if invalid.
-     * @param cin The CIN number
-     * @throws IllegalArgumentException if invalid
+     * Valide le CIN et lance IllegalArgumentException en cas d'erreur.
+     * @param cin Le CIN
+     * @throws IllegalArgumentException si invalide
      */
     public static void validateCIN(String cin) throws IllegalArgumentException {
         if (!isValidCIN(cin)) {
@@ -324,10 +191,10 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates name and throws exception if invalid.
-     * @param name The name
-     * @param fieldName The field name for error message (e.g., "Nom", "Prénom")
-     * @throws IllegalArgumentException if invalid
+     * Valide un nom et lance IllegalArgumentException si invalide.
+     * @param name Le nom
+     * @param fieldName Nom du champ pour le message d'erreur (ex: "Nom", "Prénom")
+     * @throws IllegalArgumentException si invalide
      */
     public static void validateName(String name, String fieldName) throws IllegalArgumentException {
         if (!isValidName(name)) {
@@ -339,10 +206,10 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates vehicle name and throws exception if invalid.
-     * @param vehicleName The vehicle name (e.g., "Golf 7", "Clio 4", "308")
-     * @param fieldName The field name for error message
-     * @throws IllegalArgumentException if invalid
+     * Valide le nom du véhicule et lance IllegalArgumentException si invalide.
+     * @param vehicleName Le nom du véhicule (ex: "Golf 7", "Clio 4")
+     * @param fieldName Nom du champ pour le message d'erreur
+     * @throws IllegalArgumentException si invalide
      */
     public static void validateVehicleName(String vehicleName, String fieldName) throws IllegalArgumentException {
         if (!isValidVehicleName(vehicleName)) {
@@ -354,9 +221,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates matricule and throws exception if invalid.
-     * @param matricule The car matriculation
-     * @throws IllegalArgumentException if invalid
+     * Valide l'immatriculation et lance IllegalArgumentException si invalide.
+     * @param matricule L'immatriculation
+     * @throws IllegalArgumentException si invalide
      */
     public static void validateMatricule(String matricule) throws IllegalArgumentException {
         if (!isValidMatricule(matricule)) {
@@ -368,9 +235,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates email and throws exception if invalid.
-     * @param email The email address
-     * @throws IllegalArgumentException if invalid
+     * Valide l'email et lance IllegalArgumentException si invalide.
+     * @param email L'adresse email
+     * @throws IllegalArgumentException si invalide
      */
     public static void validateEmail(String email) throws IllegalArgumentException {
         if (!isValidEmail(email)) {
@@ -382,9 +249,9 @@ public class ValidationUtils {
     }
     
     /**
-     * Validates password strength and throws exception if weak.
-     * @param password The password to validate
-     * @throws IllegalArgumentException if password doesn't meet requirements
+     * Valide la force du mot de passe et lance IllegalArgumentException si non conforme.
+     * @param password Le mot de passe à valider
+     * @throws IllegalArgumentException si le mot de passe ne respecte pas la politique
      */
     public static void validatePassword(String password) throws IllegalArgumentException {
         if (!isValidPassword(password)) {
@@ -400,7 +267,7 @@ public class ValidationUtils {
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // ERROR MESSAGES - French error messages for UI
+    // MESSAGES D'ERREUR - Messages en français utilisés par l'UI
     // ═══════════════════════════════════════════════════════════════════════════
     
     public static final String PHONE_ERROR = "Le téléphone doit contenir exactement 8 chiffres";
@@ -413,53 +280,36 @@ public class ValidationUtils {
     public static final String PASSWORD_MISMATCH_ERROR = "Les mots de passe ne correspondent pas";
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // HELPER METHOD - Get all regex as documentation
+    // MÉTHODES D'AIDE - Documentation et sécurité des mots de passe
     // ═══════════════════════════════════════════════════════════════════════════
     
     /**
-     * Prints all regex patterns and their explanations.
-     * Useful for documentation and debugging.
+     * Affiche les patterns et leurs explications (utile pour la documentation ou le debug).
      */
     public static void printRegexDocumentation() {
         System.out.println("╔════════════════════════════════════════════════════════════╗");
-        System.out.println("║           REGEX VALIDATION PATTERNS                        ║");
+        System.out.println("║           PATTERNS DE VALIDATION (REGEX)                   ║");
         System.out.println("╠════════════════════════════════════════════════════════════╣");
-        System.out.println("║ Phone:     ^[0-9]{8}$           → 8 digits exactly         ║");
-        System.out.println("║ CIN:       ^[0-9]{8}$           → 8 digits exactly         ║");
-        System.out.println("║ Name:      ^[a-zA-ZÀ-ÿ\\s'-]+$  → Letters + accents        ║");
-        System.out.println("║ Matricule: ^[0-9]{1,3}TU[0-9]{4}$ → 1-3 digits+TU+4 digits ║");
-        System.out.println("║ Email:     ...@gmail.com or @*.tn                          ║");
-        System.out.println("║ Password:  8+ chars, upper, lower, digit, special          ║");
+        System.out.println("║ Téléphone:  ^[0-9]{8}$           → 8 chiffres exactement    ║");
+        System.out.println("║ CIN:        ^[0-9]{8}$           → 8 chiffres exactement    ║");
+        System.out.println("║ Nom:        ^[a-zA-ZÀ-ÿ\\s'-]+$  → Lettres + accents        ║");
+        System.out.println("║ Matricule:  ^[0-9]{1,3}TU[0-9]{4}$ → 1-3 chiffres+TU+4 chiffres ║");
+        System.out.println("║ Email:      ...@gmail.com ou @*.tn                         ║");
+        System.out.println("║ Mot de passe: 8+ chars, maj, min, chiffre, spécial          ║");
         System.out.println("╚════════════════════════════════════════════════════════════╝");
     }
     
-    // ═══════════════════════════════════════════════════════════════════════════
-    // PASSWORD SECURITY - Hashing and Verification
-    // ═══════════════════════════════════════════════════════════════════════════
-    
     /**
-     * Hashes a password using SHA-256 algorithm.
-     * 
-     * SECURITY EXPLANATION:
-     * ────────────────────────────────────────────────────────────────────────────
-     * Why hash passwords?
-     * • NEVER store plain text passwords - if database is compromised, passwords are exposed
-     * • SHA-256 is a one-way function - cannot reverse the hash to get original password
-     * • Each password produces a unique 64-character hexadecimal hash
-     * 
-     * How it works:
-     * 1. Get MessageDigest instance for SHA-256 algorithm
-     * 2. Convert password string to bytes (UTF-8 encoding)
-     * 3. Compute the hash digest
-     * 4. Convert bytes to hexadecimal string for storage
-     * 
-     * Example:
-     *   Input:  "MyPass@123"
-     *   Output: "a5b9f1c3d4e5f6..." (64 hex characters)
-     * ────────────────────────────────────────────────────────────────────────────
-     * 
-     * @param password The plain text password to hash
-     * @return The SHA-256 hash as a hexadecimal string, or null if hashing fails
+     * Hache un mot de passe avec SHA-256.
+     *
+     * EXPLICATION SÉCURITÉ :
+     * - Il ne faut jamais stocker de mot de passe en clair.
+     * - Le hachage est une fonction à sens unique : on ne peut pas retrouver
+     *   le mot de passe d'origine à partir du haché.
+     * - SHA-256 produit une chaîne hexadécimale d'une longueur fixe.
+     *
+     * @param password Mot de passe en clair
+     * @return Haché SHA-256 sous forme hexadécimale, ou null si échec
      */
     public static String hashPassword(String password) {
         if (password == null || password.isEmpty()) {
@@ -467,16 +317,15 @@ public class ValidationUtils {
         }
         
         try {
-            // Step 1: Get SHA-256 MessageDigest instance
+            // Obtenir l'instance MessageDigest pour SHA-256
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             
-            // Step 2: Compute hash of password bytes
+            // Calcul du haché des octets du mot de passe
             byte[] hashBytes = md.digest(password.getBytes());
             
-            // Step 3: Convert bytes to hexadecimal string
+            // Conversion des octets en chaîne hexadécimale
             StringBuilder hexString = new StringBuilder();
             for (byte b : hashBytes) {
-                // Format each byte as 2-digit hex (with leading zero if needed)
                 String hex = Integer.toHexString(0xff & b);
                 if (hex.length() == 1) {
                     hexString.append('0');
@@ -487,36 +336,27 @@ public class ValidationUtils {
             return hexString.toString();
             
         } catch (NoSuchAlgorithmException e) {
-            // SHA-256 should always be available in Java
+            // SHA-256 devrait toujours être disponible
             System.err.println("Erreur: Algorithme SHA-256 non disponible: " + e.getMessage());
             return null;
         }
     }
     
     /**
-     * Verifies a plain text password against a stored hash.
-     * 
-     * SECURITY EXPLANATION:
-     * ────────────────────────────────────────────────────────────────────────────
-     * During login, we:
-     * 1. Take the user's entered password
-     * 2. Hash it using the same algorithm (SHA-256)
-     * 3. Compare the resulting hash with the stored hash
-     * 4. If they match, the password is correct
-     * 
-     * We NEVER decrypt the stored hash - hashing is one-way!
-     * ────────────────────────────────────────────────────────────────────────────
-     * 
-     * @param plainPassword The plain text password entered by user
-     * @param storedHash The stored SHA-256 hash from database
-     * @return true if password matches, false otherwise
+     * Vérifie un mot de passe en clair contre un haché stocké.
+     *
+     * MÉTHODE : on hache le mot de passe fourni et on compare les deux hachés.
+     *
+     * @param plainPassword Mot de passe entré par l'utilisateur
+     * @param storedHash Haché SHA-256 stocké
+     * @return true si la comparaison réussit, false sinon
      */
     public static boolean verifyPassword(String plainPassword, String storedHash) {
         if (plainPassword == null || storedHash == null) {
             return false;
         }
         
-        // Hash the entered password and compare with stored hash
+        // Hacher l'entrée et comparer
         String hashedInput = hashPassword(plainPassword);
         return storedHash.equals(hashedInput);
     }

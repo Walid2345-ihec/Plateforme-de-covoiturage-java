@@ -8,7 +8,8 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 /**
- * Enhanced Modern Passenger Dashboard Panel
+ * Panneau passager moderne amélioré
+ * Fournit un tableau de bord moderne pour le rôle passager avec recherche et gestion des réservations
  */
 public class EnhancedPassengerPanel extends JPanel {
     
@@ -16,7 +17,7 @@ public class EnhancedPassengerPanel extends JPanel {
     private JPanel contentPanel;
     private CardLayout contentLayout;
     
-    // Stat cards
+    // Cartes de statistiques
     private ModernUIComponents.StatCard reservationsCard;
     private ModernUIComponents.StatCard trajetsDispoCard;
     private ModernUIComponents.StatCard statusCard;
@@ -27,7 +28,7 @@ public class EnhancedPassengerPanel extends JPanel {
     private JTable mesReservationsTable;
     private DefaultTableModel reservationsModel;
     
-    // Sidebar buttons
+    // Boutons de la barre latérale
     private java.util.List<ModernUIComponents.SidebarButton> sidebarButtons = new java.util.ArrayList<>();
     
     public EnhancedPassengerPanel(MainFrame mainFrame) {
@@ -38,10 +39,10 @@ public class EnhancedPassengerPanel extends JPanel {
     }
     
     private void initializeComponents() {
-        // Sidebar
+        // Barre latérale
         add(createSidebar(), BorderLayout.WEST);
         
-        // Content area
+        // Zone de contenu
         contentLayout = new CardLayout();
         contentPanel = new JPanel(contentLayout);
         contentPanel.setBackground(Colors.SURFACE);
@@ -60,7 +61,7 @@ public class EnhancedPassengerPanel extends JPanel {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 
-                // Green gradient for passenger
+                // Dégradé vert pour l'espace passager
                 GradientPaint gradient = new GradientPaint(
                     0, 0, new Color(39, 174, 96),
                     0, getHeight(), new Color(22, 160, 133)
@@ -73,7 +74,7 @@ public class EnhancedPassengerPanel extends JPanel {
         sidebar.setPreferredSize(new Dimension(250, 0));
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         
-        // Header with user info
+        // En-tête avec infos utilisateur
         JPanel headerPanel = new JPanel();
         headerPanel.setOpaque(false);
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
@@ -103,14 +104,14 @@ public class EnhancedPassengerPanel extends JPanel {
         sidebar.add(headerPanel);
         sidebar.add(Box.createVerticalStrut(20));
         
-        // Menu items
+        // Éléments du menu
         addSidebarButton(sidebar, "Tableau de Bord", "DASHBOARD", true);
         addSidebarButton(sidebar, "Rechercher Trajets", "SEARCH", false);
         addSidebarButton(sidebar, "Mes Réservations", "RESERVATIONS", false);
         
         sidebar.add(Box.createVerticalGlue());
         
-        // Logout button
+        // Bouton de déconexion
         JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         logoutPanel.setOpaque(false);
         logoutPanel.setMaximumSize(new Dimension(250, 80));
@@ -155,7 +156,7 @@ public class EnhancedPassengerPanel extends JPanel {
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
-        // Header
+        // En-tête
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         
@@ -177,7 +178,7 @@ public class EnhancedPassengerPanel extends JPanel {
         headerPanel.add(titlePanel, BorderLayout.WEST);
         panel.add(headerPanel, BorderLayout.NORTH);
         
-        // Stats cards
+        // Cartes de statistiques
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 25));
         statsPanel.setOpaque(false);
         statsPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
@@ -192,7 +193,7 @@ public class EnhancedPassengerPanel extends JPanel {
         
         panel.add(statsPanel, BorderLayout.CENTER);
         
-        // Quick actions
+        // Actions rapides
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         actionsPanel.setOpaque(false);
         actionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
@@ -225,17 +226,17 @@ public class EnhancedPassengerPanel extends JPanel {
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         
-        // Header with title
+        // En-tête avec titre
         JLabel titleLabel = new JLabel("Rechercher des Trajets");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Main content with search form and table
+        // Contenu principal avec formulaire de recherche et table
         JPanel mainContent = new JPanel(new BorderLayout(0, 20));
         mainContent.setOpaque(false);
         
-        // Search filters card
+        // Carte des filtres de recherche
         ModernUIComponents.GlassCard searchCard = new ModernUIComponents.GlassCard();
         searchCard.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 15));
         searchCard.setPreferredSize(new Dimension(0, 80));
@@ -286,7 +287,7 @@ public class EnhancedPassengerPanel extends JPanel {
         
         panel.add(mainContent, BorderLayout.CENTER);
         
-        // Action buttons
+        // Boutons d'action
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
@@ -332,7 +333,7 @@ public class EnhancedPassengerPanel extends JPanel {
         ModernUIComponents.applyModernScrollBar(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Info panel at bottom
+        // Panneau d'information en bas
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         infoPanel.setOpaque(false);
         
@@ -363,7 +364,7 @@ public class EnhancedPassengerPanel extends JPanel {
         table.setShowVerticalLines(false);
         table.setIntercellSpacing(new Dimension(0, 1));
         
-        // Header styling
+        // Style de l'entête
         JTableHeader header = table.getTableHeader();
         header.setFont(Fonts.BODY_BOLD);
         header.setBackground(Colors.SURFACE);
@@ -371,7 +372,7 @@ public class EnhancedPassengerPanel extends JPanel {
         header.setPreferredSize(new Dimension(0, 50));
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.BORDER));
         
-        // Alternating row colors with green tint
+        // Alternance de couleur des lignes avec une teinte verte
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -396,15 +397,15 @@ public class EnhancedPassengerPanel extends JPanel {
         }
     }
     
-    // ==================== Business Logic ====================
-    
+    // ==================== Logique Métier ====================
+
     private void filterTrajets(String depart, String arrivee) {
         trajetsModel.setRowCount(0);
 
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // Show trajet only if it has a conductor and available places
+            // Montrer le trajet uniquement s'il a un conducteur et des places disponibles
             Conducteur c = t.getConducteur();
-            // Exclude finished trajets as they should no longer be available for reservation
+            // Exclure les trajets terminés car ils ne doivent plus être réservables
             if (c == null || t.getAvailablePlaces() <= 0 || t.isFinished()) continue;
 
             boolean matchDepart = depart.isEmpty() ||
@@ -455,7 +456,7 @@ public class EnhancedPassengerPanel extends JPanel {
             JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // Find the trajet and add a demande (do not decrement places yet)
+            // Trouver le trajet et ajouter une demande (ne pas décrémenter les places encore)
             for (Trajet t : mainFrame.getGestion().getTrajets()) {
                 Conducteur c = t.getConducteur();
                 if (c == null) continue;
@@ -465,7 +466,7 @@ public class EnhancedPassengerPanel extends JPanel {
                     t.getDepartTrajet().equals(depart) && 
                     t.getArriveeTrajet().equals(arrivee)) {
 
-                    // Ignore finished trajets - shouldn't be reservable
+                    // Ignorer les trajets terminés - ne doivent pas être réservés
                     if (t.isFinished()) {
                         JOptionPane.showMessageDialog(this, "Ce trajet est terminé et n'est plus disponible.", "Info", JOptionPane.INFORMATION_MESSAGE);
                         return;
@@ -473,7 +474,7 @@ public class EnhancedPassengerPanel extends JPanel {
 
                      boolean added = mainFrame.getGestion().ajouter_demande_pour_trajet(t, passager.getCin());
                     if (added) {
-                        // Also keep conductor-level mapping for notifications
+                        // Mise à jour mapping conducteur->demandes pour notifications
                         if (t.getConducteur() != null) {
                             mainFrame.getGestion().ajouter_demande_pour_conducteur(t.getConducteur().getCin(), passager.getCin());
                         }
@@ -488,12 +489,12 @@ public class EnhancedPassengerPanel extends JPanel {
                             "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
 
-                    // Refresh relevant views including reservations (pending + accepted)
+                    // Rafraîchir les vues pertinentes
                     refreshTrajetsTable();
                     refreshDashboard();
                     refreshReservationsTable();
 
-                    // Notify main frame so driver panels / other views refresh immediately
+                    // Notifier le main frame pour mise à jour globale
                     if (mainFrame != null) {
                         mainFrame.notifyDataChanged();
                     }
@@ -506,8 +507,8 @@ public class EnhancedPassengerPanel extends JPanel {
         }
     }
 
-    // ==================== Refresh Methods ====================
-    
+    // ==================== Méthodes de rafraîchissement ====================
+
     public void refresh() {
         refreshDashboard();
         refreshTrajetsTable();
@@ -517,7 +518,7 @@ public class EnhancedPassengerPanel extends JPanel {
     }
 
     /**
-     * Refresh only the data models/tables without changing the visible card.
+     * Rafraîchit uniquement les modèles de données / tables sans changer la carte visible.
      */
     public void refreshModels() {
         refreshDashboard();
@@ -526,7 +527,7 @@ public class EnhancedPassengerPanel extends JPanel {
     }
 
     private void refreshDashboard() {
-        // Count available trajets
+        // Compte des trajets disponibles
         int availableCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null &&
@@ -537,7 +538,7 @@ public class EnhancedPassengerPanel extends JPanel {
         }
         trajetsDispoCard.setValue(String.valueOf(availableCount));
         
-        // Count reservations for current passager
+        // Compte des réservations pour le passager courant
         Passager passager = mainFrame.getCurrentPassager();
         int reservationCount = 0;
         if (passager != null) {
@@ -552,7 +553,7 @@ public class EnhancedPassengerPanel extends JPanel {
         }
         reservationsCard.setValue(String.valueOf(reservationCount));
         
-        // Update status
+        // Met à jour le statut
         if (passager != null && passager.isChercheCovoit()) {
             statusCard.setValue("En recherche");
         } else {
@@ -565,7 +566,7 @@ public class EnhancedPassengerPanel extends JPanel {
 
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             Conducteur c = t.getConducteur();
-            // Hide finished trajets from passenger search/list
+            // Masquer les trajets terminés de la recherche passager
             if (c == null || t.getAvailablePlaces() <= 0 || t.isFinished()) continue;
 
             trajetsModel.addRow(new Object[]{
@@ -586,7 +587,7 @@ public class EnhancedPassengerPanel extends JPanel {
         if (passager == null) return;
 
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // First: accepted reservations
+            // D'abord : réservations acceptées
             for (Passager p : t.getPassagersAcceptes()) {
                 if (p.getCin().equals(passager.getCin())) {
                     Conducteur c = t.getConducteur();
@@ -605,7 +606,7 @@ public class EnhancedPassengerPanel extends JPanel {
                 }
             }
 
-            // Second: pending requests where the current passager is in demandes
+            // Ensuite : demandes en attente où le passager courant est dans les demandes
             for (Passager p : t.getPassagersDemandes()) {
                 if (p.getCin().equals(passager.getCin())) {
                     Conducteur c = t.getConducteur();

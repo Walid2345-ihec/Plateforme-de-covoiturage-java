@@ -40,11 +40,7 @@ public class Passager extends User {
     }
     
     /**
-     * Constructor for loading from CSV (password already hashed).
-     * This constructor accepts a pre-hashed password for database loading.
-     * 
-     * SECURITY NOTE: Use this constructor ONLY when loading from CSV.
-     * For new passenger registration, use the standard constructor with plain password.
+     * Constructeur pour le chargement des données à partir du CSV
      */
     public Passager(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, 
                     String adresse, String mail, String passwordHash, boolean isHashedPassword,

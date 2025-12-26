@@ -9,7 +9,7 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 /**
- * Driver Dashboard Panel
+ * Panneau du tableau de bord du conducteur
  */
 public class DriverPanel extends JPanel {
     
@@ -25,7 +25,7 @@ public class DriverPanel extends JPanel {
     private JTable passagersAcceptesTable;
     private DefaultTableModel passagersAcceptesTableModel;
     
-    // Labels for stats
+    // Étiquettes pour les statistiques
     private JLabel placesLabel;
     private JLabel trajetsCountLabel;
     private JLabel demandesCountLabel;
@@ -39,13 +39,13 @@ public class DriverPanel extends JPanel {
     }
     
     private void initializeComponents() {
-        // Header
+        // En-tête
         add(createHeaderPanel(), BorderLayout.NORTH);
         
-        // Sidebar
+        // Barre latérale
         add(createSidebarPanel(), BorderLayout.WEST);
         
-        // Content area with card layout
+        // Zone de contenu avec CardLayout
         contentLayout = new CardLayout();
         contentPanel = new JPanel(contentLayout);
         contentPanel.setBackground(StyleUtils.BACKGROUND_COLOR);
@@ -65,13 +65,13 @@ public class DriverPanel extends JPanel {
         panel.setPreferredSize(new Dimension(0, 70));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         
-        // Left - Title
+        // Partie gauche - Titre
         JLabel titleLabel = new JLabel("🚗 Espace Conducteur");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
         panel.add(titleLabel, BorderLayout.WEST);
         
-        // Right - User info and logout
+        // Partie droite - Informations utilisateur et déconnexion
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setOpaque(false);
         
@@ -107,7 +107,7 @@ public class DriverPanel extends JPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         
-        // Menu items
+        // Éléments du menu
         addMenuItem(panel, "Tableau de Bord", "DASHBOARD");
         addMenuItem(panel, "Mes Trajets", "TRAJETS");
         addMenuItem(panel, "Demandes Reçues", "DEMANDES");
@@ -157,11 +157,11 @@ public class DriverPanel extends JPanel {
         panel.setBackground(StyleUtils.BACKGROUND_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Title
+        // Titre
         JLabel titleLabel = StyleUtils.createTitleLabel("Tableau de Bord");
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Stats cards
+        // Cartes de statistiques
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         statsPanel.setOpaque(false);
         statsPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
@@ -183,7 +183,7 @@ public class DriverPanel extends JPanel {
         
         panel.add(statsPanel, BorderLayout.CENTER);
         
-        // Quick actions
+        // Actions rapides
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         actionsPanel.setOpaque(false);
         
@@ -237,11 +237,11 @@ public class DriverPanel extends JPanel {
         panel.setBackground(StyleUtils.BACKGROUND_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Title
+        // Titre
         JLabel titleLabel = StyleUtils.createTitleLabel("Mes Trajets");
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Table
+        // Tableau
         String[] columns = {"Départ", "Arrivée", "Durée", "Prix (TND)", "Statut", "Passager"};
         trajetsTableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -256,7 +256,7 @@ public class DriverPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Buttons
+        // Boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setOpaque(false);
         
@@ -282,11 +282,11 @@ public class DriverPanel extends JPanel {
         panel.setBackground(StyleUtils.BACKGROUND_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Title
+        // Titre
         JLabel titleLabel = StyleUtils.createTitleLabel("Demandes Reçues");
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Table
+        // Tableau
         String[] columns = {"CIN", "Nom", "Prénom", "Téléphone", "Email"};
         demandesTableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -301,7 +301,7 @@ public class DriverPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Buttons
+        // Boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setOpaque(false);
         
@@ -323,11 +323,11 @@ public class DriverPanel extends JPanel {
         panel.setBackground(StyleUtils.BACKGROUND_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Title
+        // Titre
         JLabel titleLabel = StyleUtils.createTitleLabel("Passagers Acceptés");
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Table
+        // Tableau
         String[] columns = {"CIN", "Nom", "Prénom", "Téléphone", "Email", "Adresse"};
         passagersAcceptesTableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -342,7 +342,7 @@ public class DriverPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Refresh button
+        // Bouton Actualiser
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setOpaque(false);
         JButton refreshBtn = StyleUtils.createSecondaryButton("Actualiser");
@@ -358,18 +358,18 @@ public class DriverPanel extends JPanel {
         panel.setBackground(StyleUtils.BACKGROUND_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Title
+        // Titre
         JLabel titleLabel = StyleUtils.createTitleLabel("Créer un Nouveau Trajet");
         panel.add(titleLabel, BorderLayout.NORTH);
         
-        // Form
+        // Formulaire
         JPanel formCard = StyleUtils.createCardPanel();
         formCard.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
-        // Departure
+        // Départ
         gbc.gridx = 0; gbc.gridy = 0;
         formCard.add(StyleUtils.createLabel("Point de Départ :"), gbc);
         gbc.gridx = 1;
@@ -377,14 +377,14 @@ public class DriverPanel extends JPanel {
         departField.setPreferredSize(new Dimension(300, 40));
         formCard.add(departField, gbc);
         
-        // Arrival
+        // Arrivée
         gbc.gridx = 0; gbc.gridy = 1;
         formCard.add(StyleUtils.createLabel("Point d'Arrivée :"), gbc);
         gbc.gridx = 1;
         JTextField arriveeField = StyleUtils.createStyledTextField();
         formCard.add(arriveeField, gbc);
         
-        // Duration
+        // Durée
         gbc.gridx = 0; gbc.gridy = 2;
         formCard.add(StyleUtils.createLabel("Durée (minutes) :"), gbc);
         gbc.gridx = 1;
@@ -393,7 +393,7 @@ public class DriverPanel extends JPanel {
         dureeSpinner.setPreferredSize(new Dimension(100, 40));
         formCard.add(dureeSpinner, gbc);
         
-        // Price
+        // Prix
         gbc.gridx = 0; gbc.gridy = 3;
         formCard.add(StyleUtils.createLabel("Prix par personne (TND) :"), gbc);
         gbc.gridx = 1;
@@ -402,7 +402,7 @@ public class DriverPanel extends JPanel {
         prixSpinner.setPreferredSize(new Dimension(100, 40));
         formCard.add(prixSpinner, gbc);
         
-        // Create button
+        // Bouton de création
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
         gbc.insets = new Insets(30, 10, 10, 10);
         JButton createBtn = StyleUtils.createSuccessButton("Créer le Trajet");
@@ -425,7 +425,7 @@ public class DriverPanel extends JPanel {
         });
         formCard.add(createBtn, gbc);
         
-        // Center the form
+        // Centrer le formulaire
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(formCard);
@@ -434,8 +434,8 @@ public class DriverPanel extends JPanel {
         return panel;
     }
     
-    // ==================== Business Logic Methods ====================
-    
+    // ==================== Méthodes de logique métier ====================
+
     private void createTrajet(String depart, String arrivee, int dureeMinutes, float prix) {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) {
@@ -539,13 +539,13 @@ public class DriverPanel extends JPanel {
             return;
         }
 
-        // Find the corresponding trajet and the corresponding pending passenger
+        // Rechercher le trajet correspondant et le passager en attente correspondant
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null &&
                 t.getConducteur().getCin().equals(conducteur.getCin())) {
 
-                // iterate demandes for this trajet
+                // itérer les demandes pour ce trajet
                 for (Passager p : t.getPassagersDemandes()) {
                     if (count == selectedRow) {
                         Passager passager = p;
@@ -567,7 +567,7 @@ public class DriverPanel extends JPanel {
                                 refreshPassagersAcceptesTable();
                                 refreshDashboard();
 
-                                // Notify main frame to refresh other panels (passenger view)
+                                // Notifier le MainFrame pour rafraîchir les autres panneaux (vue passager)
                                 if (mainFrame != null) {
                                     mainFrame.notifyDataChanged();
                                 }
@@ -585,8 +585,8 @@ public class DriverPanel extends JPanel {
         StyleUtils.showError(this, "Erreur: Demande non trouvée");
     }
     
-    // ==================== Refresh Methods ====================
-    
+    // ==================== Méthodes de rafraîchissement ====================
+
     public void refresh() {
         refreshDashboard();
         refreshTrajetsTable();
@@ -596,8 +596,9 @@ public class DriverPanel extends JPanel {
     }
 
     /**
-     * Refresh only the data models/tables without changing the visible card.
-     * Used when external events (other users) modify data and we want to update UI in-place.
+     * Rafraîchir uniquement les modèles/tables de données sans changer la carte visible.
+     * Utilisé lorsque des événements externes (autres utilisateurs) modifient les données
+     * et que l'on souhaite mettre à jour l'interface en place.
      */
     public void refreshModels() {
         refreshDashboard();
@@ -610,12 +611,12 @@ public class DriverPanel extends JPanel {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
         
-        // Update places
+        // Mettre à jour le nombre de places
         if (placesLabel != null) {
             placesLabel.setText(String.valueOf(conducteur.getPlacesDisponibles()));
         }
         
-        // Count trajets
+        // Compter les trajets
         int trajetCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
@@ -627,7 +628,7 @@ public class DriverPanel extends JPanel {
             trajetsCountLabel.setText(String.valueOf(trajetCount));
         }
         
-        // Count pending demandes (PENDING_APPROVAL status)
+        // Compter les demandes en attente (statut PENDING_APPROVAL)
         int demandesCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
@@ -677,7 +678,7 @@ public class DriverPanel extends JPanel {
                 t.getConducteur().getCin().equals(conducteur.getCin())) {
 
                 for (Passager p : t.getPassagersDemandes()) {
-                    // PRIVACY: Mask sensitive data until accepted
+                    // CONFIDENTIALITÉ : masquer les données sensibles tant qu'elles ne sont pas acceptées
                     String maskedCin = p.getCin().length() > 3 ? ("*****" + p.getCin().substring(p.getCin().length() - 3)) : p.getCin();
                     String maskedPhone = p.getTel().length() > 4 ? ("****" + p.getTel().substring(p.getTel().length() - 4)) : p.getTel();
                     String maskedEmail = maskEmail(p.getMail());
@@ -700,21 +701,20 @@ public class DriverPanel extends JPanel {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
 
-        // Find passengers assigned to this conductor's trajets with IN_PROGRESS or FINISHED status
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && 
                 t.getConducteur().getCin().equals(conducteur.getCin()) &&
                 (t.isInProgress() || t.isFinished())) {
 
                 for (Passager p : t.getPassagersAcceptes()) {
-                    // PRIVACY: Mask CIN even for accepted passengers
+                    // CONFIDENTIALITÉ : masquer le CIN même pour les passagers acceptés
                     String maskedCin = p.getCin().length() > 3 ? ("*****" + p.getCin().substring(p.getCin().length() - 3)) : p.getCin();
                     passagersAcceptesTableModel.addRow(new Object[]{
                         maskedCin,
                         p.getNom(),
                         p.getPrenom(),
-                        p.getTel(),  // Full phone for accepted passengers (they need to contact)
-                        p.getMail(), // Full email for accepted passengers
+                        p.getTel(),
+                        p.getMail(),
                         p.getAdresse()
                     });
                 }

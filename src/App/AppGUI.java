@@ -5,17 +5,14 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * GUI Entry Point for the Carpooling Platform
- * This launches the graphical user interface version of the application
- * 
- * @author ricko
+ * AppGUI - Point d'entrée de l'application graphique
  */
 public class AppGUI {
     
     public static void main(String[] args) {
-        // Set system look and feel
+        // Met le look and feel de Nimbus
         try {
-            // Try to use a modern look and feel
+            // Essaye de trouver Nimbus
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
@@ -23,7 +20,7 @@ public class AppGUI {
                 }
             }
         } catch (Exception e) {
-            // Fall back to system look and feel
+            // Si Nimbus n'est pas trouvé, utilise le look and feel par défaut
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ex) {
@@ -31,30 +28,29 @@ public class AppGUI {
             }
         }
         
-        // Customize UI defaults for better appearance
+        // Customiser l'apparence de Nimbus
         UIManager.put("Button.arc", 10);
         UIManager.put("Component.arc", 10);
         UIManager.put("TextComponent.arc", 10);
         UIManager.put("OptionPane.messageFont", new Font("Segoe UI", Font.PLAIN, 14));
         UIManager.put("OptionPane.buttonFont", new Font("Segoe UI", Font.PLAIN, 13));
-        
-        // Enable anti-aliasing for text
+
         System.setProperty("awt.useSystemAAFontSettings", "on");
         System.setProperty("swing.aatext", "true");
         
-        // Launch the application on the Event Dispatch Thread
+        // Lancer l'application sur le thread d'événement Swing
         SwingUtilities.invokeLater(() -> {
-            // Show splash screen
+            //Montrer l'écran de démarrage
             showSplashScreen();
             
-            // Create and show main frame
+            // Créer la fenêtre principale
             MainFrame mainFrame = new MainFrame();
             mainFrame.setVisible(true);
         });
     }
     
     /**
-     * Shows a brief splash screen while the application loads
+     * Affiche un écran de démarrage pendant le chargement de l'application
      */
     private static void showSplashScreen() {
         JWindow splash = new JWindow();
@@ -92,7 +88,7 @@ public class AppGUI {
         subtitleLabel.setForeground(new Color(255, 255, 255, 200));
         content.add(subtitleLabel, BorderLayout.CENTER);
         
-        // Loading indicator
+        // Indicateur de chargement
         JLabel loadingLabel = new JLabel("Chargement...", SwingConstants.CENTER);
         loadingLabel.setFont(new Font("Segoe UI", Font.ITALIC, 14));
         loadingLabel.setForeground(new Color(255, 255, 255, 180));
@@ -102,7 +98,7 @@ public class AppGUI {
         splash.setContentPane(content);
         splash.setVisible(true);
         
-        // Wait briefly
+        // Attendre 1,5 secondes
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {

@@ -6,13 +6,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
- * User - Base class for all users in the carpooling platform
- * 
- * VALIDATION RULES:
- * - CIN: exactly 8 digits (^[0-9]{8}$)
- * - Phone: exactly 8 digits (^[0-9]{8}$)
- * - Name/Prénom: letters only including French accents (^[a-zA-ZÀ-ÿ\s'-]+$)
- * - Email: @gmail.com or @*.tn domain
+ * User - Classe de base représentant un utilisateur.
  */
 public class User {
     protected String cin;
@@ -22,12 +16,8 @@ public class User {
     protected Year anneeUniversitaire;
     protected String adresse;
     protected String mail;
-    protected String passwordHash; // Stores SHA-256 hash of password - NEVER plain text!
+    protected String passwordHash; // Stocke le hash du mot de passe, pas le mot de passe en clair
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Using centralized validation from ValidationUtils class
-    // ═══════════════════════════════════════════════════════════════════════════
-    
     // Constructeur par défaut (interactif avec gestion des exceptions)
     public User() {
         // Utilisation d'un Scanner local. Il est préférable de ne pas le fermer
@@ -129,28 +119,27 @@ public class User {
         // VALIDATION avec expressions régulières
         // ═══════════════════════════════════════════════════════════════════════════
         
-        // Validate CIN: exactly 8 digits
+        // Valider CIN: 8 charactères
         ValidationUtils.validateCIN(cin);
         
-        // Validate Nom: letters only (including French accents)
+        // Valider Nom: lettres
         ValidationUtils.validateName(nom, "Nom");
         
-        // Validate Prénom: letters only (including French accents)
+        // Valider Prénom: lettres
         ValidationUtils.validateName(prenom, "Prénom");
         
-        // Validate Phone: exactly 8 digits
+        // Valider tel : 8 charactères
         ValidationUtils.validatePhone(tel);
         
-        // Validate Year
+        // Valider anneeUniversitaire
         if (anneeUniversitaire == null) {
             throw new IllegalArgumentException("L'année universitaire ne peut pas être nulle.");
         }
         
-        // Validate Email: @gmail.com or @*.tn
+        // Valider Email: @gmail.com ou @*.tn
         ValidationUtils.validateEmail(mail);
         
-        // Validate Password strength (if provided)
-        // Note: password can be null when loading from CSV (already hashed)
+        // Valider Password
         if (password != null && !password.isEmpty()) {
             ValidationUtils.validatePassword(password);
             this.passwordHash = ValidationUtils.hashPassword(password);
@@ -168,15 +157,11 @@ public class User {
     }
     
     /**
-     * Constructor for loading from CSV (password already hashed).
-     * This constructor accepts a pre-hashed password for database loading.
-     * 
-     * SECURITY NOTE: Use this constructor ONLY when loading from CSV.
-     * For new user registration, use the standard constructor with plain password.
+     * Constructeur pour le chargement des données à partir du CSV
      */
     public User(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, 
                 String adresse, String mail, String passwordHash, boolean isHashedPassword) {
-        // Minimal validation for CSV loading
+        // Validation basique pour le chargement CSV
         this.cin = cin;
         this.nom = nom;
         this.prenom = prenom;
@@ -198,11 +183,7 @@ public class User {
     public String getPasswordHash() { return passwordHash; }
     
     /**
-     * Verifies if the provided plain text password matches the stored hash.
-     * Use this method for login authentication.
-     * 
-     * @param plainPassword The password entered by the user
-     * @return true if password matches, false otherwise
+     * Vérifie si le mot de passe fourni correspond au hash stocké
      */
     public boolean verifyPassword(String plainPassword) {
         return ValidationUtils.verifyPassword(plainPassword, this.passwordHash);
@@ -219,16 +200,16 @@ public class User {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     
     /**
-     * Sets a new password (will be hashed automatically).
-     * Use this for password changes.
-     * 
-     * @param newPassword The new plain text password
+     * Ajoute un nouveau mot de passe (hashé automatiquement)
      */
     public void setPassword(String newPassword) {
         ValidationUtils.validatePassword(newPassword);
         this.passwordHash = ValidationUtils.hashPassword(newPassword);
     }
 
+    /**
+     * Polymorphisme toString()
+     */
     @Override
     public String toString() {
         return "User{" +

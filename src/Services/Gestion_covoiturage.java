@@ -6,8 +6,21 @@ import java.util.Map;
 import java.util.Vector;
 
 /**
- * Classe de gestion du système de covoiturage
- * @author ricko
+ * Gestion_covoiturage
+ * -------------------
+ * Classe centrale de gestion du système de covoiturage.
+ * Elle constitue un gestionnaire en mémoire des utilisateurs (conducteurs et passengers),
+ * des trajets disponibles, des demandes effectuées par les passagers et des passagers
+ * acceptés. Cette classe fournit une API utilisée par l'interface graphique pour
+ * rechercher l'id  des utilisateurs, créer des demandes et accepter des passagers
+ * sur des trajets.
+ *
+ * Principales responsabilités :
+ * - maintenir les collections d'objets (users, trajets, demandes, passagers acceptés)
+ * - exposer des méthodes utilitaires pour l'UI (recherche, ajout/suppression de demandes,
+ *   acceptation de passagers)
+ * - veiller à la cohérence des structures (mise à jour des places disponibles, mapping
+ *   demandes_par_conducteur, historique des passagers acceptés, statut des trajets)
  */
 public class Gestion_covoiturage {
     private int Index_trajet_conducteur = -1;
@@ -27,6 +40,8 @@ public class Gestion_covoiturage {
     // Setters
     public void setUsers(Vector<User> users) { this.users = users; }
     public void setTrajets(Vector<Trajet> trajets) { this.trajets = trajets; }
+
+    // ===== Recherche d'utilisateurs =====
 
     /**
      * Recherche un utilisateur par son CIN
@@ -75,7 +90,7 @@ public class Gestion_covoiturage {
     }
 
     /**
-     * Supprimer une demande pour un conducteur
+     * Supprimer une demande pour un conducteur (lorsque le passager est acceptée, sa demande est supprimée grâce à cette méthode)
      */
     public void supprimer_demande_pour_conducteur(String cinConducteur, String cinPassager) {
         Vector<String> demandes = demandes_par_conducteur.get(cinConducteur);
@@ -88,7 +103,7 @@ public class Gestion_covoiturage {
     }
 
     /**
-     * Ajouter une demande pour un trajet spécifique
+     * Ajouter une demande pour un trajet spécifique (le passager choisit un trajet et fait une demande au conducteur)
      */
     public boolean ajouter_demande_pour_trajet(Trajet t, String cinPassager) {
         if (t == null || cinPassager == null || cinPassager.trim().isEmpty()) return false;
@@ -106,8 +121,8 @@ public class Gestion_covoiturage {
     }
 
     /**
-     * Accepter un passager pour un trajet
-     * Retourne true si l'acceptation a réussi.
+     * Accepter un passager pour un trajet afin qu'il soit ajouté à la liste des passagers acceptés et
+     * retiré de celle des demandes.
      */
     public boolean accepter_passager_pour_trajet(Trajet t, String cinPassager) {
         if (t == null || cinPassager == null || cinPassager.trim().isEmpty()) return false;
@@ -116,7 +131,7 @@ public class Gestion_covoiturage {
         Passager p = rechercher_passager(cinPassager);
         if (p == null) return false;
 
-        // Use the conducteur associated with the trajet
+        // Utiliser le conducteur associé avec le trajet
         Conducteur conducteur = t.getConducteur();
 
         // Vérifier places disponibles au niveau du trajet
@@ -126,7 +141,7 @@ public class Gestion_covoiturage {
         boolean accepted = t.acceptPassenger(p);
         if (!accepted) return false;
 
-        // Mark passenger as no longer searching -> reserved
+        // L'etat du passager devient "réservé"
         try {
             p.setChercheCovoit(false);
         } catch (Exception ignored) {}
@@ -140,7 +155,7 @@ public class Gestion_covoiturage {
         Vector<String> demandes = demandes_par_conducteur.get(conducteur.getCin());
         if (demandes != null) demandes.remove(cinPassager);
 
-        // Ajouter à historique global
+        // Ajouter à l'historique global
         passagers_acceptes.add(p);
 
         // Mise à jour statut et validité

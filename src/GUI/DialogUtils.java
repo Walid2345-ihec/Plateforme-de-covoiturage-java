@@ -5,12 +5,12 @@ import java.awt.*;
 import javax.swing.*;
 
 /**
- * Utility class for creating custom dialogs
+ * Classe utilitaire pour créer des boîtes de dialogue personnalisées
  */
 public class DialogUtils {
     
     /**
-     * Shows a detailed trip information dialog
+     * Affiche une fenêtre contenant les détails d'un trajet
      */
     public static void showTrajetDetails(Component parent, Trajet trajet) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), 
@@ -23,14 +23,14 @@ public class DialogUtils {
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Header
+        // En-tête
         JLabel headerLabel = new JLabel("Détails du Trajet");
         headerLabel.setFont(StyleUtils.SUBTITLE_FONT);
         headerLabel.setForeground(StyleUtils.PRIMARY_COLOR);
         headerLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         mainPanel.add(headerLabel, BorderLayout.NORTH);
         
-        // Content
+        // Contenu
         JPanel contentPanel = new JPanel();
         contentPanel.setOpaque(false);
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -52,7 +52,7 @@ public class DialogUtils {
                 " " + trajet.getConducteur().getNomVoiture());
         }
         
-        // Show passengers (if any accepted)
+        // Afficher les passagers (s'il y en a d'acceptés)
         if (!trajet.getPassagersAcceptes().isEmpty()) {
             contentPanel.add(Box.createVerticalStrut(15));
             addSectionHeader(contentPanel, "Passagers acceptés");
@@ -67,7 +67,7 @@ public class DialogUtils {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         
-        // Close button
+        // Bouton de fermeture
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
@@ -82,7 +82,7 @@ public class DialogUtils {
     }
     
     /**
-     * Shows a user profile dialog
+     * Affiche une fenêtre de profil utilisateur
      */
     public static void showUserProfile(Component parent, User user) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), 
@@ -95,7 +95,7 @@ public class DialogUtils {
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Header with avatar
+        // En-tête avec avatar
         JPanel headerPanel = new JPanel();
         headerPanel.setOpaque(false);
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
@@ -122,12 +122,12 @@ public class DialogUtils {
         
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         
-        // Content
+        // Contenu
         JPanel contentPanel = new JPanel();
         contentPanel.setOpaque(false);
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         
-        // PRIVACY: Mask CIN - show only last 3 digits
+        // CONFIDENTIALITÉ : masquer le CIN - n'afficher que les 3 derniers chiffres
         String maskedCin = "*****" + user.getCin().substring(Math.max(0, user.getCin().length() - 3));
         addDetailRow(contentPanel, "CIN", maskedCin);
         addDetailRow(contentPanel, "Téléphone", user.getTel());
@@ -141,7 +141,7 @@ public class DialogUtils {
             contentPanel.add(Box.createVerticalStrut(15));
             addSectionHeader(contentPanel, "Informations Véhicule");
             addDetailRow(contentPanel, "Véhicule", c.getMarqueVoiture() + " " + c.getNomVoiture());
-            // PRIVACY: Mask vehicle matricule - show only last 4 chars
+            // CONFIDENTIALITÉ : masquer le numéro d'immatriculation - n'afficher que les 4 derniers caractères
             String maskedMatricule = "***" + c.getMatricule().substring(Math.max(0, c.getMatricule().length() - 4));
             addDetailRow(contentPanel, "Matricule", maskedMatricule);
             addDetailRow(contentPanel, "Places Disponibles", String.valueOf(c.getPlacesDisponibles()));
@@ -155,7 +155,7 @@ public class DialogUtils {
         
         mainPanel.add(contentPanel, BorderLayout.CENTER);
         
-        // Close button
+        // Bouton de fermeture
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
@@ -170,7 +170,7 @@ public class DialogUtils {
     }
     
     /**
-     * Shows an about dialog
+     * Affiche une fenêtre "À propos"
      */
     public static void showAboutDialog(Component parent) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), 
@@ -192,7 +192,7 @@ public class DialogUtils {
         
         mainPanel.add(Box.createVerticalStrut(20));
         
-        // Title
+        // Titre
         JLabel titleLabel = new JLabel("Plateforme de Covoiturage");
         titleLabel.setFont(StyleUtils.SUBTITLE_FONT);
         titleLabel.setForeground(StyleUtils.PRIMARY_COLOR);
@@ -230,7 +230,7 @@ public class DialogUtils {
         
         mainPanel.add(Box.createVerticalStrut(20));
         
-        // Close button
+        // Bouton de fermeture
         JButton closeBtn = StyleUtils.createPrimaryButton("Fermer");
         closeBtn.setPreferredSize(new Dimension(100, 35));
         closeBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -241,7 +241,7 @@ public class DialogUtils {
         dialog.setVisible(true);
     }
     
-    // Helper methods
+    // Méthodes utilitaires
     private static void addDetailRow(JPanel panel, String label, String value) {
         JPanel rowPanel = new JPanel(new BorderLayout(10, 0));
         rowPanel.setOpaque(false);
@@ -280,14 +280,14 @@ public class DialogUtils {
     }
     
     /**
-     * Creates an input dialog with custom styling
+     * Crée une fenêtre de saisie avec un style personnalisé
      */
     public static String showInputDialog(Component parent, String title, String message) {
         return JOptionPane.showInputDialog(parent, message, title, JOptionPane.PLAIN_MESSAGE);
     }
     
     /**
-     * Shows a loading dialog (returns the dialog so it can be disposed later)
+     * Affiche une fenêtre de chargement (retourne le JDialog pour pouvoir la fermer ensuite)
      */
     public static JDialog showLoadingDialog(Component parent, String message) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "", true);

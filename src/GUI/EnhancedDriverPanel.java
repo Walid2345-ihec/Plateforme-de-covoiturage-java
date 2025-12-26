@@ -10,19 +10,19 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 /**
- * Enhanced Modern Driver Dashboard Panel
+ * Panneau conducteur moderne amélioré
  */
 public class EnhancedDriverPanel extends JPanel {
-    
+
     private MainFrame mainFrame;
     private JPanel contentPanel;
     private CardLayout contentLayout;
-    
-    // Stat cards
+
+    // Cartes de statistiques
     private ModernUIComponents.StatCard placesCard;
     private ModernUIComponents.StatCard trajetsCard;
     private ModernUIComponents.StatCard demandesCard;
-    
+
     // Tables
     private JTable trajetsTable;
     private DefaultTableModel trajetsModel;
@@ -30,46 +30,46 @@ public class EnhancedDriverPanel extends JPanel {
     private DefaultTableModel demandesModel;
     private JTable passagersTable;
     private DefaultTableModel passagersModel;
-    
-    // Sidebar buttons for selection tracking
+
+    // Boutons de la barre latérale pour le suivi de la sélection
     private java.util.List<ModernUIComponents.SidebarButton> sidebarButtons = new java.util.ArrayList<>();
-    
+
     public EnhancedDriverPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         setLayout(new BorderLayout());
         setBackground(Colors.SURFACE);
         initializeComponents();
     }
-    
+
     private void initializeComponents() {
-        // Sidebar
+        // Barre latérale
         add(createSidebar(), BorderLayout.WEST);
-        
-        // Content area
+
+        // Zone de contenu
         contentLayout = new CardLayout();
         contentPanel = new JPanel(contentLayout);
         contentPanel.setBackground(Colors.SURFACE);
-        
+
         contentPanel.add(createDashboardView(), "DASHBOARD");
         contentPanel.add(createTrajetsView(), "TRAJETS");
         contentPanel.add(createDemandesView(), "DEMANDES");
         contentPanel.add(createPassagersView(), "PASSAGERS");
         contentPanel.add(createNewTrajetView(), "NEW_TRAJET");
-        
+
         add(contentPanel, BorderLayout.CENTER);
     }
-    
+
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                
-                // Gradient background
+
+                // Fond en dégradé
                 GradientPaint gradient = new GradientPaint(
-                    0, 0, new Color(44, 62, 80),
-                    0, getHeight(), new Color(52, 73, 94)
+                        0, 0, new Color(44, 62, 80),
+                        0, getHeight(), new Color(52, 73, 94)
                 );
                 g2.setPaint(gradient);
                 g2.fillRect(0, 0, getWidth(), getHeight());
@@ -78,79 +78,79 @@ public class EnhancedDriverPanel extends JPanel {
         };
         sidebar.setPreferredSize(new Dimension(250, 0));
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        
-        // Header with user info
+
+        // En-tête avec informations utilisateur
         JPanel headerPanel = new JPanel();
         headerPanel.setOpaque(false);
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
         headerPanel.setMaximumSize(new Dimension(250, 150));
-        
+
         JLabel avatarLabel = new JLabel("🚗");
         avatarLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         avatarLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
+
         JLabel titleLabel = new JLabel("Espace Conducteur");
         titleLabel.setFont(Fonts.HEADING_3);
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
+
         JLabel subtitleLabel = new JLabel("Gérez vos trajets");
         subtitleLabel.setFont(Fonts.CAPTION);
         subtitleLabel.setForeground(new Color(255, 255, 255, 150));
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
+
         headerPanel.add(avatarLabel);
         headerPanel.add(Box.createVerticalStrut(10));
         headerPanel.add(titleLabel);
         headerPanel.add(Box.createVerticalStrut(5));
         headerPanel.add(subtitleLabel);
-        
+
         sidebar.add(headerPanel);
         sidebar.add(Box.createVerticalStrut(20));
-        
-        // Menu items
+
+        // Éléments du menu
         addSidebarButton(sidebar, "Tableau de Bord", "DASHBOARD", true);
         addSidebarButton(sidebar, "Mes Trajets", "TRAJETS", false);
         addSidebarButton(sidebar, "Demandes Reçues", "DEMANDES", false);
         addSidebarButton(sidebar, "Passagers Acceptés", "PASSAGERS", false);
         addSidebarButton(sidebar, "Nouveau Trajet", "NEW_TRAJET", false);
-        
+
         sidebar.add(Box.createVerticalGlue());
-        
-        // Logout button
+
+        // Bouton de déconnexion
         JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         logoutPanel.setOpaque(false);
         logoutPanel.setMaximumSize(new Dimension(250, 80));
         logoutPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
-        
+
         ModernUIComponents.RoundedButton logoutBtn = new ModernUIComponents.RoundedButton(
-            "Déconnexion", Colors.ACCENT_CORAL);
+                "Déconnexion", Colors.ACCENT_CORAL);
         logoutBtn.setPreferredSize(new Dimension(180, 42));
         logoutBtn.addActionListener(e -> {
-            if (JOptionPane.showConfirmDialog(this, "Voulez-vous vous déconnecter ?", 
-                "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            if (JOptionPane.showConfirmDialog(this, "Voulez-vous vous déconnecter ?",
+                    "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 mainFrame.showLogin();
             }
         });
         logoutPanel.add(logoutBtn);
         sidebar.add(logoutPanel);
-        
+
         return sidebar;
     }
-    
+
     private void addSidebarButton(JPanel sidebar, String text, String cardName, boolean selected) {
         ModernUIComponents.SidebarButton button = new ModernUIComponents.SidebarButton(text);
         button.setSelected(selected);
         button.setMaximumSize(new Dimension(250, 50));
         button.addActionListener(e -> {
-            // Update selection
+            // Mettre à jour la sélection
             for (ModernUIComponents.SidebarButton btn : sidebarButtons) {
                 btn.setSelected(false);
             }
             button.setSelected(true);
-            
-            // Show content and refresh
+
+            // Afficher le contenu et rafraîchir
             contentLayout.show(contentPanel, cardName);
             if (cardName.equals("DASHBOARD")) refreshDashboard();
             if (cardName.equals("TRAJETS")) refreshTrajetsTable();
@@ -160,88 +160,88 @@ public class EnhancedDriverPanel extends JPanel {
         sidebarButtons.add(button);
         sidebar.add(button);
     }
-    
+
     private JPanel createDashboardView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
-        
-        // Header
+
+        // En-tête
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-        
+
         JLabel titleLabel = new JLabel("Tableau de Bord");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
-        
+
         JLabel dateLabel = new JLabel("Bienvenue sur votre espace conducteur");
         dateLabel.setFont(Fonts.BODY);
         dateLabel.setForeground(Colors.TEXT_MUTED);
-        
+
         JPanel titlePanel = new JPanel();
         titlePanel.setOpaque(false);
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
         titlePanel.add(titleLabel);
         titlePanel.add(Box.createVerticalStrut(5));
         titlePanel.add(dateLabel);
-        
+
         headerPanel.add(titlePanel, BorderLayout.WEST);
         panel.add(headerPanel, BorderLayout.NORTH);
-        
-        // Stats cards
+
+        // Cartes de statistiques
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 25));
         statsPanel.setOpaque(false);
         statsPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
-        
+
         placesCard = new ModernUIComponents.StatCard("", "Places Disponibles", "0", Colors.ACCENT_MINT);
         trajetsCard = new ModernUIComponents.StatCard("", "Mes Trajets", "0", Colors.PRIMARY_START);
         demandesCard = new ModernUIComponents.StatCard("", "Demandes", "0", Colors.ACCENT_GOLD);
-        
+
         statsPanel.add(placesCard);
         statsPanel.add(trajetsCard);
         statsPanel.add(demandesCard);
-        
+
         panel.add(statsPanel, BorderLayout.CENTER);
-        
-        // Quick actions
+
+        // Actions rapides
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         actionsPanel.setOpaque(false);
         actionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-        
+
         ModernUIComponents.GradientButton newTrajetBtn = new ModernUIComponents.GradientButton(
-            "Créer un Trajet", Colors.PRIMARY_START, Colors.PRIMARY_END);
+                "Créer un Trajet", Colors.PRIMARY_START, Colors.PRIMARY_END);
         newTrajetBtn.addActionListener(e -> {
             updateSidebarSelection(4);
             contentLayout.show(contentPanel, "NEW_TRAJET");
         });
         actionsPanel.add(newTrajetBtn);
-        
+
         ModernUIComponents.RoundedButton viewDemandesBtn = new ModernUIComponents.RoundedButton(
-            "Voir les Demandes", Colors.ACCENT_SKY);
+                "Voir les Demandes", Colors.ACCENT_SKY);
         viewDemandesBtn.addActionListener(e -> {
             updateSidebarSelection(2);
             refreshDemandesTable();
             contentLayout.show(contentPanel, "DEMANDES");
         });
         actionsPanel.add(viewDemandesBtn);
-        
+
         panel.add(actionsPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
+
     private JPanel createTrajetsView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
-        
-        // Header
+
+        // En-tête
         JLabel titleLabel = new JLabel("Mes Trajets");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
-        
-        // Table
+
+        // Tableau
         String[] columns = {"Départ", "Arrivée", "Durée", "Prix (TND)", "Statut", "Passager"};
         trajetsModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -250,33 +250,33 @@ public class EnhancedDriverPanel extends JPanel {
             }
         };
         trajetsTable = createModernTable(trajetsModel);
-        
+
         JScrollPane scrollPane = new JScrollPane(trajetsTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         ModernUIComponents.applyModernScrollBar(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Buttons
+
+        // Boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         buttonPanel.setOpaque(false);
-        
+
         ModernUIComponents.RoundedButton editBtn = new ModernUIComponents.RoundedButton(
-            "Modifier Prix", Colors.ACCENT_SKY);
+                "Modifier Prix", Colors.ACCENT_SKY);
         editBtn.setPreferredSize(new Dimension(150, 42));
         editBtn.addActionListener(e -> modifyTrajetPrice());
-        
+
         ModernUIComponents.RoundedButton deleteBtn = new ModernUIComponents.RoundedButton(
-            "Supprimer", Colors.ACCENT_CORAL);
+                "Supprimer", Colors.ACCENT_CORAL);
         deleteBtn.setPreferredSize(new Dimension(130, 42));
         deleteBtn.addActionListener(e -> deleteTrajet());
-        
+
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "Actualiser", Colors.TEXT_MUTED);
+                "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshTrajetsTable());
 
         ModernUIComponents.RoundedButton finishBtn = new ModernUIComponents.RoundedButton(
-            "Finir Trajet", Colors.ACCENT_CORAL);
+                "Finir Trajet", Colors.ACCENT_CORAL);
         finishBtn.setPreferredSize(new Dimension(150, 42));
         finishBtn.addActionListener(e -> finishSelectedTrajet());
 
@@ -285,20 +285,20 @@ public class EnhancedDriverPanel extends JPanel {
         buttonPanel.add(refreshBtn);
         buttonPanel.add(finishBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
+
     private JPanel createDemandesView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
-        
+
         JLabel titleLabel = new JLabel("Demandes Reçues");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
-        
+
         String[] columns = {"CIN", "Nom", "Prénom", "Téléphone", "Email"};
         demandesModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -307,42 +307,42 @@ public class EnhancedDriverPanel extends JPanel {
             }
         };
         demandesTable = createModernTable(demandesModel);
-        
+
         JScrollPane scrollPane = new JScrollPane(demandesTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         ModernUIComponents.applyModernScrollBar(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         buttonPanel.setOpaque(false);
-        
+
         ModernUIComponents.GradientButton acceptBtn = new ModernUIComponents.GradientButton(
-            "Accepter", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
+                "Accepter", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
         acceptBtn.setPreferredSize(new Dimension(150, 45));
         acceptBtn.addActionListener(e -> acceptPassenger());
-        
+
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "Actualiser", Colors.TEXT_MUTED);
+                "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshDemandesTable());
-        
+
         buttonPanel.add(acceptBtn);
         buttonPanel.add(refreshBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
+
     private JPanel createPassagersView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
-        
+
         JLabel titleLabel = new JLabel("Passagers Acceptés");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
-        
+
         String[] columns = {"CIN", "Nom", "Prénom", "Téléphone", "Email", "Adresse"};
         passagersModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -351,59 +351,59 @@ public class EnhancedDriverPanel extends JPanel {
             }
         };
         passagersTable = createModernTable(passagersModel);
-        
+
         JScrollPane scrollPane = new JScrollPane(passagersTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         ModernUIComponents.applyModernScrollBar(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setOpaque(false);
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
-            "Actualiser", Colors.TEXT_MUTED);
+                "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshPassagersTable());
         buttonPanel.add(refreshBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
+
     private JPanel createNewTrajetView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
-        
+
         JLabel titleLabel = new JLabel("Créer un Nouveau Trajet");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
-        
-        // Form card
+
+        // Carte du formulaire
         ModernUIComponents.GlassCard formCard = new ModernUIComponents.GlassCard();
         formCard.setLayout(new GridBagLayout());
         formCard.setPreferredSize(new Dimension(500, 350));
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(12, 12, 12, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        // Departure
+
+        // Départ
         gbc.gridx = 0; gbc.gridy = 0;
         formCard.add(createFormLabel("Point de Départ"), gbc);
         gbc.gridx = 1;
         ModernUIComponents.ModernTextField departField = new ModernUIComponents.ModernTextField("Tunis, Sousse...");
         departField.setPreferredSize(new Dimension(280, 45));
         formCard.add(departField, gbc);
-        
-        // Arrival
+
+        // Arrivée
         gbc.gridx = 0; gbc.gridy = 1;
         formCard.add(createFormLabel("Point d'Arrivée"), gbc);
         gbc.gridx = 1;
         ModernUIComponents.ModernTextField arriveeField = new ModernUIComponents.ModernTextField("Destination...");
         formCard.add(arriveeField, gbc);
-        
-        // Duration
+
+        // Durée
         gbc.gridx = 0; gbc.gridy = 2;
         formCard.add(createFormLabel("Durée (minutes)"), gbc);
         gbc.gridx = 1;
@@ -411,8 +411,8 @@ public class EnhancedDriverPanel extends JPanel {
         dureeSpinner.setFont(Fonts.BODY);
         dureeSpinner.setPreferredSize(new Dimension(120, 40));
         formCard.add(dureeSpinner, gbc);
-        
-        // Price
+
+        // Prix
         gbc.gridx = 0; gbc.gridy = 3;
         formCard.add(createFormLabel("Prix (TND)"), gbc);
         gbc.gridx = 1;
@@ -420,26 +420,26 @@ public class EnhancedDriverPanel extends JPanel {
         prixSpinner.setFont(Fonts.BODY);
         prixSpinner.setPreferredSize(new Dimension(120, 40));
         formCard.add(prixSpinner, gbc);
-        
-        // Create button
+
+        // Bouton de création
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
         gbc.insets = new Insets(30, 12, 12, 12);
-        
+
         ModernUIComponents.GradientButton createBtn = new ModernUIComponents.GradientButton(
-            "Créer le Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
+                "Créer le Trajet", Colors.ACCENT_MINT, Colors.GRADIENT_TEAL_START);
         createBtn.setPreferredSize(new Dimension(250, 50));
         createBtn.addActionListener(e -> {
             String depart = departField.getText().trim();
             String arrivee = arriveeField.getText().trim();
             int duree = (Integer) dureeSpinner.getValue();
             double prix = (Double) prixSpinner.getValue();
-            
+
             if (depart.isEmpty() || arrivee.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs !", 
-                    "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs !",
+                        "Erreur", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+
             createTrajet(depart, arrivee, duree, (float) prix);
             departField.setText("");
             arriveeField.setText("");
@@ -447,23 +447,23 @@ public class EnhancedDriverPanel extends JPanel {
             prixSpinner.setValue(5.0);
         });
         formCard.add(createBtn, gbc);
-        
-        // Center the form
+
+        // Centrer le formulaire
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(formCard);
         panel.add(centerPanel, BorderLayout.CENTER);
-        
+
         return panel;
     }
-    
+
     private JLabel createFormLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(Fonts.BODY_BOLD);
         label.setForeground(Colors.TEXT_DARK);
         return label;
     }
-    
+
     private JTable createModernTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(Fonts.BODY);
@@ -473,77 +473,77 @@ public class EnhancedDriverPanel extends JPanel {
         table.setSelectionForeground(Colors.TEXT_DARK);
         table.setShowVerticalLines(false);
         table.setIntercellSpacing(new Dimension(0, 1));
-        
-        // Header styling
+
+        // Style de l'en-tête
         JTableHeader header = table.getTableHeader();
         header.setFont(Fonts.BODY_BOLD);
         header.setBackground(Colors.SURFACE);
         header.setForeground(Colors.TEXT_DARK);
         header.setPreferredSize(new Dimension(0, 50));
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.BORDER));
-        
-        // Alternating row colors
+
+        // Couleurs alternées des lignes
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
+                                                           boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
+
                 if (!isSelected) {
                     c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 249, 250));
                 }
-                
+
                 setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
                 return c;
             }
         });
-        
+
         return table;
     }
-    
+
     private void updateSidebarSelection(int index) {
         for (int i = 0; i < sidebarButtons.size(); i++) {
             sidebarButtons.get(i).setSelected(i == index);
         }
     }
-    
-    // ==================== Business Logic ====================
-    
+
+    // ==================== Logique Métier ====================
+
     private void createTrajet(String depart, String arrivee, int dureeMinutes, float prix) {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) {
-            JOptionPane.showMessageDialog(this, "Erreur: Conducteur non connecté", 
-                "Erreur", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erreur: Conducteur non connecté",
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         try {
             Duration duree = Duration.ofMinutes(dureeMinutes);
             Trajet trajet = new Trajet(depart, arrivee, duree, "PENDING", prix, conducteur, null);
             mainFrame.getGestion().getTrajets().add(trajet);
-            
-            JOptionPane.showMessageDialog(this, 
-                "Trajet créé avec succès !\n" + depart + " → " + arrivee + "\nPrix: " + prix + " TND",
-                "Succès ✓", JOptionPane.INFORMATION_MESSAGE);
-            
+
+            JOptionPane.showMessageDialog(this,
+                    "Trajet créé avec succès !\n" + depart + " → " + arrivee + "\nPrix: " + prix + " TND",
+                    "Succès ✓", JOptionPane.INFORMATION_MESSAGE);
+
             refreshDashboard();
             updateSidebarSelection(1);
             contentLayout.show(contentPanel, "TRAJETS");
             refreshTrajetsTable();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erreur: " + e.getMessage(), 
-                "Erreur", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erreur: " + e.getMessage(),
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void modifyTrajetPrice() {
         int row = trajetsTable.getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un trajet", 
-                "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un trajet",
+                    "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         String input = JOptionPane.showInputDialog(this, "Nouveau prix (TND):", "Modifier le Prix", JOptionPane.PLAIN_MESSAGE);
         if (input != null && !input.isEmpty()) {
             try {
@@ -551,7 +551,7 @@ public class EnhancedDriverPanel extends JPanel {
                 Conducteur conducteur = mainFrame.getCurrentConducteur();
                 Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
                 int count = 0;
-                
+
                 for (Trajet t : trajets) {
                     if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
                         if (count == row) {
@@ -568,19 +568,19 @@ public class EnhancedDriverPanel extends JPanel {
             }
         }
     }
-    
+
     private void deleteTrajet() {
         int row = trajetsTable.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Veuillez sélectionner un trajet", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         if (JOptionPane.showConfirmDialog(this, "Supprimer ce trajet ?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             Conducteur conducteur = mainFrame.getCurrentConducteur();
             Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
             int count = 0;
-            
+
             for (int i = 0; i < trajets.size(); i++) {
                 Trajet t = trajets.get(i);
                 if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
@@ -596,54 +596,54 @@ public class EnhancedDriverPanel extends JPanel {
             }
         }
     }
-    
+
     private void acceptPassenger() {
         int row = demandesTable.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Veuillez sélectionner une demande", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
-        
+
         if (conducteur.getPlacesDisponibles() <= 0) {
             JOptionPane.showMessageDialog(this, "Plus de places disponibles !", "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        // Find the corresponding trajet with PENDING_APPROVAL status
+
+        // Rechercher le trajet correspondant (généralement PENDING_APPROVAL)
         int count = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getConducteur() != null && 
-                t.getConducteur().getCin().equals(conducteur.getCin()) &&
-                // show demandes irrespective of the trajet status, as long as there are demandes and places
-                !t.getPassagersDemandes().isEmpty() &&
-                t.getAvailablePlaces() > 0) {
+            if (t.getConducteur() != null &&
+                    t.getConducteur().getCin().equals(conducteur.getCin()) &&
+                    // afficher les demandes indépendamment du statut du trajet, tant qu'il y a des demandes et des places
+                    !t.getPassagersDemandes().isEmpty() &&
+                    t.getAvailablePlaces() > 0) {
 
                 for (Passager passager : t.getPassagersDemandes()) {
                     if (count == row) {
                         int confirm = JOptionPane.showConfirmDialog(this,
-                            "Accepter la demande de " + passager.getPrenom() + " " + passager.getNom() + " ?\n\n" +
-                            "Trajet: " + t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
-                            "Prix: " + String.format("%.2f", t.getPrix()) + " TND",
-                            "Confirmer", JOptionPane.YES_NO_OPTION);
+                                "Accepter la demande de " + passager.getPrenom() + " " + passager.getNom() + " ?\n\n" +
+                                        "Trajet: " + t.getDepartTrajet() + " → " + t.getArriveeTrajet() + "\n" +
+                                        "Prix: " + String.format("%.2f", t.getPrix()) + " TND",
+                                "Confirmer", JOptionPane.YES_NO_OPTION);
 
                         if (confirm == JOptionPane.YES_OPTION) {
                             boolean accepted = mainFrame.getGestion().accepter_passager_pour_trajet(t, passager.getCin());
                             if (accepted) {
                                 JOptionPane.showMessageDialog(this,
-                                    "Passager accepté !\n\n" +
-                                    passager.getPrenom() + " " + passager.getNom() + "\n" +
-                                    "Téléphone: " + passager.getTel() + "\n\n" +
-                                    "Places restantes: " + conducteur.getPlacesDisponibles(),
-                                    "Succès", JOptionPane.INFORMATION_MESSAGE);
+                                        "Passager accepté !\n\n" +
+                                                passager.getPrenom() + " " + passager.getNom() + "\n" +
+                                                "Téléphone: " + passager.getTel() + "\n\n" +
+                                                "Places restantes: " + conducteur.getPlacesDisponibles(),
+                                        "Succès", JOptionPane.INFORMATION_MESSAGE);
 
                                 refreshDemandesTable();
                                 refreshPassagersTable();
                                 refreshDashboard();
 
-                                // Notify other panels (passenger) to refresh their models/views
+                                // Notifier les autres panneaux (passagers) pour rafraîchir leurs modèles/vues
                                 if (mainFrame != null) mainFrame.notifyDataChanged();
 
                             } else {
@@ -656,13 +656,13 @@ public class EnhancedDriverPanel extends JPanel {
                 }
             }
         }
-        
+
         JOptionPane.showMessageDialog(this, "Erreur: Demande non trouvée", "Erreur", JOptionPane.ERROR_MESSAGE);
     }
-    
+
     /**
-     * Finish the selected trajet: mark FINISHED, restore conducteur places,
-     * set chercheCovoit=true for accepted passengers, and refresh views.
+     * Terminer le trajet sélectionné : marquer comme TERMINÉ, restaurer les places du conducteur,
+     * définir chercheCovoit=true pour les passagers acceptés, et rafraîchir les vues.
      */
     private void finishSelectedTrajet() {
         int row = trajetsTable.getSelectedRow();
@@ -684,7 +684,7 @@ public class EnhancedDriverPanel extends JPanel {
                 if (count == row) {
                     int acceptedCount = (t.getPassagersAcceptes() != null) ? t.getPassagersAcceptes().size() : 0;
 
-                    // Restore places: prefer trajet.maxPlaces if defined, otherwise add acceptedCount to current
+                    // Restauration des places : préférer t.getMaxPlaces() si défini, sinon ajouter acceptedCount
                     int restoredPlaces = -1;
                     try {
                         restoredPlaces = t.getMaxPlaces();
@@ -693,29 +693,28 @@ public class EnhancedDriverPanel extends JPanel {
                         restoredPlaces = conducteur.getPlacesDisponibles() + acceptedCount;
                     }
 
-                    // Set status FINISHED
+                    // Marquer le trajet comme TERMINÉ
                     try {
                         t.setStatusTrajet(Trajet.STATUS_FINISHED);
                     } catch (Exception ex) {
-                        // fallback to direct assignment if setter rejects but constant valid
-                        // (shouldn't happen)
-                        // ignore
+                        // Repli : affectation directe si le setter refuse (ne devrait pas arriver)
+                        // Ignorer l'exception pour ne pas casser l'UI
                     }
                     t.setTrajet_valide(false);
 
-                    // Reset passagers chercheCovoit to true
+                    // Remettre les passagers en recherche (chercheCovoit = true)
                     if (t.getPassagersAcceptes() != null) {
                         for (Passager p : t.getPassagersAcceptes()) {
                             if (p != null) p.setChercheCovoit(true);
                         }
                     }
 
-                    // Restore conducteur places
+                    // Restaurer les places du conducteur
                     conducteur.setPlacesDisponibles(restoredPlaces);
 
                     JOptionPane.showMessageDialog(this, "Trajet terminé. Places restaurées et passagers remis en recherche.", "Succès", JOptionPane.INFORMATION_MESSAGE);
 
-                    // Refresh local views and notify other panels
+                    // Rafraîchir les vues locales et notifier les autres panneaux
                     refreshTrajetsTable();
                     refreshPassagersTable();
                     refreshDashboard();
@@ -729,8 +728,8 @@ public class EnhancedDriverPanel extends JPanel {
         JOptionPane.showMessageDialog(this, "Trajet non trouvé", "Erreur", JOptionPane.ERROR_MESSAGE);
     }
 
-    // ==================== Refresh Methods ====================
-    
+    // ==================== Méthodes de rafraîchissement ====================
+
     public void refresh() {
         refreshDashboard();
         refreshTrajetsTable();
@@ -741,7 +740,7 @@ public class EnhancedDriverPanel extends JPanel {
     }
 
     /**
-     * Refresh only data models/tables without changing the visible card.
+     * Rafraîchir uniquement les modèles/tables de données sans changer la carte visible.
      */
     public void refreshModels() {
         refreshDashboard();
@@ -753,9 +752,9 @@ public class EnhancedDriverPanel extends JPanel {
     private void refreshDashboard() {
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
-        
+
         placesCard.setValue(String.valueOf(conducteur.getPlacesDisponibles()));
-        
+
         int trajetCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
@@ -763,7 +762,7 @@ public class EnhancedDriverPanel extends JPanel {
             }
         }
         trajetsCard.setValue(String.valueOf(trajetCount));
-        // Count total demandes for this conducteur (across all their trajets)
+        // Compter le total des demandes pour ce conducteur (sur tous ses trajets)
         int demandesCount = 0;
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
@@ -772,65 +771,65 @@ public class EnhancedDriverPanel extends JPanel {
         }
         demandesCard.setValue(String.valueOf(demandesCount));
     }
-    
+
     private void refreshTrajetsTable() {
         trajetsModel.setRowCount(0);
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
-        
+
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
             if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {
                 trajetsModel.addRow(new Object[]{
-                    t.getDepartTrajet(),
-                    t.getArriveeTrajet(),
-                    t.getDureeTrajet().toMinutes() + " min",
-                    String.format("%.2f", t.getPrix()),
-                    t.getStatusTrajet(),
-                    t.getPassagersAcceptes().isEmpty() ? "En attente" : t.getPassagersAcceptes().size() + " accepté(s)"
+                        t.getDepartTrajet(),
+                        t.getArriveeTrajet(),
+                        t.getDureeTrajet().toMinutes() + " min",
+                        String.format("%.2f", t.getPrix()),
+                        t.getStatusTrajet(),
+                        t.getPassagersAcceptes().isEmpty() ? "En attente" : t.getPassagersAcceptes().size() + " accepté(s)"
                 });
             }
         }
     }
-    
+
     private void refreshDemandesTable() {
         demandesModel.setRowCount(0);
-        
+
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
-        
-        // FIXED: Only show passengers who have requested THIS driver's trajets
-        // and are awaiting approval (PENDING_APPROVAL status)
+
+        // CORRIGÉ : Ne montrer que les passagers ayant demandé les trajets de CE conducteur
+        // et qui sont en attente d'approbation (statut PENDING_APPROVAL)
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            // Only show demandes for:
-            // 1. Trajets belonging to this conductor
-            // 2. With PENDING_APPROVAL status (passenger has requested)
-            // 3. With one or more passengers in demandes list
+            // Montrer les demandes seulement si :
+            // 1. Le trajet appartient à ce conducteur
+            // 2. Le trajet est en statut PENDING_APPROVAL (demande envoyée par le passager)
+            // 3. La liste des demandes n'est pas vide
             if (t.getConducteur() != null &&
-                t.getConducteur().getCin().equals(conducteur.getCin()) &&
-                !t.getPassagersDemandes().isEmpty() &&
-                t.getAvailablePlaces() > 0) {
+                    t.getConducteur().getCin().equals(conducteur.getCin()) &&
+                    !t.getPassagersDemandes().isEmpty() &&
+                    t.getAvailablePlaces() > 0) {
 
                 for (Passager p : t.getPassagersDemandes()) {
-                    // PRIVACY: Mask CIN - only show last 3 digits
+                    // CONFIDENTIALITÉ : masquer le CIN - n'afficher que les 3 derniers chiffres
                     String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
                     demandesModel.addRow(new Object[]{
-                        maskedCin,
-                        p.getNom(),
-                        p.getPrenom(),
-                        maskPhone(p.getTel()),
-                        maskEmail(p.getMail())
+                            maskedCin,
+                            p.getNom(),
+                            p.getPrenom(),
+                            maskPhone(p.getTel()),
+                            maskEmail(p.getMail())
                     });
                 }
             }
         }
     }
-    
-    // Privacy helper methods
+
+    // Fonctions utilitaires de confidentialité
     private String maskPhone(String phone) {
         if (phone == null || phone.length() < 4) return "****";
         return "****" + phone.substring(phone.length() - 4);
     }
-    
+
     private String maskEmail(String email) {
         if (email == null || !email.contains("@")) return "***@***";
         int atIndex = email.indexOf("@");
@@ -839,28 +838,29 @@ public class EnhancedDriverPanel extends JPanel {
         if (local.length() <= 2) return local + "***" + domain;
         return local.substring(0, 2) + "***" + domain;
     }
-    
+
     private void refreshPassagersTable() {
         passagersModel.setRowCount(0);
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
-        
-        // Only show accepted passengers (IN_PROGRESS or FINISHED status)
+
+        // Ne montrer que les passagers acceptés (statut IN_PROGRESS ou FINISHED)
         for (Trajet t : mainFrame.getGestion().getTrajets()) {
-            if (t.getConducteur() != null && 
-                t.getConducteur().getCin().equals(conducteur.getCin()) && 
-                (t.isInProgress() || t.isFinished()) &&
-                !t.getPassagersAcceptes().isEmpty()) {
+            if (t.getConducteur() != null &&
+                    t.getConducteur().getCin().equals(conducteur.getCin()) &&
+                    (t.isInProgress() || t.isFinished()) &&
+                    !t.getPassagersAcceptes().isEmpty()) {
 
                 for (Passager p : t.getPassagersAcceptes()) {
-                    // For accepted passengers, show full contact info (they have a confirmed booking)
-                    // But still mask CIN for privacy
+                    // Pour les passagers acceptés, afficher les coordonnées complètes (réservation confirmée)
+                    // mais masquer le CIN pour la confidentialité
                     String maskedCin = "*****" + p.getCin().substring(Math.max(0, p.getCin().length() - 3));
                     passagersModel.addRow(new Object[]{
-                        maskedCin, p.getNom(), p.getPrenom(), p.getTel(), p.getMail(), p.getAdresse()
+                            maskedCin, p.getNom(), p.getPrenom(), p.getTel(), p.getMail(), p.getAdresse()
                     });
                 }
             }
         }
     }
+
 }

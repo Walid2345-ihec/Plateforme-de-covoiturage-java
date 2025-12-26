@@ -11,27 +11,25 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * CSVDatabase - A utility class for reading and writing data to CSV files.
+ * CSVDatabase - Classe utilitaire pour la lecture et l'écriture de données dans des fichiers CSV.
  *
- * STEP-BY-STEP EXPLANATION:
+ * EXPLICATION PAS À PAS :
+ * 1. Structure CSV :
+ *    - Chaque fichier représente une "table" (conducteurs, passagers, trajets)
+ *    - Première ligne = en-têtes de colonnes
+ *    - Lignes suivantes = enregistrements de données
+ *    - Valeurs séparées par des points-virgules (;) pour éviter les conflits avec la ponctuation française
  *
- * 1. CSV Structure:
- *    - Each file represents a "table"
- *    - First row = column headers
- *    - Subsequent rows = data records
- *    - Values separated by semicolons (;) to handle French text with commas
+ * 2. Opérations clés :
+ *    - LECTURE : charger les données depuis les fichiers CSV vers des objets Java
+ *    - ÉCRITURE : sauvegarder les objets Java dans des fichiers CSV
+ *    - SAUVEGARDE/APPEND : création de backups avant écriture, rotation des backups
  *
- * 2. Key Operations:
- *    - READ: Load data from CSV into Java objects
- *    - WRITE: Save Java objects to CSV files
- *    - APPEND: Add new records without overwriting
- *
- * @author Student Guide
  */
 public class CSVDatabase {
     
     // ============================================================
-    // CONFIGURATION - File paths for each "table"
+    // CONFIGURATION - chemins de fichiers pour chaque "table"
     // ============================================================
     
     private static final String DATA_FOLDER = "data/";
@@ -40,19 +38,19 @@ public class CSVDatabase {
     private static final String PASSAGERS_FILE = DATA_FOLDER + "passagers.csv";
     private static final String TRAJETS_FILE = DATA_FOLDER + "trajets.csv";
     
-    // Delimiter - using semicolon to avoid conflicts with French text
+    // Délimiteur - utilisation du point-virgule pour la compatibilité avec les textes français
     private static final String DELIMITER = ";";
     
-    // Maximum number of backup files to keep
+    // Nombre maximal de fichiers de sauvegarde à conserver
     private static final int MAX_BACKUPS = 5;
     
     // ============================================================
-    // STEP 1: Initialize the data folder
+    // ÉTAPE 1 : Initialisation du dossier de données
     // ============================================================
     
     /**
-     * Creates the data folder if it doesn't exist.
-     * Always call this before reading/writing files!
+     * Crée le dossier de données s'il n'existe pas.
+     * Toujours appeler cette méthode avant de lire/écrire sur le disque.
      */
     public static void initializeDataFolder() {
         try {
@@ -61,7 +59,7 @@ public class CSVDatabase {
                 Files.createDirectories(dataPath);
                 System.out.println("✓ Dossier 'data/' créé avec succès");
             }
-            // Also create backup folder
+            // Crée également le dossier de backups
             Path backupPath = Paths.get(BACKUP_FOLDER);
             if (!Files.exists(backupPath)) {
                 Files.createDirectories(backupPath);
@@ -72,12 +70,12 @@ public class CSVDatabase {
     }
     
     // ============================================================
-    // BACKUP & RECOVERY SYSTEM
+    // SYSTÈME DE SAUVEGARDE ET RESTAURATION
     // ============================================================
     
     /**
-     * Creates a backup of all CSV files before saving.
-     * Backups are timestamped and rotated (max 5 kept).
+     * Crée une sauvegarde (backup) de tous les fichiers CSV avant d'écrire.
+     * Les backups sont horodatés et on effectue une rotation pour ne pas dépasser MAX_BACKUPS.
      */
     public static void createBackup() {
         initializeDataFolder();
@@ -101,27 +99,27 @@ public class CSVDatabase {
             }
         }
         
-        // Rotate old backups
+        // Rotation des anciens backups
         rotateBackups();
         System.out.println("✓ Backup créé: " + timestamp);
     }
     
     /**
-     * Removes old backup files, keeping only the most recent ones.
+     * Supprime les anciens fichiers de sauvegarde, en conservant uniquement les plus récents.
      */
     private static void rotateBackups() {
         try {
             Path backupDir = Paths.get(BACKUP_FOLDER);
             if (!Files.exists(backupDir)) return;
             
-            // Group backups by base name and keep only MAX_BACKUPS of each
+            // Regroupe les backups par nom de base et conserve MAX_BACKUPS par groupe
             java.util.Map<String, java.util.List<Path>> backupGroups = new java.util.HashMap<>();
             
             Files.list(backupDir)
                 .filter(p -> p.toString().endsWith(".csv"))
                 .forEach(p -> {
                     String name = p.getFileName().toString();
-                    // Extract base name (e.g., "conducteurs" from "conducteurs_20241217_143022.csv")
+                    // Extrait le nom de base (ex: "conducteurs" depuis "conducteurs_20241217_143022.csv")
                     int underscoreIdx = name.indexOf('_');
                     if (underscoreIdx > 0) {
                         String baseName = name.substring(0, underscoreIdx);
@@ -129,7 +127,7 @@ public class CSVDatabase {
                     }
                 });
             
-            // For each group, sort by modification time and delete oldest if > MAX_BACKUPS
+            // Pour chaque groupe, tri par date de modification et suppression des plus anciens si > MAX_BACKUPS
             for (java.util.List<Path> group : backupGroups.values()) {
                 if (group.size() > MAX_BACKUPS) {
                     group.sort((a, b) -> {
@@ -140,26 +138,26 @@ public class CSVDatabase {
                         }
                     });
                     
-                    // Delete oldest backups
+                    // Supprimer les backups les plus anciens
                     for (int i = MAX_BACKUPS; i < group.size(); i++) {
                         try {
                             Files.delete(group.get(i));
                         } catch (IOException e) {
-                            // Ignore deletion errors
+                            // Ignorer les erreurs de suppression
                         }
                     }
                 }
             }
         } catch (IOException e) {
-            // Ignore rotation errors
+            // Ignorer les erreurs de rotation
         }
     }
     
     /**
-     * Attempts to restore data from the most recent backup.
-     * Use this if the main data files are corrupted.
-     * 
-     * @return true if restoration was successful
+     * Tente de restaurer les fichiers de données à partir du backup le plus récent.
+     * Utiliser cette méthode si les fichiers principaux sont corrompus.
+     *
+     * @return true si la restauration a réussi
      */
     public static boolean restoreFromBackup() {
         try {
@@ -169,7 +167,7 @@ public class CSVDatabase {
                 return false;
             }
             
-            // Find most recent backup for each file type
+            // Trouve le backup le plus récent pour chaque type de fichier
             String[] baseNames = {"conducteurs", "passagers", "trajets"};
             String[] targetFiles = {CONDUCTEURS_FILE, PASSAGERS_FILE, TRAJETS_FILE};
             
@@ -203,19 +201,18 @@ public class CSVDatabase {
     }
     
     // ============================================================
-    // STEP 2: WRITE Operations - Saving data to CSV
+    // ÉTAPE 2 : Opérations D'ÉCRITURE - sauvegarde des données en CSV
     // ============================================================
     
     /**
-     * Saves all conducteurs to CSV file.
+     * Sauvegarde tous les conducteurs dans le fichier CSV correspondant.
      *
-     * HOW IT WORKS:
-     * 1. Open a BufferedWriter (efficient for writing text)
-     * 2. Write the header row first
-     * 3. Loop through each Conducteur and write their data
-     *  * Each field is separated by our DELIMITER
+     * COMMENTAIRE DE FONCTIONNEMENT :
+     * 1. Ouvre un BufferedWriter (efficace pour l'écriture de texte)
+     * 2. Écrit la ligne d'en-tête
+     * 3. Parcourt chaque Conducteur et écrit ses champs séparés par DELIMITER
      *
-     * @param users Vector of User objects (only Conducteur instances are saved by this method)
+     * @param users Vecteur d'objets User (seules les instances Conducteur sont sauvegardées ici)
      */
     public static void saveConducteurs(Vector<User> users) {
         initializeDataFolder();
@@ -225,16 +222,16 @@ public class CSVDatabase {
                     new FileOutputStream(CONDUCTEURS_FILE), 
                     StandardCharsets.UTF_8))) {
             
-            // HEADER ROW - defines the columns
+            // LIGNE D'EN-TÊTE - définit les colonnes
             writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles");
             writer.newLine();
             
-            // DATA ROWS - one per conducteur
+            // LIGNES DE DONNÉES - une par conducteur
             for (User user : users) {
                 if (user instanceof Conducteur) {
                     Conducteur c = (Conducteur) user;
                     
-                    // Build the CSV line by joining fields with delimiter
+                    // Construit la ligne CSV en joignant les champs par le délimiteur
                     String line = String.join(DELIMITER,
                         escapeCSV(c.getCin()),
                         escapeCSV(c.getNom()),
@@ -263,7 +260,7 @@ public class CSVDatabase {
     }
     
     /**
-     * Saves all passagers to CSV file.
+     * Sauvegarde tous les passagers dans le fichier CSV correspondant.
      */
     public static void savePassagers(Vector<User> users) {
         initializeDataFolder();
@@ -273,11 +270,11 @@ public class CSVDatabase {
                     new FileOutputStream(PASSAGERS_FILE), 
                     StandardCharsets.UTF_8))) {
             
-            // HEADER ROW
+            // LIGNE D'EN-TÊTE
             writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;ChercheCovoit");
             writer.newLine();
             
-            // DATA ROWS
+            // LIGNES DE DONNÉES
             for (User user : users) {
                 if (user instanceof Passager) {
                     Passager p = (Passager) user;
@@ -307,7 +304,7 @@ public class CSVDatabase {
     }
     
     /**
-     * Saves all trajets to CSV file.
+     * Sauvegarde tous les trajets dans le fichier CSV correspondant.
      */
     public static void saveTrajets(Vector<Trajet> trajets) {
         initializeDataFolder();
@@ -317,15 +314,15 @@ public class CSVDatabase {
                     new FileOutputStream(TRAJETS_FILE), 
                     StandardCharsets.UTF_8))) {
             
-            // HEADER ROW
+            // LIGNE D'EN-TÊTE
             // Nouveau format: ajout de MaxPlaces;AcceptedCINs;PendingCINs
             writer.write("Depart;Arrivee;DureeMinutes;Status;Prix;ConducteurCIN;PassagerCIN;MaxPlaces;AcceptedCINs;PendingCINs");
             writer.newLine();
             
-            // DATA ROWS
+            // LIGNES DE DONNÉES
             for (Trajet t : trajets) {
                 String conducteurCIN = (t.getConducteur() != null) ? t.getConducteur().getCin() : "";
-                // For backward compatibility provide first accepted passager CIN in the old column
+                // Pour compatibilité ascendante, fournir le premier CIN de passager accepté dans l'ancienne colonne
                 String passagerCIN = "";
                 if (!t.getPassagersAcceptes().isEmpty()) {
                     passagerCIN = t.getPassagersAcceptes().get(0).getCin();
@@ -359,25 +356,25 @@ public class CSVDatabase {
     }
     
     // ============================================================
-    // STEP 3: READ Operations - Loading data from CSV
+    // ÉTAPE 3 : Opérations DE LECTURE - chargement des données depuis CSV
     // ============================================================
     
     /**
-     * Loads conducteurs from CSV file.
-     * 
-     * HOW IT WORKS:
-     * 1. Open a BufferedReader (efficient for reading text)
-     * 2. Skip the header row
-     * 3. Read each line and split by DELIMITER
-     * 4. Create Conducteur objects from the values
-     * 
-     * @return List of Conducteur objects
+     * Charge les conducteurs depuis le fichier CSV.
+     *
+     * COMMENTAIRE DE FONCTIONNEMENT :
+     * 1. Ouvre un BufferedReader (efficace pour la lecture de texte)
+     * 2. Saute la ligne d'en-tête
+     * 3. Lit chaque ligne et split par DELIMITER
+     * 4. Crée des objets Conducteur à partir des valeurs
+     *
+     * @return Liste d'objets Conducteur
      */
     public static List<Conducteur> loadConducteurs() {
         List<Conducteur> conducteurs = new ArrayList<>();
         Path filePath = Paths.get(CONDUCTEURS_FILE);
         
-        // Check if file exists
+        // Vérifie si le fichier existe
         if (!Files.exists(filePath)) {
             System.out.println("ℹ Fichier conducteurs non trouvé, liste vide retournée");
             return conducteurs;
@@ -392,19 +389,19 @@ public class CSVDatabase {
             boolean isHeader = true;
             
             while ((line = reader.readLine()) != null) {
-                // Skip header row
+                // Saute la ligne d'en-tête
                 if (isHeader) {
                     isHeader = false;
                     continue;
                 }
                 
-                // Skip empty lines
+                // Saute les lignes vides
                 if (line.trim().isEmpty()) continue;
                 
-                // Split the line by delimiter
-                String[] values = line.split(DELIMITER, -1); // -1 keeps empty values
-                
-                // Validate we have enough columns
+                // Sépare la ligne par le délimiteur
+                String[] values = line.split(DELIMITER, -1); // -1 conserve les valeurs vides
+
+                // Valide qu'il y a suffisamment de colonnes
                 if (values.length >= 12) {
                     try {
                         Conducteur c = new Conducteur(
@@ -415,7 +412,7 @@ public class CSVDatabase {
                             Year.of(Integer.parseInt(values[4])), // AnneeUniv
                             unescapeCSV(values[5]),  // Adresse
                             unescapeCSV(values[6]),  // Mail
-                            unescapeCSV(values[7]),  // PasswordHash (already hashed)
+                            unescapeCSV(values[7]),  // PasswordHash (déjà haché)
                             true,                     // isHashedPassword = true
                             unescapeCSV(values[8]),  // NomVoiture
                             unescapeCSV(values[9]),  // MarqueVoiture
@@ -439,7 +436,7 @@ public class CSVDatabase {
     }
     
     /**
-     * Loads passagers from CSV file.
+     * Charge les passagers depuis le fichier CSV.
      */
     public static List<Passager> loadPassagers() {
         List<Passager> passagers = new ArrayList<>();
@@ -470,8 +467,8 @@ public class CSVDatabase {
                 
                 if (values.length >= 9) {
                     try {
-                        // Note: Passager constructor requires a Conducteur reference
-                        // We pass null initially; relationships are rebuilt when loading trajets
+                        // Remarque : le constructeur de Passager peut nécessiter une référence vers un Conducteur
+                        // Nous passons null initialement ; les relations seront recréées lors du chargement des trajets
                         Passager p = new Passager(
                             unescapeCSV(values[0]),  // CIN
                             unescapeCSV(values[1]),  // Nom
@@ -480,10 +477,10 @@ public class CSVDatabase {
                             Year.of(Integer.parseInt(values[4])), // AnneeUniv
                             unescapeCSV(values[5]),  // Adresse
                             unescapeCSV(values[6]),  // Mail
-                            unescapeCSV(values[7]),  // PasswordHash (already hashed)
+                            unescapeCSV(values[7]),  // PasswordHash (déjà haché)
                             true,                     // isHashedPassword = true
                             Boolean.parseBoolean(values[8]), // ChercheCovoit
-                            null  // Conducteur - will be set when loading trajets
+                            null  // Conducteur - sera défini lors du chargement des trajets
                         );
                         passagers.add(p);
                     } catch (Exception e) {
@@ -502,8 +499,9 @@ public class CSVDatabase {
     }
     
     /**
-     * Loads trajets from CSV file.
-     * Note: Requires conducteurs and passagers to be loaded first for references.
+     * Charge les trajets depuis le fichier CSV.
+     * Remarque : nécessite que les conducteurs et passagers soient chargés au préalable
+     * afin de reconstruire les références par CIN.
      */
     public static List<Trajet> loadTrajets(Vector<User> users) {
         List<Trajet> trajets = new ArrayList<>();
@@ -534,11 +532,11 @@ public class CSVDatabase {
                 
                 if (values.length >= 7) {
                     try {
-                        // Find conductor and passenger by CIN
+                        // Recherche du conducteur et du passager par CIN
                         Conducteur conducteur = findConducteurByCIN(users, values[5]);
                         Passager passager = findPassagerByCIN(users, values[6]);
 
-                        // If newer format (with maxPlaces and lists)
+                        // Si format nouveau (avec maxPlaces et listes)
                         int maxPlaces = 1;
                         Vector<Passager> accepted = new Vector<>();
                         Vector<Passager> pending = new Vector<>();
@@ -568,7 +566,7 @@ public class CSVDatabase {
                                 }
                             }
                         } else {
-                            // Old format: if passager not null, add as accepted
+                            // Ancien format : si passager non nul, l'ajouter aux acceptés
                             if (passager != null) accepted.add(passager);
                             maxPlaces = (conducteur != null) ? conducteur.getPlacesDisponibles() : 1;
                         }
@@ -583,7 +581,7 @@ public class CSVDatabase {
                             maxPlaces
                         );
 
-                        // Attach accepted and pending lists
+                        // Attacher les listes de passagers acceptés et en attente
                         for (Passager p : accepted) t.getPassagersAcceptes().add(p);
                         for (Passager p : pending) t.getPassagersDemandes().add(p);
 
@@ -604,17 +602,18 @@ public class CSVDatabase {
     }
     
     // ============================================================
-    // STEP 4: Helper Methods
+    // ÉTAPE 4 : Méthodes d'aide
     // ============================================================
     
     /**
-     * Escapes special characters in CSV values.
-     * If a value contains the delimiter or quotes, wrap it in quotes.
+     * Échappe les caractères spéciaux dans les valeurs CSV.
+     * Si une valeur contient le délimiteur ou des guillemets, on l'entoure de guillemets
+     * et on double les guillemets internes conformément à la norme CSV.
      */
     private static String escapeCSV(String value) {
         if (value == null) return "";
         
-        // If contains delimiter or quotes, wrap in quotes and escape internal quotes
+        // Si contient le délimiteur ou des guillemets ou des retours à la ligne, entourer de guillemets et échapper
         if (value.contains(DELIMITER) || value.contains("\"") || value.contains("\n")) {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
@@ -622,23 +621,23 @@ public class CSVDatabase {
     }
     
     /**
-     * Removes escape characters from CSV values.
+     * Retire les échappements appliqués aux valeurs CSV.
      */
     private static String unescapeCSV(String value) {
         if (value == null) return "";
         value = value.trim();
         
-        // Remove surrounding quotes
+        // Supprime les guillemets entourants
         if (value.startsWith("\"") && value.endsWith("\"")) {
             value = value.substring(1, value.length() - 1);
-            // Unescape internal quotes
+            // Déséchapper les guillemets internes
             value = value.replace("\"\"", "\"");
         }
         return value;
     }
     
     /**
-     * Finds a Conducteur by CIN in the users list.
+     * Recherche un Conducteur par CIN dans la liste d'utilisateurs.
      */
     private static Conducteur findConducteurByCIN(Vector<User> users, String cin) {
         if (cin == null || cin.trim().isEmpty()) return null;
@@ -652,7 +651,7 @@ public class CSVDatabase {
     }
     
     /**
-     * Finds a Passager by CIN in the users list.
+     * Recherche un Passager par CIN dans la liste d'utilisateurs.
      */
     private static Passager findPassagerByCIN(Vector<User> users, String cin) {
         if (cin == null || cin.trim().isEmpty()) return null;
@@ -666,12 +665,12 @@ public class CSVDatabase {
     }
     
     // ============================================================
-    // STEP 5: Convenience Methods - Save/Load All
+    // ÉTAPE 5 : Méthodes de commodité - Sauvegarder/Charger tout
     // ============================================================
     
     /**
-     * Saves all data to CSV files.
-     * Call this when the application closes or after important changes.
+     * Sauvegarde toutes les données dans les fichiers CSV.
+     * Appeler cette méthode lors de la fermeture de l'application ou après des modifications importantes.
      */
     public static void saveAllData(Gestion_covoiturage gestion) {
         System.out.println("\n📁 Sauvegarde des données...");
@@ -682,25 +681,25 @@ public class CSVDatabase {
     }
     
     /**
-     * Loads all data from CSV files into the gestion object.
-     * Call this when the application starts.
+     * Charge toutes les données depuis les fichiers CSV dans l'objet de gestion.
+     * Appeler cette méthode au démarrage de l'application.
      */
     public static void loadAllData(Gestion_covoiturage gestion) {
         System.out.println("\n📂 Chargement des données...");
         
-        // Load conducteurs
+        // Charger les conducteurs
         List<Conducteur> conducteurs = loadConducteurs();
         for (Conducteur c : conducteurs) {
             gestion.getUsers().add(c);
         }
         
-        // Load passagers
+        // Charger les passagers
         List<Passager> passagers = loadPassagers();
         for (Passager p : passagers) {
             gestion.getUsers().add(p);
         }
         
-        // Load trajets (needs users to be loaded first)
+        // Charger les trajets (nécessite que les users soient chargés en premier)
         List<Trajet> trajets = loadTrajets(gestion.getUsers());
         for (Trajet t : trajets) {
             gestion.getTrajets().add(t);
@@ -710,12 +709,12 @@ public class CSVDatabase {
     }
     
     // ============================================================
-    // STEP 6: Export to Standard CSV (for external use)
+    // ÉTAPE 6 : Export vers CSV standard (pour usage externe)
     // ============================================================
     
     /**
-     * Exports data to a user-friendly CSV file.
-     * This creates a nicely formatted file that can be opened in Excel.
+     * Exporte les données vers un CSV lisible par l'utilisateur (Excel, etc.).
+     * Crée un fichier bien formaté pouvant être ouvert par Excel.
      */
     public static void exportToExcelCSV(Vector<Trajet> trajets, String filename) {
         initializeDataFolder();
@@ -726,10 +725,10 @@ public class CSVDatabase {
                     new FileOutputStream(exportPath), 
                     StandardCharsets.UTF_8))) {
             
-            // BOM for Excel UTF-8 compatibility
+            // BOM pour compatibilité Excel UTF-8
             writer.write('\ufeff');
             
-            // Header with French labels
+            // En-tête avec libellés en français
             writer.write("Point de Départ;Point d'Arrivée;Durée (min);Statut;Prix (TND);Conducteur;Passager");
             writer.newLine();
             

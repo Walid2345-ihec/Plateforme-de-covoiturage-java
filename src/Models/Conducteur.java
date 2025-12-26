@@ -51,34 +51,30 @@ public class Conducteur extends User {
         // VALIDATION spécifique au Conducteur
         // ═══════════════════════════════════════════════════════════════════════════
         
-        // Validate nom de voiture: letters AND numbers allowed (e.g., "Golf 7", "308")
+        // Valider nom de voiture: lettres et chiffres autorisés
         ValidationUtils.validateVehicleName(nomVoiture, "Nom de voiture");
         
-        // Validate marque de voiture: letters AND numbers allowed
+        // Valider marque de voiture: lettres et chiffres autorisés
         if (marqueVoiture != null && !marqueVoiture.trim().isEmpty()) {
             ValidationUtils.validateVehicleName(marqueVoiture, "Marque de voiture");
         }
         
-        // Validate matricule: format XXXTUXXXX (1-3 digits + TU + 4 digits)
+        // Valider matricule: format XXXTUXXXX (1-3 digits + TU + 4 digits)
         ValidationUtils.validateMatricule(matricule);
         
-        // Validate places disponibles
+        // Valider places disponibles
         if (placesDisponibles < 1) {
             throw new IllegalArgumentException("Le nombre de places disponibles doit être au moins 1.");
         }
 
         this.nomVoiture = nomVoiture;
         this.marqueVoiture = marqueVoiture;
-        this.matricule = matricule.toUpperCase(); // Normalize to uppercase
+        this.matricule = matricule.toUpperCase();
         this.placesDisponibles = placesDisponibles;
     }
     
     /**
-     * Constructor for loading from CSV (password already hashed).
-     * This constructor accepts a pre-hashed password for database loading.
-     * 
-     * SECURITY NOTE: Use this constructor ONLY when loading from CSV.
-     * For new driver registration, use the standard constructor with plain password.
+     * Constructeur pour le chargement des données à partir du CSV
      */
     public Conducteur(String cin, String nom, String prenom, String tel, Year anneeUniversitaire, 
                       String adresse, String mail, String passwordHash, boolean isHashedPassword,

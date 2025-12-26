@@ -8,14 +8,14 @@ import java.awt.event.WindowEvent;
 import javax.swing.*;
 
 /**
- * Main application frame with card layout for navigation
- * Enhanced with modern UI components and CSV persistence
- * 
- * AUTO-SAVE FEATURES:
- * - Periodic auto-save every 5 minutes
- * - Save on window close with user confirmation
- * - Shutdown hook for unexpected terminations
- * - Backup creation before each save
+ * Cadre principal de l'application avec CardLayout pour la navigation
+ * Amélioré avec des composants UI modernes et persistance CSV.
+ *
+ * FONCTIONNALITÉS DE SAUVEGARDE AUTOMATIQUE :
+ * - Sauvegarde périodique toutes les 5 minutes
+ * - Sauvegarde à la fermeture de la fenêtre (confirmation utilisateur)
+ * - Hook de shutdown pour terminaisons inattendues
+ * - Création de backup avant chaque sauvegarde
  */
 public class MainFrame extends JFrame {
     
@@ -23,38 +23,38 @@ public class MainFrame extends JFrame {
     private JPanel mainPanel;
     private Gestion_covoiturage gestion;
     
-    // Enhanced Panels
+    // Panneaux améliorés (UI)
     private EnhancedLoginPanel loginPanel;
     private EnhancedDriverPanel driverPanel;
     private EnhancedPassengerPanel passengerPanel;
     
-    // Current user info
+    // Informations sur l'utilisateur courant
     private User currentUser;
-    private String userType; // "CONDUCTEUR" or "PASSAGER"
-    
-    // Auto-save timer
+    private String userType; // "CONDUCTEUR" ou "PASSAGER"
+
+    // Timer de sauvegarde automatique
     private Timer autoSaveTimer;
-    private static final int AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes in ms
+    private static final int AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes en ms
     private boolean hasUnsavedChanges = false;
     
     public MainFrame() {
         gestion = new Gestion_covoiturage();
         
-        // STEP: Load data from CSV files on startup
+        // ÉTAPE : charger les données depuis les fichiers CSV au démarrage
         loadDataFromCSV();
         
         initializeFrame();
         initializePanels();
         
-        // STEP: Setup comprehensive auto-save system
+        // ÉTAPE : configurer le système complet de sauvegarde automatique
         setupAutoSave();
         setupPeriodicAutoSave();
         setupShutdownHook();
     }
     
     /**
-     * Loads all data from CSV files into the application.
-     * Called when the application starts.
+     * Charge toutes les données depuis les fichiers CSV dans l'application.
+     * Appelée lors du démarrage.
      */
     private void loadDataFromCSV() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -64,10 +64,10 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Sets up automatic saving when the application closes.
+     * Configure la sauvegarde automatique lors de la fermeture de l'application.
      */
     private void setupAutoSave() {
-        // Override default close operation
+        // Remplace le comportement de fermeture par défaut
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
         addWindowListener(new WindowAdapter() {
@@ -79,10 +79,10 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Handles the application close event with proper cleanup.
+     * Gère l'événement de fermeture de l'application avec nettoyage approprié.
      */
     private void handleApplicationClose() {
-        // Stop auto-save timer
+        // Arrête le timer d'auto-save
         if (autoSaveTimer != null && autoSaveTimer.isRunning()) {
             autoSaveTimer.stop();
         }
@@ -103,9 +103,9 @@ public class MainFrame extends JFrame {
             } else if (choice == JOptionPane.NO_OPTION) {
                 cleanupAndExit();
             }
-            // Cancel - do nothing, stay in app
+            // Annuler -> ne fait rien, reste dans l'application
         } else {
-            // No unsaved changes, just confirm exit
+            // Pas de modifications non sauvegardées, confirmer simplement la sortie
             int choice = JOptionPane.showConfirmDialog(
                 MainFrame.this,
                 "Voulez-vous quitter l'application?",
@@ -122,7 +122,7 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Performs cleanup and exits the application.
+     * Effectue le nettoyage nécessaire puis ferme l'application.
      */
     private void cleanupAndExit() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -133,7 +133,7 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Sets up periodic auto-save every 5 minutes.
+     * Configure une sauvegarde périodique toutes les 5 minutes.
      */
     private void setupPeriodicAutoSave() {
         autoSaveTimer = new Timer(AUTO_SAVE_INTERVAL, e -> {
@@ -149,8 +149,8 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Sets up a shutdown hook for unexpected terminations.
-     * This ensures data is saved even if the JVM is killed unexpectedly.
+     * Configure un shutdown hook pour les terminaisons inattendues.
+     * Assure que les données sont sauvegardées si la JVM est tuée.
      */
     private void setupShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -165,29 +165,29 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Marks that there are unsaved changes.
-     * Call this after any data modification.
+     * Marque qu'il y a des modifications non sauvegardées.
+     * Appeler après toute modification des données.
      */
     public void markUnsavedChanges() {
         this.hasUnsavedChanges = true;
     }
     
     /**
-     * Saves all data with backup creation.
+     * Sauvegarde toutes les données en créant d'abord une sauvegarde (backup).
      */
     public void saveDataWithBackup() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        // Create backup before saving
+        // Crée un backup avant la sauvegarde
         CSVDatabase.createBackup();
-        // Save current data
+        // Sauvegarde des données courantes
         CSVDatabase.saveAllData(gestion);
         hasUnsavedChanges = false;
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
     
     /**
-     * Saves all data to CSV files.
-     * Can be called manually or automatically on close.
+     * Sauvegarde toutes les données dans les fichiers CSV.
+     * Peut être appelée manuellement ou automatiquement à la fermeture.
      */
     public void saveDataToCSV() {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -197,7 +197,7 @@ public class MainFrame extends JFrame {
     }
     
     /**
-     * Exports trajets to a user-friendly CSV file.
+     * Export des trajets vers un fichier CSV lisible par l'utilisateur.
      */
     public void exportTrajetsToCSV(String filename) {
         CSVDatabase.exportToExcelCSV(gestion.getTrajets(), filename);
@@ -210,18 +210,18 @@ public class MainFrame extends JFrame {
         setMinimumSize(new Dimension(1100, 750));
         setLocationRelativeTo(null);
         
-        // Set application icon
+        // Définir l'icône de l'application (si présente)
         try {
             setIconImage(new ImageIcon(getClass().getResource("/resources/car_icon.png")).getImage());
         } catch (Exception e) {
-            // Icon not found, continue without it
+            // Icône non trouvée, continuer sans
         }
         
-        // Enhanced Look and Feel settings
+        // Paramètres d'apparence améliorés
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             
-            // Custom UI defaults for modern appearance
+            // Défauts UI personnalisés pour une apparence moderne
             UIManager.put("Button.arc", 15);
             UIManager.put("Component.arc", 10);
             UIManager.put("ProgressBar.arc", 10);
@@ -230,7 +230,7 @@ public class MainFrame extends JFrame {
             e.printStackTrace();
         }
         
-        // Main panel with card layout
+        // Panneau principal avec CardLayout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         mainPanel.setBackground(ModernUIComponents.Colors.SURFACE);
@@ -249,7 +249,7 @@ public class MainFrame extends JFrame {
         showLogin();
     }
     
-    // Navigation methods
+    // Méthodes de navigation
     public void showLogin() {
         currentUser = null;
         userType = null;
@@ -259,9 +259,9 @@ public class MainFrame extends JFrame {
     public void showDriverPanel(Conducteur conducteur) {
         this.currentUser = conducteur;
         this.userType = "CONDUCTEUR";
-        // Synchronize gestion indices for console compatibility
+        // Synchronise les index de gestion pour compatibilité console
         if (conducteur != null) {
-            // find index of conducteur in gestion.users
+            // cherche l'index du conducteur dans gestion.users
             int idx = -1;
             for (int i = 0; i < gestion.getUsers().size(); i++) {
                 User u = gestion.getUsers().get(i);
@@ -270,12 +270,12 @@ public class MainFrame extends JFrame {
                 }
             }
             try {
-                // reflect to set private Index_conducteur and Index_trajet_conducteur
+                // réflexion pour définir les champs privés Index_conducteur et Index_trajet_conducteur
                 java.lang.reflect.Field f = gestion.getClass().getDeclaredField("Index_conducteur");
                 f.setAccessible(true);
                 f.setInt(gestion, idx);
 
-                // set Index_trajet_conducteur to first trajet of conducteur if any
+                // définir Index_trajet_conducteur sur le premier trajet du conducteur si existe
                 int trajetIndex = -1;
                 for (int i = 0; i < gestion.getTrajets().size(); i++) {
                     Trajet t = gestion.getTrajets().get(i);
@@ -294,7 +294,7 @@ public class MainFrame extends JFrame {
     public void showPassengerPanel(Passager passager) {
         this.currentUser = passager;
         this.userType = "PASSAGER";
-        // Synchronize gestion Index_passager
+        // Synchronise Index_passager de gestion
         if (passager != null) {
             int idx = -1;
             for (int i = 0; i < gestion.getUsers().size(); i++) {
@@ -343,7 +343,7 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Notify all panels that underlying data changed and they should refresh.
+     * Informe tous les panneaux que les données sous-jacentes ont changé et qu'ils doivent se rafraîchir.
      */
     public void notifyDataChanged() {
         try {

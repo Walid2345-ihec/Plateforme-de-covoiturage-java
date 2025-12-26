@@ -9,46 +9,46 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Enhanced UI Components Library
- * Provides modern, animated, and visually polished components
+ * Bibliothèque de composants UI modernisés
+ * Fournit des composants animés et visuellement améliorés pour une interface moderne
  */
 public class ModernUIComponents {
     
-    // ==================== MODERN COLOR PALETTE ====================
+    // ==================== PALETTE DE COULEURS MODERNE ====================
     public static class Colors {
-        // Primary Gradient Colors
-        public static final Color PRIMARY_START = new Color(102, 126, 234);    // Purple-Blue
-        public static final Color PRIMARY_END = new Color(118, 75, 162);       // Purple
-        
-        // Alternative Gradient
+        // Couleurs du gradient principal
+        public static final Color PRIMARY_START = new Color(102, 126, 234);    // Violet-bleu
+        public static final Color PRIMARY_END = new Color(118, 75, 162);       // Violet
+
+        // Gradient alternatif (teal -> vert)
         public static final Color GRADIENT_TEAL_START = new Color(17, 153, 142);
         public static final Color GRADIENT_TEAL_END = new Color(56, 239, 125);
         
-        // Accent Colors
+        // Couleurs d'accentuation
         public static final Color ACCENT_CORAL = new Color(255, 107, 107);
         public static final Color ACCENT_MINT = new Color(46, 213, 115);
         public static final Color ACCENT_SKY = new Color(30, 144, 255);
         public static final Color ACCENT_GOLD = new Color(255, 193, 7);
         
-        // Neutral Colors
+        // Couleurs neutres
         public static final Color DARK_BG = new Color(30, 30, 46);
         public static final Color CARD_BG = new Color(255, 255, 255);
         public static final Color SURFACE = new Color(248, 249, 250);
         public static final Color BORDER = new Color(222, 226, 230);
         
-        // Text Colors
+        // Couleurs de texte
         public static final Color TEXT_DARK = new Color(33, 37, 41);
         public static final Color TEXT_MUTED = new Color(108, 117, 125);
         public static final Color TEXT_LIGHT = new Color(173, 181, 189);
         
-        // Status Colors
+        // Couleurs de statut
         public static final Color SUCCESS = new Color(40, 167, 69);
         public static final Color WARNING = new Color(255, 193, 7);
         public static final Color DANGER = new Color(220, 53, 69);
         public static final Color INFO = new Color(23, 162, 184);
     }
     
-    // ==================== MODERN FONTS ====================
+    // ==================== POLICES MODERNES ====================
     public static class Fonts {
         public static final Font DISPLAY = new Font("Segoe UI", Font.BOLD, 42);
         public static final Font HEADING_1 = new Font("Segoe UI", Font.BOLD, 32);
@@ -60,7 +60,7 @@ public class ModernUIComponents {
         public static final Font BUTTON = new Font("Segoe UI Semibold", Font.PLAIN, 14);
     }
     
-    // ==================== ROUNDED BUTTON ====================
+    // ==================== BOUTON ARRONDI (RoundedButton) ====================
     public static class RoundedButton extends JButton {
         private Color normalColor;
         private Color hoverColor;
@@ -142,7 +142,7 @@ public class ModernUIComponents {
             int width = getWidth();
             int height = getHeight();
             
-            // Calculate animated color
+            // Calcul de la couleur animée
             Color currentColor;
             if (isPressed) {
                 currentColor = pressedColor;
@@ -150,18 +150,18 @@ public class ModernUIComponents {
                 currentColor = interpolateColor(normalColor, hoverColor, animationProgress);
             }
             
-            // Draw shadow when hovered
+            // Dessine une ombre lorsque le bouton est survolé
             if (animationProgress > 0) {
                 int shadowOffset = (int) (4 * animationProgress);
                 g2.setColor(new Color(0, 0, 0, (int) (30 * animationProgress)));
                 g2.fillRoundRect(2, shadowOffset, width - 4, height - 2, radius, radius);
             }
             
-            // Draw button background
+            // Dessine le fond du bouton
             g2.setColor(currentColor);
             g2.fillRoundRect(0, 0, width - 1, height - 1 - (int)(2 * animationProgress), radius, radius);
             
-            // Draw text with enhanced visibility
+            // Dessine le texte avec une meilleure lisibilité
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             Font buttonFont = getFont().deriveFont(Font.BOLD, 14f);
             g2.setFont(buttonFont);
@@ -169,11 +169,11 @@ public class ModernUIComponents {
             int textX = (width - fm.stringWidth(getText())) / 2;
             int textY = (height - fm.getHeight()) / 2 + fm.getAscent() - (int)(animationProgress);
             
-            // Draw text shadow for depth and legibility (dark shadow)
+            // Ombre du texte pour profondeur et lisibilité
             g2.setColor(new Color(0, 0, 0, 100));
             g2.drawString(getText(), textX + 1, textY + 1);
             
-            // Draw main text in pure white
+            // Texte principal en blanc
             g2.setColor(Color.WHITE);
             g2.drawString(getText(), textX, textY);
             
@@ -181,7 +181,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== GRADIENT BUTTON ====================
+    // ==================== BOUTON GRADIENT (GradientButton) ====================
     public static class GradientButton extends JButton {
         private Color startColor;
         private Color endColor;
@@ -240,12 +240,12 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Animated shadow
+            // Ombre animée
             int shadowY = (int) (5 * animationProgress);
             g2.setColor(new Color(0, 0, 0, (int) (40 * animationProgress)));
             g2.fillRoundRect(3, 3 + shadowY, w - 6, h - 4, radius, radius);
             
-            // Gradient background
+            // Fond en gradient
             GradientPaint gradient = new GradientPaint(
                 0, 0, startColor,
                 w, h, endColor
@@ -253,13 +253,13 @@ public class ModernUIComponents {
             g2.setPaint(gradient);
             g2.fillRoundRect(0, (int)(-2 * animationProgress), w - 1, h - 1, radius, radius);
             
-            // Shine effect on hover
+            // Effet de brillance au survol
             if (animationProgress > 0) {
                 g2.setColor(new Color(255, 255, 255, (int) (40 * animationProgress)));
                 g2.fillRoundRect(0, 0, w - 1, h / 2, radius, radius);
             }
             
-            // Text with shadow
+            // Texte avec ombre
             FontMetrics fm = g2.getFontMetrics(getFont());
             int textX = (w - fm.stringWidth(getText())) / 2;
             int textY = (h - fm.getHeight()) / 2 + fm.getAscent() - (int)(2 * animationProgress);
@@ -274,7 +274,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== MODERN TEXT FIELD ====================
+    // ==================== CHAMP DE TEXTE MODERNE (ModernTextField) ====================
     public static class ModernTextField extends JTextField {
         private String placeholder;
         private Color borderColor = Colors.BORDER;
@@ -320,16 +320,16 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Background
+            // Fond
             g2.setColor(Color.WHITE);
             g2.fillRoundRect(0, 0, w - 1, h - 1, radius, radius);
             
-            // Border
+            // Bordure
             g2.setColor(isFocused ? focusBorderColor : borderColor);
             g2.setStroke(new BasicStroke(isFocused ? 2f : 1f));
             g2.drawRoundRect(0, 0, w - 1, h - 1, radius, radius);
             
-            // Icon
+            // Icône
             if (iconText != null) {
                 g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
                 g2.setColor(Colors.TEXT_MUTED);
@@ -340,7 +340,7 @@ public class ModernUIComponents {
             
             super.paintComponent(g);
             
-            // Placeholder - Fixed: draw within paintComponent context
+            // Placeholder - fix : dessin dans le contexte paintComponent
             if (getText().isEmpty() && !isFocused && placeholder != null) {
                 Graphics2D g2p = (Graphics2D) g.create();
                 g2p.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -355,7 +355,7 @@ public class ModernUIComponents {
         }
         
         /**
-         * Gets the current text, returning empty string if it matches placeholder
+         * Retourne le texte courant (conserve le comportement hérité)
          */
         @Override
         public String getText() {
@@ -363,7 +363,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== MODERN PASSWORD FIELD ====================
+    // ==================== CHAMP DE MOT DE PASSE MODERNE (ModernPasswordField) ====================
     public static class ModernPasswordField extends JPasswordField {
         private String placeholder;
         private Color borderColor = Colors.BORDER;
@@ -402,16 +402,16 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Background
+            // Fond
             g2.setColor(Color.WHITE);
             g2.fillRoundRect(0, 0, w - 1, h - 1, radius, radius);
             
-            // Border
+            // Bordure
             g2.setColor(isFocused ? focusBorderColor : borderColor);
             g2.setStroke(new BasicStroke(isFocused ? 2f : 1f));
             g2.drawRoundRect(0, 0, w - 1, h - 1, radius, radius);
             
-            // Lock icon
+            // Icône cadenas
             g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
             g2.setColor(Colors.TEXT_MUTED);
             g2.drawString("🔒", 15, h / 2 + 6);
@@ -422,7 +422,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== GLASS CARD PANEL ====================
+    // ==================== PANNEAU GLASS CARD (GlassCard) ====================
     public static class GlassCard extends JPanel {
         private int radius = 20;
         private Color bgColor;
@@ -447,18 +447,18 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Outer shadow
+            // Ombre externe
             for (int i = 0; i < 8; i++) {
                 g2.setColor(new Color(0, 0, 0, 5 - i / 2));
                 g2.fillRoundRect(i, i + 2, w - i * 2, h - i * 2, radius + i, radius + i);
             }
             
-            // Card background
-            g2.setColor(new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 
+            // Fond de la carte
+            g2.setColor(new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(),
                 (int)(255 * opacity)));
             g2.fillRoundRect(0, 0, w - 1, h - 1, radius, radius);
             
-            // Subtle border
+            // Bordure subtile
             g2.setColor(new Color(255, 255, 255, 100));
             g2.setStroke(new BasicStroke(1f));
             g2.drawRoundRect(0, 0, w - 1, h - 1, radius, radius);
@@ -467,7 +467,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== GRADIENT HEADER PANEL ====================
+    // ==================== EN-TETE GRADIENT (GradientHeader) ====================
     public static class GradientHeader extends JPanel {
         private Color startColor;
         private Color endColor;
@@ -486,7 +486,7 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Main gradient
+            // Gradient principal
             GradientPaint gradient = new GradientPaint(
                 0, 0, startColor,
                 w, h, endColor
@@ -494,7 +494,7 @@ public class ModernUIComponents {
             g2.setPaint(gradient);
             g2.fillRect(0, 0, w, h);
             
-            // Decorative circles
+            // Cercles décoratifs translucides
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
             g2.setColor(Color.WHITE);
             g2.fillOval(-50, -50, 200, 200);
@@ -505,7 +505,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== STAT CARD ====================
+    // ==================== CARTE DE STATISTIQUES (StatCard) ====================
     public static class StatCard extends JPanel {
         private String title;
         private String value;
@@ -538,30 +538,30 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Shadow
+            // Ombre
             g2.setColor(new Color(0, 0, 0, 15));
             g2.fillRoundRect(3, 5, w - 6, h - 5, radius, radius);
             
-            // Background
+            // Fond
             g2.setColor(Color.WHITE);
             g2.fillRoundRect(0, 0, w - 1, h - 5, radius, radius);
             
-            // Accent bar on left
+            // Barre d'accent à gauche
             g2.setColor(accentColor);
             g2.fillRoundRect(0, 0, 5, h - 5, radius, radius);
             g2.fillRect(3, 0, 5, h - 5);
             
-            // Icon
+            // Icône
             g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
             g2.setColor(accentColor);
             g2.drawString(icon, 20, 40);
             
-            // Value
+            // Valeur
             g2.setFont(Fonts.HEADING_1);
             g2.setColor(Colors.TEXT_DARK);
             g2.drawString(value, 20, 80);
             
-            // Title
+            // Titre
             g2.setFont(Fonts.CAPTION);
             g2.setColor(Colors.TEXT_MUTED);
             g2.drawString(title, 20, 100);
@@ -570,7 +570,7 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== SIDEBAR BUTTON ====================
+    // ==================== BOUTON DE LA BARRE LATÉRALE (SidebarButton) ====================
     public static class SidebarButton extends JButton {
         private boolean isSelected = false;
         private Color normalBg = new Color(0, 0, 0, 0);
@@ -632,12 +632,12 @@ public class ModernUIComponents {
             int w = getWidth();
             int h = getHeight();
             
-            // Background
+            // Fond selon l'état (sélection / survol)
             if (isSelected) {
                 g2.setColor(selectedBg);
                 g2.fillRoundRect(10, 5, w - 20, h - 10, 10, 10);
                 
-                // Left indicator
+                // Indicateur gauche
                 g2.setColor(Color.WHITE);
                 g2.fillRoundRect(0, h / 2 - 10, 4, 20, 2, 2);
             } else if (hoverProgress > 0) {
@@ -650,8 +650,8 @@ public class ModernUIComponents {
         }
     }
     
-    // ==================== UTILITY METHODS ====================
-    
+    // ==================== MÉTHODES UTILITAIRES ====================
+
     public static Color brighten(Color color, float factor) {
         int r = Math.min(255, (int) (color.getRed() * (1 + factor)));
         int g = Math.min(255, (int) (color.getGreen() * (1 + factor)));
@@ -677,7 +677,7 @@ public class ModernUIComponents {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
     
-    // Modern ScrollBar UI
+    // Applique un style moderne à la scrollbar d'un JScrollPane
     public static void applyModernScrollBar(JScrollPane scrollPane) {
         scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
             @Override

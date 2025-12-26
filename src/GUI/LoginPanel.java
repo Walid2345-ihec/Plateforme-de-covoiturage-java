@@ -7,7 +7,12 @@ import java.time.Year;
 import javax.swing.*;
 
 /**
- * Login and Registration Panel
+ * Panneau de connexion et d'inscription
+ *
+ * Ce panneau fournit :
+ * - une vue de connexion (login) par CIN,
+ * - des formulaires d'inscription pour Conducteur et Passager,
+ * - la navigation entre les cartes (CardLayout) pour basculer entre login et enregistrement.
  */
 public class LoginPanel extends JPanel {
     
@@ -15,10 +20,10 @@ public class LoginPanel extends JPanel {
     private CardLayout cardLayout;
     private JPanel cardPanel;
     
-    // Login components
+    // Composants de connexion
     private JTextField loginCinField;
     
-    // Registration components - User info
+    // Composants d'inscription - Informations utilisateur
     private JTextField regCinField;
     private JTextField regNomField;
     private JTextField regPrenomField;
@@ -27,13 +32,13 @@ public class LoginPanel extends JPanel {
     private JTextField regAdresseField;
     private JTextField regMailField;
     
-    // Registration components - Driver specific
+    // Composants d'inscription - Spécifique Conducteur
     private JTextField regNomVoitureField;
     private JTextField regMarqueVoitureField;
     private JTextField regMatriculeField;
     private JSpinner regPlacesSpinner;
     
-    // Registration components - Passenger specific
+    // Composants d'inscription - Spécifique Passager
     private JTextField pCinField;
     private JTextField pNomField;
     private JTextField pPrenomField;
@@ -42,7 +47,7 @@ public class LoginPanel extends JPanel {
     private JTextField pAdresseField;
     private JTextField pMailField;
 
-    // Registration type
+    // Type d'inscription courant (CONDUCTEUR ou PASSAGER)
     private String registrationType = "CONDUCTEUR";
     
     public LoginPanel(MainFrame mainFrame) {
@@ -54,11 +59,11 @@ public class LoginPanel extends JPanel {
     }
     
     private void initializeComponents() {
-        // Header
+        // En-tête
         JPanel headerPanel = createHeaderPanel();
         add(headerPanel, BorderLayout.NORTH);
         
-        // Center - Card panel for login/register forms
+        // Centre - panneau à cartes pour les formulaires de login/inscription
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);
         cardPanel.setOpaque(false);
@@ -67,14 +72,14 @@ public class LoginPanel extends JPanel {
         cardPanel.add(createDriverRegistrationCard(), "REGISTER_DRIVER");
         cardPanel.add(createPassengerRegistrationCard(), "REGISTER_PASSENGER");
         
-        // Center the card panel
+        // Centrer le panneau de cartes
         JPanel centerWrapper = new JPanel(new GridBagLayout());
         centerWrapper.setOpaque(false);
         centerWrapper.add(cardPanel);
         
         add(centerWrapper, BorderLayout.CENTER);
         
-        // Footer
+        // Pied de page
         add(createFooterPanel(), BorderLayout.SOUTH);
     }
     
@@ -111,7 +116,7 @@ public class LoginPanel extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setPreferredSize(new Dimension(450, 500));
         
-        // Title
+        // Titre
         JLabel titleLabel = new JLabel("Connexion");
         titleLabel.setFont(StyleUtils.TITLE_FONT);
         titleLabel.setForeground(StyleUtils.TEXT_PRIMARY);
@@ -120,7 +125,7 @@ public class LoginPanel extends JPanel {
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(30));
         
-        // CIN Field
+        // Champ CIN
         JPanel cinPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         cinPanel.setOpaque(false);
         cinPanel.add(StyleUtils.createLabel("Numéro CIN :"));
@@ -133,7 +138,7 @@ public class LoginPanel extends JPanel {
         
         card.add(Box.createVerticalStrut(20));
         
-        // User type selection
+        // Sélection du type d'utilisateur
         JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         typePanel.setOpaque(false);
         
@@ -155,7 +160,7 @@ public class LoginPanel extends JPanel {
         
         card.add(Box.createVerticalStrut(30));
         
-        // Login Button
+        // Bouton de connexion
         JButton loginBtn = StyleUtils.createPrimaryButton("Se Connecter");
         loginBtn.setMaximumSize(new Dimension(400, 50));
         loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -176,14 +181,14 @@ public class LoginPanel extends JPanel {
         
         card.add(Box.createVerticalStrut(30));
         
-        // Separator
+        // Séparateur
         JSeparator separator = new JSeparator();
         separator.setMaximumSize(new Dimension(350, 1));
         card.add(separator);
         
         card.add(Box.createVerticalStrut(20));
         
-        // Register section
+        // Section d'inscription
         JLabel noAccountLabel = new JLabel("Pas encore de compte ?");
         noAccountLabel.setFont(StyleUtils.SMALL_FONT);
         noAccountLabel.setForeground(StyleUtils.TEXT_SECONDARY);
@@ -192,7 +197,7 @@ public class LoginPanel extends JPanel {
         
         card.add(Box.createVerticalStrut(15));
         
-        // Register buttons
+        // Boutons d'inscription
         JPanel registerBtnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         registerBtnPanel.setOpaque(false);
         
@@ -224,7 +229,7 @@ public class LoginPanel extends JPanel {
         card.setLayout(new BorderLayout());
         card.setPreferredSize(new Dimension(550, 650));
         
-        // Title
+        // Titre
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         titlePanel.setOpaque(false);
         JLabel titleLabel = new JLabel("Inscription Conducteur");
@@ -233,13 +238,13 @@ public class LoginPanel extends JPanel {
         titlePanel.add(titleLabel);
         card.add(titlePanel, BorderLayout.NORTH);
         
-        // Form Panel with scroll
+        // Formulaire avec scroll
         JPanel formPanel = new JPanel();
         formPanel.setOpaque(false);
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         
-        // User info section
+        // Section informations personnelles
         formPanel.add(createSectionLabel("Informations Personnelles"));
         formPanel.add(Box.createVerticalStrut(10));
         
@@ -259,7 +264,7 @@ public class LoginPanel extends JPanel {
         regMarqueVoitureField = addFormField(formPanel, "Marque *");
         regMatriculeField = addFormField(formPanel, "Matricule *");
         
-        // Places spinner
+        // Spinner pour le nombre de places
         JPanel placesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         placesPanel.setOpaque(false);
         placesPanel.setMaximumSize(new Dimension(500, 70));
@@ -278,7 +283,7 @@ public class LoginPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         card.add(scrollPane, BorderLayout.CENTER);
         
-        // Buttons
+        // Boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
         buttonPanel.setOpaque(false);
         
@@ -296,13 +301,13 @@ public class LoginPanel extends JPanel {
         
         return card;
     }
-    
+
     private JPanel createPassengerRegistrationCard() {
         JPanel card = StyleUtils.createCardPanel();
         card.setLayout(new BorderLayout());
         card.setPreferredSize(new Dimension(500, 550));
         
-        // Title
+        // Titre
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         titlePanel.setOpaque(false);
         JLabel titleLabel = new JLabel("Inscription Passager");
@@ -311,7 +316,7 @@ public class LoginPanel extends JPanel {
         titlePanel.add(titleLabel);
         card.add(titlePanel, BorderLayout.NORTH);
         
-        // Form Panel
+        // Formulaire
         JPanel formPanel = new JPanel();
         formPanel.setOpaque(false);
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
@@ -320,7 +325,7 @@ public class LoginPanel extends JPanel {
         formPanel.add(createSectionLabel("Informations Personnelles"));
         formPanel.add(Box.createVerticalStrut(10));
         
-        // Use passenger field variables (class members)
+        // Utiliser les variables de champ de passager (membres de classe)
         pCinField = addFormField(formPanel, "CIN *");
         pNomField = addFormField(formPanel, "Nom *");
         pPrenomField = addFormField(formPanel, "Prénom *");
@@ -334,7 +339,7 @@ public class LoginPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         card.add(scrollPane, BorderLayout.CENTER);
         
-        // Buttons
+        // Boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
         buttonPanel.setOpaque(false);
         

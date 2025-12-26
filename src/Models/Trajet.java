@@ -21,10 +21,10 @@ public class Trajet {
 
     // ==================== STATUS CONSTANTS ====================
     /**
-     * PENDING: Trajet available for reservation (no passenger assigned)
-     * PENDING_APPROVAL: Passenger has requested reservation, waiting for driver approval
-     * IN_PROGRESS: Driver accepted one or more passengers, trajet is confirmed
-     * FINISHED: Trajet completed
+     * PENDING: Trajet vient d'être créé, pas encore de passager ni de demande
+     * PENDING_APPROVAL: Passager a demandé, en attente d'acceptation
+     * IN_PROGRESS: Passager accepté, trajet en cours
+     * FINISHED: Trajet fini
      */
     public static final String STATUS_PENDING = "PENDING";
     public static final String STATUS_PENDING_APPROVAL = "PENDING_APPROVAL";
@@ -114,7 +114,7 @@ public class Trajet {
             this.passagersAcceptes.add(passager);
         }
 
-        // Default maxPlaces: use conducteur placesDisponibles if available
+        // Synchroniser capacité par défaut avec conducteur
         if (conducteur != null) {
             try {
                 this.maxPlaces = conducteur.getPlacesDisponibles();
@@ -131,7 +131,7 @@ public class Trajet {
         if (maxPlaces > 0) this.maxPlaces = maxPlaces;
     }
 
-    // Helper method to validate status
+    // Validation du statut
     private static boolean isValidStatus(String status) {
         return status != null && (
                 status.equals(STATUS_PENDING) ||
@@ -148,10 +148,8 @@ public class Trajet {
     public String getStatusTrajet() { return statusTrajet; }
     public boolean isTrajet_valide() { return trajet_valide; }
     public Conducteur getConducteur() { return conducteur; }
-    /**
-     * Compatibility getter: returns the first accepted passager or null
-     */
-    @Deprecated
+
+    @Deprecated // Utiliser getPassagersAcceptes() à la place
     public Passager getPassager() { return passagersAcceptes.isEmpty() ? null : passagersAcceptes.get(0); }
     public float getPrix() { return prix; }
     public int getMaxPlaces() { return maxPlaces; }
@@ -171,7 +169,7 @@ public class Trajet {
         }
     }
 
-    // Convenience methods for status checks
+    // méthode de confort pour les statuts
     public boolean isPending() { return STATUS_PENDING.equals(statusTrajet); }
     public boolean isPendingApproval() { return STATUS_PENDING_APPROVAL.equals(statusTrajet); }
     public boolean isInProgress() { return STATUS_IN_PROGRESS.equals(statusTrajet); }
