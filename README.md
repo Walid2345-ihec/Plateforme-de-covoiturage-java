@@ -25,7 +25,7 @@ Structure du projet
 -------------------
 Les fichiers sources sont dans `src/` et les données dans `data/`.
 Organisation principale :
-- src/App/ : point d'entrée de l'application (classes `App.java`, `AppGUI.java`).
+- src/App/ : point d'entrée de l'application (`AppGUI.java`).
 - src/Models/ : contient les classes représentant les données (le "Modèle"). Ex : `User`, `Passager`, `Conducteur`, `Trajet`, `ValidationUtils`.
 - src/Services/ : logique métier et persistance (CSV). Ex : `Gestion_covoiturage`, `CSVDatabase`.
 - src/GUI/ : toutes les classes de l'interface graphique (vues). Ex : `MainFrame`, `EnhancedDriverPanel`, `EnhancedPassengerPanel`, `LoginPanel`, `ModernUIComponents`.
@@ -91,7 +91,7 @@ Comment lancer l'application
 
 2) Depuis un IDE :
    - Ouvrez le projet dans NetBeans / IntelliJ / Eclipse.
-   - Définissez la classe de démarrage `MainFrame` ou `App.App` selon votre configuration et lancez l'application.
+   - Définissez la classe de démarrage `MainFrame` et lancez l'application.
 
 3) Build avec Ant :
    - `ant` (si vous avez Ant installé) utilise `build.xml`. Le plus simple reste `run.bat`.
@@ -117,7 +117,7 @@ Points d'entrée utiles (liste de classes/clés)
 - `Models/*.java` : `User`, `Passager`, `Conducteur`, `Trajet` (les entités centrales).
 - `GUI/EnhancedDriverPanel.java` : vue conducteur (gestion des trajets, acceptation, fin de trajet).
 - `GUI/EnhancedPassengerPanel.java` : vue passager moderne (recherche, réserver, mes réservations).
-- `App/App.java` ou `AppGUI.java` : utilitaires d'exécution (selon votre configuration).
+- `AppGUI.java` : utilitaire d'exécution.
 
 Remerciements et suite
 ----------------------
