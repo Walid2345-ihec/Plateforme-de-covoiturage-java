@@ -1,0 +1,4 @@
+﻿notificationId;passagerId;conducteurId;trajetId;type;message;dateCreation;estLue
+NOTIF_1774971624939_47586912;47586912;41233051;41233051_kram_IHEC;ACCEPTATION;Accepté par tlili mokhtar pour le trajet kram → IHEC;2026-03-31 16:40:24;true
+NOTIF_1774971237336_47586912;47586912;41233051;41233051_kram_IHEC;REFUS;Refusé par tlili mokhtar pour le trajet kram → IHEC;2026-03-31 16:33:57;true
+NOTIF_1774970672241_47586912;47586912;41233051;41233051_kram_IHEC;REFUS;Refusé pour le trajet kram → IHEC;2026-03-31 16:24:32;true
