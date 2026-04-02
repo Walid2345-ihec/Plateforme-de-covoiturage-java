@@ -5,19 +5,20 @@ import GUI.ModernUIComponents.Fonts;
 import Models.*;
 import Services.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javax.swing.*;
 
 /**
- * Notification Panel - Affiche les notifications du passager
+ * Driver Notification Panel - Affiche les notifications du conducteur
  * Affiche jusqu'à 10 dernières notifications (récentes)
  */
-public class NotificationPanel extends JPanel {
+public class DriverNotificationPanel extends JPanel {
     
     private MainFrame mainFrame;
     private Gestion_covoiturage gestion;
-    private String currentPassagerCIN;
+    private String currentConducteurCIN;
     
     private JPanel notificationsContainer;
     private JLabel noNotificationsLabel;
@@ -25,10 +26,10 @@ public class NotificationPanel extends JPanel {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final int MAX_NOTIFICATIONS_DISPLAY = 10;
     
-    public NotificationPanel(MainFrame mainFrame, Gestion_covoiturage gestion, String passagerCIN) {
+    public DriverNotificationPanel(MainFrame mainFrame, Gestion_covoiturage gestion, String conducteurCIN) {
         this.mainFrame = mainFrame;
         this.gestion = gestion;
-        this.currentPassagerCIN = passagerCIN;
+        this.currentConducteurCIN = conducteurCIN;
         
         setLayout(new BorderLayout());
         setBackground(Colors.SURFACE);
@@ -76,10 +77,10 @@ public class NotificationPanel extends JPanel {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 
-                // Green gradient for passenger
+                // Blue gradient for conductor
                 GradientPaint gradient = new GradientPaint(
-                    0, 0, new Color(39, 174, 96),
-                    0, getHeight(), new Color(22, 160, 133)
+                    0, 0, new Color(63, 81, 181),
+                    0, getHeight(), new Color(33, 150, 243)
                 );
                 g2.setPaint(gradient);
                 g2.fillRect(0, 0, getWidth(), getHeight());
@@ -94,7 +95,7 @@ public class NotificationPanel extends JPanel {
         JButton backButton = new JButton("← Retour");
         backButton.setFont(Fonts.BUTTON);
         backButton.setForeground(Color.WHITE);
-        backButton.setBackground(Colors.ACCENT_MINT);
+        backButton.setBackground(new Color(25, 103, 210));
         backButton.setOpaque(true);
         backButton.setBorderPainted(false);
         backButton.setFocusPainted(false);
@@ -104,16 +105,16 @@ public class NotificationPanel extends JPanel {
         backButton.addActionListener(e -> {
             try {
                 // Marquer toutes les notifications comme lues
-                gestion.marquerToutesCommelues(currentPassagerCIN);
+                gestion.marquerToutesCommelueConducteur(currentConducteurCIN);
                 // Retourner au dashboard
-                mainFrame.showPassengerPanel();
+                mainFrame.showDriverPanel();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
         
         // Title
-        JLabel titleLabel = new JLabel("📬 Notifications");
+        JLabel titleLabel = new JLabel("📬 Notifications - Conducteur");
         titleLabel.setFont(Fonts.HEADING_2);
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -133,7 +134,7 @@ public class NotificationPanel extends JPanel {
         notificationsContainer.removeAll();
         
         // Récupérer les 10 dernières notifications
-        List<Notification> notifications = gestion.getDernieresNotifications(currentPassagerCIN, MAX_NOTIFICATIONS_DISPLAY);
+        List<Notification> notifications = gestion.getDernieresNotificationsConducteur(currentConducteurCIN, MAX_NOTIFICATIONS_DISPLAY);
         
         if (notifications.isEmpty()) {
             notificationsContainer.add(noNotificationsLabel);
@@ -162,7 +163,7 @@ public class NotificationPanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
                 // Couleur en arrière-plan selon le statut
-                Color bgColor = notif.isEstLue() ? new Color(245, 245, 245) : new Color(255, 252, 242);
+                Color bgColor = notif.isEstLue() ? new Color(245, 245, 245) : new Color(242, 245, 250);
                 g2.setColor(bgColor);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
                 
@@ -209,51 +210,19 @@ public class NotificationPanel extends JPanel {
         topPanel.add(dateLabel);
         
         // Message
-        JTextArea messageLabel = new JTextArea(notif.getMessage());
+        JLabel messageLabel = new JLabel(notif.getMessage());
         messageLabel.setFont(Fonts.BODY);
         messageLabel.setForeground(Colors.TEXT_DARK);
-        messageLabel.setWrapStyleWord(true);
-        messageLabel.setLineWrap(true);
-        messageLabel.setOpaque(false);
-        messageLabel.setEditable(false);
-        messageLabel.setBorder(null);
+        messageLabel.setVerticalAlignment(SwingConstants.TOP);
+        messageLabel.setVerticalTextPosition(SwingConstants.TOP);
         
         contentPanel.add(topPanel);
-        contentPanel.add(Box.createVerticalStrut(6));
+        contentPanel.add(Box.createVerticalStrut(8));
         contentPanel.add(messageLabel);
-        
-        // Status indicator
-        JPanel statusPanel = new JPanel();
-        statusPanel.setOpaque(false);
-        statusPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        
-        if (!notif.isEstLue()) {
-            JLabel luIcon = new JLabel("• Non lue");
-            luIcon.setFont(Fonts.CAPTION);
-            luIcon.setForeground(Colors.ACCENT_CORAL);
-            statusPanel.add(luIcon);
-        }
+        contentPanel.add(Box.createVerticalGlue());
         
         card.add(contentPanel, BorderLayout.CENTER);
-        card.add(statusPanel, BorderLayout.SOUTH);
-        
-        // Click to mark as read
-        card.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                gestion.marquerCommelue(currentPassagerCIN, notif.getNotificationId());
-                refreshNotifications();
-            }
-        });
         
         return card;
-    }
-    
-    /**
-     * Mettre à jour le CIN du passager
-     */
-    public void setCurrentPassagerCIN(String cinPassager) {
-        this.currentPassagerCIN = cinPassager;
-        refreshNotifications();
     }
 }

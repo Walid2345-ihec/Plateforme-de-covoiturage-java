@@ -28,6 +28,7 @@ public class MainFrame extends JFrame {
     private EnhancedDriverPanel driverPanel;
     private EnhancedPassengerPanel passengerPanel;
     private NotificationPanel notificationPanel;
+    private DriverNotificationPanel driverNotificationPanel;
     
     // Current user info
     private User currentUser;
@@ -243,11 +244,13 @@ public class MainFrame extends JFrame {
         driverPanel = new EnhancedDriverPanel(this);
         passengerPanel = new EnhancedPassengerPanel(this);
         notificationPanel = new NotificationPanel(this, gestion, "");
+        driverNotificationPanel = new DriverNotificationPanel(this, gestion, "");
         
         mainPanel.add(loginPanel, "LOGIN");
         mainPanel.add(driverPanel, "DRIVER");
         mainPanel.add(passengerPanel, "PASSENGER");
         mainPanel.add(notificationPanel, "NOTIFICATIONS");
+        mainPanel.add(driverNotificationPanel, "DRIVER_NOTIFICATIONS");
         
         showLogin();
     }
@@ -331,6 +334,28 @@ public class MainFrame extends JFrame {
         if (currentUser instanceof Passager) {
             passengerPanel.refresh();
             cardLayout.show(mainPanel, "PASSENGER");
+        }
+    }
+
+    /**
+     * Afficher la page des notifications pour le conducteur courant
+     */
+    public void showDriverNotificationPanel() {
+        if (currentUser instanceof Conducteur) {
+            driverNotificationPanel = new DriverNotificationPanel(this, gestion, currentUser.getCin());
+            mainPanel.remove(driverNotificationPanel);
+            mainPanel.add(driverNotificationPanel, "DRIVER_NOTIFICATIONS");
+            cardLayout.show(mainPanel, "DRIVER_NOTIFICATIONS");
+        }
+    }
+
+    /**
+     * Retourner au panel conducteur sans parameter (depuis la page notifications)
+     */
+    public void showDriverPanel() {
+        if (currentUser instanceof Conducteur) {
+            driverPanel.refresh();
+            cardLayout.show(mainPanel, "DRIVER");
         }
     }
     

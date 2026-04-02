@@ -6,7 +6,6 @@ import Models.*;
 import Services.*;
 import java.awt.*;
 import java.util.List;
-import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.*;
 
@@ -225,6 +224,13 @@ public class EnhancedDriverPanel extends JPanel {
             contentLayout.show(contentPanel, "DEMANDES");
         });
         actionsPanel.add(viewDemandesBtn);
+
+        ModernUIComponents.RoundedButton viewNotificationsBtn = new ModernUIComponents.RoundedButton(
+            "📬 Voir Notifications", Colors.ACCENT_MINT);
+        viewNotificationsBtn.addActionListener(e -> {
+            mainFrame.showDriverNotificationPanel();
+        });
+        actionsPanel.add(viewNotificationsBtn);
         
         panel.add(actionsPanel, BorderLayout.SOUTH);
         
@@ -370,8 +376,15 @@ public class EnhancedDriverPanel extends JPanel {
         ModernUIComponents.applyModernScrollBar(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         buttonPanel.setOpaque(false);
+        
+        ModernUIComponents.RoundedButton deleteBtn = new ModernUIComponents.RoundedButton(
+            "Supprimer", Colors.ACCENT_CORAL);
+        deleteBtn.setPreferredSize(new Dimension(130, 42));
+        deleteBtn.addActionListener(e -> deletePassengerFromAccepted());
+        buttonPanel.add(deleteBtn);
+        
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
             "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
@@ -1206,5 +1219,76 @@ public class EnhancedDriverPanel extends JPanel {
         row.add(valueComponent, BorderLayout.CENTER);
         
         return row;
+    }
+    
+    /**
+     * Delete a passenger from the accepted passengers list
+     */
+    private void deletePassengerFromAccepted() {
+        int selectedRow = passagersTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un passager à supprimer");
+            return;
+        }
+
+        Conducteur conducteur = mainFrame.getCurrentConducteur();
+        if (conducteur == null) {
+            JOptionPane.showMessageDialog(this, "Erreur: Conducteur non connecté");
+            return;
+        }
+
+        // Find the corresponding trajet and passager
+        int count = 0;
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            if (t.getConducteur() != null &&
+                t.getConducteur().getCin().equals(conducteur.getCin()) &&
+                (t.isInProgress() || t.isFinished())) {
+
+                for (Passager p : t.getPassagersAcceptes()) {
+                    if (count == selectedRow) {
+                        // Display confirmation dialog with passenger details
+                        String passagerFullName = p.getPrenom() + " " + p.getNom();
+                        int confirm = JOptionPane.showConfirmDialog(this,
+                            "Êtes-vous sûr de supprimer ce passager ?\n\n" +
+                            "Passager: " + passagerFullName + "\n" +
+                            "Téléphone: " + p.getTel() + "\n" +
+                            "Email: " + p.getMail(),
+                            "Confirmer la suppression",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE);
+
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            // Call the deletion logic from Gestion_covoiturage
+                            boolean deleted = mainFrame.getGestion().supprimer_passager_accepte(
+                                t, 
+                                p.getCin(), 
+                                conducteur.getCin()
+                            );
+
+                            if (deleted) {
+                                JOptionPane.showMessageDialog(this,
+                                    "Passager supprimé avec succès !\n\n" +
+                                    passagerFullName + " a été retiré du trajet.\n" +
+                                    "Une notification a été envoyée au passager.\n" +
+                                    "Places restantes: " + conducteur.getPlacesDisponibles());
+
+                                refreshPassagersTable();
+                                refreshDashboard();
+                                refreshDemandesTable();
+
+                                // Notify main frame to refresh other panels (passenger view)
+                                if (mainFrame != null) {
+                                    mainFrame.notifyDataChanged();
+                                }
+                            } else {
+                                JOptionPane.showMessageDialog(this, "Erreur lors de la suppression du passager.");
+                            }
+                        }
+                        return;
+                    }
+                    count++;
+                }
+            }
+        }
     }
 }

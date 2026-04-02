@@ -18,12 +18,15 @@ public class Gestion_covoiturage {
     private final Map<String, List<String>> demandes_par_conducteur = new HashMap<>();
     // Notifications : clé = CIN du passager, valeur = liste des notifications
     private final Map<String, List<Notification>> notifications_par_passager = new HashMap<>();
+    // Notifications conducteur : clé = CIN du conducteur, valeur = liste des notifications
+    private final Map<String, List<Notification>> notifications_par_conducteur = new HashMap<>();
 
     // Getters
     public List<User> getUsers() { return users; }
     public List<Trajet> getTrajets() { return trajets; }
     public List<User> getPassagers_acceptes() { return passagers_acceptes; }
     public Map<String, List<Notification>> getNotificationsParPassager() { return notifications_par_passager; }
+    public Map<String, List<Notification>> getNotificationsParConducteur() { return notifications_par_conducteur; }
 
     // Setters
     public void setUsers(List<User> newUsers) { this.users.clear(); this.users.addAll(newUsers); }
@@ -102,6 +105,10 @@ public class Gestion_covoiturage {
         if (t.getConducteur() != null) {
             List<String> demandes = demandes_par_conducteur.computeIfAbsent(t.getConducteur().getCin(), k -> new ArrayList<>());
             if (!demandes.contains(cinPassager)) demandes.add(cinPassager);
+            
+            // Créer une notification pour le conducteur
+            String trajetId = t.getConducteur().getCin() + "_" + t.getDepartTrajet() + "_" + t.getArriveeTrajet();
+            creerNotificationNouvelleDemande(t.getConducteur().getCin(), cinPassager, trajetId, t);
         }
         return added;
     }
@@ -359,5 +366,85 @@ public class Gestion_covoiturage {
         // Ajouter à la map des notifications
         List<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new ArrayList<>());
         notifications.add(notif);
+    }
+
+    // ==================== NOTIFICATIONS CONDUCTEUR ====================
+
+    /**
+     * Obtenir les dernières notifications pour un conducteur
+     */
+    public List<Notification> getDernieresNotificationsConducteur(String cinConducteur, int limite) {
+        List<Notification> allNotifs = new ArrayList<>(notifications_par_conducteur.getOrDefault(cinConducteur, new ArrayList<>()));
+        
+        // Trier par date décroissante (les plus récentes en premier)
+        allNotifs.sort((n1, n2) -> n2.getDateCreation().compareTo(n1.getDateCreation()));
+        
+        // Retourner les N dernières
+        List<Notification> derniers = new ArrayList<>();
+        int count = Math.min(limite, allNotifs.size());
+        for (int i = 0; i < count; i++) {
+            derniers.add(allNotifs.get(i));
+        }
+        return derniers;
+    }
+
+    /**
+     * Compter les notifications non lues pour un conducteur
+     */
+    public int compterNotificationsNonLuesConducteur(String cinConducteur) {
+        List<Notification> notifs = notifications_par_conducteur.getOrDefault(cinConducteur, new ArrayList<>());
+        return (int) notifs.stream().filter(n -> !n.isEstLue()).count();
+    }
+
+    /**
+     * Marquer une notification comme lue pour un conducteur
+     */
+    public void marquerCommelueConducteur(String cinConducteur, String notificationId) {
+        List<Notification> notifs = notifications_par_conducteur.getOrDefault(cinConducteur, new ArrayList<>());
+        for (Notification n : notifs) {
+            if (n.getNotificationId().equals(notificationId)) {
+                n.setEstLue(true);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Marquer toutes les notifications comme lues pour un conducteur
+     */
+    public void marquerToutesCommelueConducteur(String cinConducteur) {
+        List<Notification> notifs = notifications_par_conducteur.getOrDefault(cinConducteur, new ArrayList<>());
+        for (Notification n : notifs) {
+            n.setEstLue(true);
+        }
+    }
+
+    /**
+     * Créer une notification de nouvelle demande pour le conducteur
+     */
+    public void creerNotificationNouvelleDemande(String cinConducteur, String cinPassager, String trajetId, Trajet trajet) {
+        String notificationId = "NOTIF_" + System.currentTimeMillis() + "_" + cinConducteur;
+        
+        // Récupérer le passager pour obtenir son nom et prénom
+        Passager passager = rechercher_passager(cinPassager);
+        String nomPassager = (passager != null) ? passager.getNom() + " " + passager.getPrenom() : "Passager inconnu";
+        
+        String message = passager != null 
+            ? "Nouvelle demande de " + nomPassager + " pour le trajet " + trajet.getDepartTrajet() + " → " + trajet.getArriveeTrajet()
+            : "Nouvelle demande pour le trajet " + trajet.getDepartTrajet() + " → " + trajet.getArriveeTrajet();
+        
+        Notification notif = new Notification(notificationId, cinConducteur, cinPassager, trajetId, "DEMANDE", message);
+        
+        // Ajouter à la map des notifications
+        List<Notification> notifications = notifications_par_conducteur.computeIfAbsent(cinConducteur, k -> new ArrayList<>());
+        notifications.add(notif);
+    }
+
+    /**
+     * Ajouter une notification existante pour un conducteur (utilisé lors du chargement du CSV)
+     */
+    public void ajouterNotificationConducteur(Notification notification) {
+        List<Notification> notifs = notifications_par_conducteur.computeIfAbsent(notification.getPassagerId(), k -> new ArrayList<>());
+        notifs.add(notification);
     }
 }
