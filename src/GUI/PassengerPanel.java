@@ -360,6 +360,10 @@ public class PassengerPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setOpaque(false);
         
+        JButton supprimerBtn = StyleUtils.createDangerButton("🗑️ Supprimer");
+        supprimerBtn.addActionListener(e -> supprimerReservation());
+        buttonPanel.add(supprimerBtn);
+        
         JButton refreshBtn = StyleUtils.createSecondaryButton("🔄 Actualiser");
         refreshBtn.addActionListener(e -> refreshMesReservations());
         buttonPanel.add(refreshBtn);
@@ -1020,6 +1024,40 @@ public class PassengerPanel extends JPanel {
         }
         
         StyleUtils.showError(this, "Trajet non trouvé");
+    }
+
+    private void supprimerReservation() {
+        int selectedRow = mesReservationsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            StyleUtils.showError(this, "Veuillez sélectionner une réservation à supprimer");
+            return;
+        }
+
+        if (!StyleUtils.showConfirm(this, "Voulez-vous vraiment supprimer cette réservation ?\nCette action est irréversible.")) {
+            return;
+        }
+
+        Passager passager = mainFrame.getCurrentPassager();
+        if (passager == null) return;
+
+        // Find the corresponding trajet
+        int count = 0;
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            for (Passager p : t.getPassagersAcceptes()) {
+                if (p.getCin().equals(passager.getCin())) {
+                    if (count == selectedRow) {
+                        // Remove passenger from accepted list
+                        t.removeAccepted(passager);
+                        StyleUtils.showSuccess(this, "Réservation supprimée avec succès !");
+
+                        refreshMesReservations();
+                        refreshDashboard();
+                        return;
+                    }
+                    count++;
+                }
+            }
+        }
     }
     
     /**
