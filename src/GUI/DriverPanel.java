@@ -4,6 +4,7 @@ import Models.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.time.Duration;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -559,7 +560,7 @@ public class DriverPanel extends JPanel {
                 
                 // Find the trajet
                 Conducteur conducteur = mainFrame.getCurrentConducteur();
-                Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
+                List<Trajet> trajets = mainFrame.getGestion().getTrajets();
                 int count = 0;
                 for (Trajet t : trajets) {
                     if (t.getConducteur() != null && 
@@ -588,7 +589,7 @@ public class DriverPanel extends JPanel {
         
         if (StyleUtils.showConfirm(this, "Voulez-vous vraiment supprimer ce trajet ?")) {
             Conducteur conducteur = mainFrame.getCurrentConducteur();
-            Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
+            List<Trajet> trajets = mainFrame.getGestion().getTrajets();
             int count = 0;
             for (int i = 0; i < trajets.size(); i++) {
                 Trajet t = trajets.get(i);

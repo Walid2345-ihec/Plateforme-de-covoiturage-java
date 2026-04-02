@@ -221,7 +221,7 @@ public class CSVDatabase {
      *
      * @param users Vector of User objects (only Conducteur instances are saved by this method)
      */
-    public static void saveConducteurs(Vector<User> users) {
+    public static void saveConducteurs(List<User> users) {
         initializeDataFolder();
         
         try (BufferedWriter writer = new BufferedWriter(
@@ -282,7 +282,7 @@ public class CSVDatabase {
         
         try {
             // Find and update the conductor in the users list
-            Vector<User> users = gestion.getUsers();
+            List<User> users = gestion.getUsers();
             boolean found = false;
             
             for (int i = 0; i < users.size(); i++) {
@@ -315,7 +315,7 @@ public class CSVDatabase {
     /**
      * Saves all passagers to CSV file.
      */
-    public static void savePassagers(Vector<User> users) {
+    public static void savePassagers(List<User> users) {
         initializeDataFolder();
         
         try (BufferedWriter writer = new BufferedWriter(
@@ -359,7 +359,7 @@ public class CSVDatabase {
     /**
      * Saves all trajets to CSV file.
      */
-    public static void saveTrajets(Vector<Trajet> trajets) {
+    public static void saveTrajets(List<Trajet> trajets) {
         initializeDataFolder();
         
         try (BufferedWriter writer = new BufferedWriter(
@@ -565,7 +565,7 @@ public class CSVDatabase {
      * Loads trajets from CSV file.
      * Note: Requires conducteurs and passagers to be loaded first for references.
      */
-    public static List<Trajet> loadTrajets(Vector<User> users) {
+    public static List<Trajet> loadTrajets(List<User> users) {
         List<Trajet> trajets = new ArrayList<>();
         Path filePath = Paths.get(TRAJETS_FILE);
         
@@ -742,7 +742,7 @@ public class CSVDatabase {
     /**
      * Finds a Conducteur by CIN in the users list.
      */
-    private static Conducteur findConducteurByCIN(Vector<User> users, String cin) {
+    private static Conducteur findConducteurByCIN(List<User> users, String cin) {
         if (cin == null || cin.trim().isEmpty()) return null;
         
         for (User u : users) {
@@ -756,7 +756,7 @@ public class CSVDatabase {
     /**
      * Finds a Passager by CIN in the users list.
      */
-    private static Passager findPassagerByCIN(Vector<User> users, String cin) {
+    private static Passager findPassagerByCIN(List<User> users, String cin) {
         if (cin == null || cin.trim().isEmpty()) return null;
         
         for (User u : users) {
@@ -826,7 +826,7 @@ public class CSVDatabase {
      * Exports data to a user-friendly CSV file.
      * This creates a nicely formatted file that can be opened in Excel.
      */
-    public static void exportToExcelCSV(Vector<Trajet> trajets, String filename) {
+    public static void exportToExcelCSV(List<Trajet> trajets, String filename) {
         initializeDataFolder();
         String exportPath = DATA_FOLDER + filename;
         
@@ -940,7 +940,7 @@ public class CSVDatabase {
     /**
      * Save all notifications to CSV
      */
-    public static void saveNotifications(Map<String, Vector<Notification>> notificationsParPassager) {
+    public static void saveNotifications(Map<String, List<Notification>> notificationsParPassager) {
         initializeDataFolder();
         
         try (BufferedWriter writer = new BufferedWriter(
@@ -957,7 +957,7 @@ public class CSVDatabase {
             
             // Write all notifications
             int count = 0;
-            for (Vector<Notification> notifs : notificationsParPassager.values()) {
+            for (List<Notification> notifs : notificationsParPassager.values()) {
                 for (Notification n : notifs) {
                     String line = String.join(DELIMITER,
                         n.getNotificationId(),

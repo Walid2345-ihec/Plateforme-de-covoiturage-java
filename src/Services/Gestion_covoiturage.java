@@ -1,35 +1,33 @@
 package Services;
 
 import Models.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 /**
  * Classe de gestion du système de covoiturage
  * @author ricko
  */
 public class Gestion_covoiturage {
-    private int Index_trajet_conducteur = -1;
-    private int Index_conducteur = -1;
-    private int Index_passager = -1;
-    private Vector<User> users = new Vector<>();
-    private Vector<Trajet> trajets = new Vector<>();
-    private Vector<User> passagers_acceptes = new Vector<>();
+    private final List<User> users = new ArrayList<>();
+    private final List<Trajet> trajets = new ArrayList<>();
+    private final List<User> passagers_acceptes = new ArrayList<>();
     // demandes par conducteur : clé = CIN du conducteur, valeur = liste des CINs des passagers ayant demandé ce conducteur
-    private Map<String, Vector<String>> demandes_par_conducteur = new HashMap<>();
+    private final Map<String, List<String>> demandes_par_conducteur = new HashMap<>();
     // Notifications : clé = CIN du passager, valeur = liste des notifications
-    private Map<String, Vector<Notification>> notifications_par_passager = new HashMap<>();
+    private final Map<String, List<Notification>> notifications_par_passager = new HashMap<>();
 
     // Getters
-    public Vector<User> getUsers() { return users; }
-    public Vector<Trajet> getTrajets() { return trajets; }
-    public Vector<User> getPassagers_acceptes() { return passagers_acceptes; }
-    public Map<String, Vector<Notification>> getNotificationsParPassager() { return notifications_par_passager; }
+    public List<User> getUsers() { return users; }
+    public List<Trajet> getTrajets() { return trajets; }
+    public List<User> getPassagers_acceptes() { return passagers_acceptes; }
+    public Map<String, List<Notification>> getNotificationsParPassager() { return notifications_par_passager; }
 
     // Setters
-    public void setUsers(Vector<User> users) { this.users = users; }
-    public void setTrajets(Vector<Trajet> trajets) { this.trajets = trajets; }
+    public void setUsers(List<User> newUsers) { this.users.clear(); this.users.addAll(newUsers); }
+    public void setTrajets(List<Trajet> newTrajets) { this.trajets.clear(); this.trajets.addAll(newTrajets); }
 
     /**
      * Recherche un utilisateur par son CIN
@@ -71,7 +69,7 @@ public class Gestion_covoiturage {
      * Ajouter une demande pour un conducteur
      */
     public void ajouter_demande_pour_conducteur(String cinConducteur, String cinPassager) {
-        Vector<String> demandes = demandes_par_conducteur.computeIfAbsent(cinConducteur, k -> new Vector<>());
+        List<String> demandes = demandes_par_conducteur.computeIfAbsent(cinConducteur, k -> new ArrayList<>());
         if (!demandes.contains(cinPassager)) {
             demandes.add(cinPassager);
         }
@@ -81,7 +79,7 @@ public class Gestion_covoiturage {
      * Supprimer une demande pour un conducteur
      */
     public void supprimer_demande_pour_conducteur(String cinConducteur, String cinPassager) {
-        Vector<String> demandes = demandes_par_conducteur.get(cinConducteur);
+        List<String> demandes = demandes_par_conducteur.get(cinConducteur);
         if (demandes != null) {
             demandes.removeIf(s -> s.equalsIgnoreCase(cinPassager));
             if (demandes.isEmpty()) {
@@ -102,7 +100,7 @@ public class Gestion_covoiturage {
         boolean added = t.addDemand(p);
         // Mettre à jour mapping demandes_par_conducteur pour affichage rapide
         if (t.getConducteur() != null) {
-            Vector<String> demandes = demandes_par_conducteur.computeIfAbsent(t.getConducteur().getCin(), k -> new Vector<>());
+            List<String> demandes = demandes_par_conducteur.computeIfAbsent(t.getConducteur().getCin(), k -> new ArrayList<>());
             if (!demandes.contains(cinPassager)) demandes.add(cinPassager);
         }
         return added;
@@ -140,7 +138,7 @@ public class Gestion_covoiturage {
         } catch (Exception ignored) {}
 
         // Retirer de mapping demandes_par_conducteur
-        Vector<String> demandes = demandes_par_conducteur.get(conducteur.getCin());
+        List<String> demandes = demandes_par_conducteur.get(conducteur.getCin());
         if (demandes != null) demandes.remove(cinPassager);
 
         // Ajouter à historique global
@@ -174,7 +172,7 @@ public class Gestion_covoiturage {
         Notification notif = new Notification(notificationId, cinPassager, cinConducteur, trajetId, "ACCEPTATION", message);
         
         // Ajouter à la map des notifications
-        Vector<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new Vector<>());
+        List<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new ArrayList<>());
         notifications.add(notif);
     }
 
@@ -195,7 +193,7 @@ public class Gestion_covoiturage {
         if (!removed) return false;
 
         // Mettre à jour mapping demandes_par_conducteur
-        Vector<String> demandes = demandes_par_conducteur.get(t.getConducteur().getCin());
+        List<String> demandes = demandes_par_conducteur.get(t.getConducteur().getCin());
         if (demandes != null) {
             demandes.removeIf(s -> s.equalsIgnoreCase(cinPassager));
             if (demandes.isEmpty()) {
@@ -230,21 +228,21 @@ public class Gestion_covoiturage {
         Notification notif = new Notification(notificationId, cinPassager, cinConducteur, trajetId, "REFUS", message);
         
         // Ajouter à la map des notifications
-        Vector<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new Vector<>());
+        List<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new ArrayList<>());
         notifications.add(notif);
     }
 
     /**
      * Obtenir les 10 dernières notifications pour un passager
      */
-    public Vector<Notification> getDernieresNotifications(String cinPassager, int limite) {
-        Vector<Notification> allNotifs = notifications_par_passager.getOrDefault(cinPassager, new Vector<>());
+    public List<Notification> getDernieresNotifications(String cinPassager, int limite) {
+        List<Notification> allNotifs = new ArrayList<>(notifications_par_passager.getOrDefault(cinPassager, new ArrayList<>()));
         
         // Trier par date décroissante (les plus récentes en premier)
         allNotifs.sort((n1, n2) -> n2.getDateCreation().compareTo(n1.getDateCreation()));
         
         // Retourner les N dernières
-        Vector<Notification> derniers = new Vector<>();
+        List<Notification> derniers = new ArrayList<>();
         int count = Math.min(limite, allNotifs.size());
         for (int i = 0; i < count; i++) {
             derniers.add(allNotifs.get(i));
@@ -256,7 +254,7 @@ public class Gestion_covoiturage {
      * Compter les notifications non lues pour un passager
      */
     public int compterNotificationsNonLues(String cinPassager) {
-        Vector<Notification> notifs = notifications_par_passager.getOrDefault(cinPassager, new Vector<>());
+        List<Notification> notifs = notifications_par_passager.getOrDefault(cinPassager, new ArrayList<>());
         return (int) notifs.stream().filter(n -> !n.isEstLue()).count();
     }
 
@@ -264,7 +262,7 @@ public class Gestion_covoiturage {
      * Marquer une notification comme lue
      */
     public void marquerCommelue(String cinPassager, String notificationId) {
-        Vector<Notification> notifs = notifications_par_passager.getOrDefault(cinPassager, new Vector<>());
+        List<Notification> notifs = notifications_par_passager.getOrDefault(cinPassager, new ArrayList<>());
         for (Notification n : notifs) {
             if (n.getNotificationId().equals(notificationId)) {
                 n.setEstLue(true);
@@ -277,7 +275,7 @@ public class Gestion_covoiturage {
      * Marquer toutes les notifications comme lues pour un passager
      */
     public void marquerToutesCommelues(String cinPassager) {
-        Vector<Notification> notifs = notifications_par_passager.getOrDefault(cinPassager, new Vector<>());
+        List<Notification> notifs = notifications_par_passager.getOrDefault(cinPassager, new ArrayList<>());
         for (Notification n : notifs) {
             n.setEstLue(true);
         }
@@ -287,7 +285,7 @@ public class Gestion_covoiturage {
      * Ajouter une notification existante (utilisé lors du chargement du CSV)
      */
     public void ajouterNotification(Notification notification) {
-        Vector<Notification> notifs = notifications_par_passager.computeIfAbsent(notification.getPassagerId(), k -> new Vector<>());
+        List<Notification> notifs = notifications_par_passager.computeIfAbsent(notification.getPassagerId(), k -> new ArrayList<>());
         notifs.add(notification);
     }
 
@@ -359,7 +357,7 @@ public class Gestion_covoiturage {
         Notification notif = new Notification(notificationId, cinPassager, cinConducteur, trajetId, "SUPPRESSION", message);
         
         // Ajouter à la map des notifications
-        Vector<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new Vector<>());
+        List<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new ArrayList<>());
         notifications.add(notif);
     }
 }

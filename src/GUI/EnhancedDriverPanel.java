@@ -5,6 +5,7 @@ import GUI.ModernUIComponents.Fonts;
 import Models.*;
 import Services.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -594,7 +595,7 @@ public class EnhancedDriverPanel extends JPanel {
             try {
                 float newPrice = Float.parseFloat(input);
                 Conducteur conducteur = mainFrame.getCurrentConducteur();
-                Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
+                List<Trajet> trajets = mainFrame.getGestion().getTrajets();
                 int count = 0;
                 
                 for (Trajet t : trajets) {
@@ -623,7 +624,7 @@ public class EnhancedDriverPanel extends JPanel {
         
         if (JOptionPane.showConfirmDialog(this, "Supprimer ce trajet ?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             Conducteur conducteur = mainFrame.getCurrentConducteur();
-            Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
+            List<Trajet> trajets = mainFrame.getGestion().getTrajets();
             int count = 0;
             
             for (int i = 0; i < trajets.size(); i++) {
@@ -866,7 +867,7 @@ public class EnhancedDriverPanel extends JPanel {
             return;
         }
 
-        Vector<Trajet> trajets = mainFrame.getGestion().getTrajets();
+        List<Trajet> trajets = mainFrame.getGestion().getTrajets();
         int count = 0;
         for (Trajet t : trajets) {
             if (t.getConducteur() != null && t.getConducteur().getCin().equals(conducteur.getCin())) {

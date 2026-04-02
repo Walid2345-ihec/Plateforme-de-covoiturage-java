@@ -6,6 +6,7 @@ import Models.*;
 import Services.*;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.*;
 
@@ -133,7 +134,7 @@ public class NotificationPanel extends JPanel {
         notificationsContainer.removeAll();
         
         // Récupérer les 10 dernières notifications
-        Vector<Notification> notifications = gestion.getDernieresNotifications(currentPassagerCIN, MAX_NOTIFICATIONS_DISPLAY);
+        List<Notification> notifications = gestion.getDernieresNotifications(currentPassagerCIN, MAX_NOTIFICATIONS_DISPLAY);
         
         if (notifications.isEmpty()) {
             notificationsContainer.add(noNotificationsLabel);
