@@ -31,8 +31,14 @@ public class EnhancedDriverPanel extends JPanel {
     private JTable passagersTable;
     private DefaultTableModel passagersModel;
     
+    // Passenger mapping for accepted passengers
+    private java.util.Map<Integer, Passager> passagersMap = new java.util.HashMap<>();
+    
     // Sidebar buttons for selection tracking
     private final java.util.List<ModernUIComponents.SidebarButton> sidebarButtons = new java.util.ArrayList<>();
+    
+    // Notification badge
+    private JLabel notificationBadge;
     
     public EnhancedDriverPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -225,12 +231,9 @@ public class EnhancedDriverPanel extends JPanel {
         });
         actionsPanel.add(viewDemandesBtn);
 
-        ModernUIComponents.RoundedButton viewNotificationsBtn = new ModernUIComponents.RoundedButton(
-            "📬 Voir Notifications", Colors.ACCENT_MINT);
-        viewNotificationsBtn.addActionListener(e -> {
-            mainFrame.showDriverNotificationPanel();
-        });
-        actionsPanel.add(viewNotificationsBtn);
+        // Notifications button with badge
+        JPanel notificationButtonPanel = createNotificationButtonWithBadge();
+        actionsPanel.add(notificationButtonPanel);
         
         panel.add(actionsPanel, BorderLayout.SOUTH);
         
@@ -384,6 +387,12 @@ public class EnhancedDriverPanel extends JPanel {
         deleteBtn.setPreferredSize(new Dimension(130, 42));
         deleteBtn.addActionListener(e -> deletePassengerFromAccepted());
         buttonPanel.add(deleteBtn);
+        
+        ModernUIComponents.RoundedButton messagingBtn = new ModernUIComponents.RoundedButton(
+            "💬 Messagerie", Colors.ACCENT_MINT);
+        messagingBtn.setPreferredSize(new Dimension(130, 42));
+        messagingBtn.addActionListener(e -> openMessagingWithPassenger());
+        buttonPanel.add(messagingBtn);
         
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
             "Actualiser", Colors.TEXT_MUTED);
@@ -974,6 +983,9 @@ public class EnhancedDriverPanel extends JPanel {
             }
         }
         demandesCard.setValue(String.valueOf(demandesCount));
+        
+        // Update notification badge
+        updateNotificationBadge();
     }
     
     private void refreshTrajetsTable() {
@@ -1045,6 +1057,8 @@ public class EnhancedDriverPanel extends JPanel {
     
     private void refreshPassagersTable() {
         passagersModel.setRowCount(0);
+        passagersMap.clear();
+        int rowIndex = 0;
         Conducteur conducteur = mainFrame.getCurrentConducteur();
         if (conducteur == null) return;
         
@@ -1062,6 +1076,8 @@ public class EnhancedDriverPanel extends JPanel {
                     passagersModel.addRow(new Object[]{
                         maskedCin, p.getNom(), p.getPrenom(), p.getTel(), p.getMail(), p.getAdresse()
                     });
+                    passagersMap.put(rowIndex, p);
+                    rowIndex++;
                 }
             }
         }
@@ -1290,5 +1306,125 @@ public class EnhancedDriverPanel extends JPanel {
                 }
             }
         }
+    }
+    
+    /**
+     * Créer un bouton de notifications avec un badge pour le conducteur
+     */
+    private JPanel createNotificationButtonWithBadge() {
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+            }
+        };
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+        panel.setOpaque(false);
+        panel.setPreferredSize(new Dimension(200, 42));
+        
+        ModernUIComponents.RoundedButton notifBtn = new ModernUIComponents.RoundedButton(
+            "📬 Voir Notifications", Colors.ACCENT_MINT);
+        notifBtn.addActionListener(e -> {
+            mainFrame.showDriverNotificationPanel();
+        });
+        
+        panel.add(notifBtn);
+        
+        // Badge avec le nombre de notifications non lues
+        notificationBadge = new JLabel("0") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw red circle
+                g2.setColor(Color.RED);
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                
+                // Draw text
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                g2.drawString(getText(), x, y);
+                
+                g2.dispose();
+            }
+        };
+        notificationBadge.setPreferredSize(new Dimension(24, 24));
+        notificationBadge.setMaximumSize(new Dimension(24, 24));
+        notificationBadge.setHorizontalAlignment(SwingConstants.CENTER);
+        notificationBadge.setVerticalAlignment(SwingConstants.CENTER);
+        notificationBadge.setOpaque(true);
+        notificationBadge.setBackground(Color.RED);
+        notificationBadge.setForeground(Color.WHITE);
+        notificationBadge.setFont(new Font("Arial", Font.BOLD, 12));
+        
+        // Position le badge en haut à droite
+        JPanel badgeContainer = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+            }
+        };
+        badgeContainer.setLayout(new BorderLayout());
+        badgeContainer.setOpaque(false);
+        badgeContainer.setPreferredSize(new Dimension(30, 30));
+        badgeContainer.add(notificationBadge, BorderLayout.CENTER);
+        
+        panel.add(Box.createHorizontalStrut(8));
+        panel.add(badgeContainer);
+        
+        // Mettre à jour le badge avec le nombre de notifications
+        updateNotificationBadge();
+        
+        return panel;
+    }
+    
+    /**
+     * Mettre à jour le badge des notifications du conducteur
+     */
+    private void updateNotificationBadge() {
+        if (notificationBadge != null) {
+            String conducteurCIN = mainFrame.getCurrentUser() != null ? mainFrame.getCurrentUser().getCin() : "";
+            if (!conducteurCIN.isEmpty()) {
+                int count = mainFrame.getGestion().compterNotificationsNonLuesConducteur(conducteurCIN);
+                if (count > 0) {
+                    notificationBadge.setText(String.valueOf(Math.min(count, 99))); // Max 99 affichées
+                    notificationBadge.setVisible(true);
+                } else {
+                    notificationBadge.setVisible(false);
+                }
+            } else {
+                notificationBadge.setVisible(false);
+            }
+        }
+    }
+    
+    /**
+     * Ouvrir la messagerie avec le passager sélectionné
+     */
+    private void openMessagingWithPassenger() {
+        int selectedRow = passagersTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un passager", 
+                "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        Passager passenger = passagersMap.get(selectedRow);
+        if (passenger == null) {
+            JOptionPane.showMessageDialog(this, "Passager non trouvé", 
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        Conducteur conductor = mainFrame.getCurrentConducteur();
+        if (conductor == null) return;
+        
+        // Ouvrir la MessagingPanel
+        MessagingPanel messagingPanel = new MessagingPanel(mainFrame, conductor, passenger);
+        mainFrame.showMessagingPanel(messagingPanel);
     }
 }

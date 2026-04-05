@@ -13,7 +13,7 @@ public class Passager extends User {
     public Passager() {
         super(); // Appelle le constructeur par défaut interactif de User
 
-        Scanner sc = new Scanner(System.in);
+        try (Scanner sc = new Scanner(System.in)) {
         System.out.println("--- Saisie des informations Passager ---");
 
         // Gestion des exceptions pour la saisie d'un booléen
@@ -32,6 +32,7 @@ public class Passager extends User {
             }
         }
         this.conducteur = null;
+        }
     }
 
     // Constructeur paramétré (avec validation)
@@ -59,7 +60,7 @@ public class Passager extends User {
     // Nouveau constructeur qui accepte un objet User
     public Passager(String cin) {
         super(cin);
-        Scanner sc = new Scanner(System.in);
+        try (Scanner sc = new Scanner(System.in)) {
         System.out.println("--- Saisie des informations Passager ---");
 
         // Gestion des exceptions pour la saisie d'un booléen
@@ -76,6 +77,7 @@ public class Passager extends User {
             } else {
                 System.err.println("Erreur: Veuillez répondre par 'oui' ou 'non'.");
             }
+        }
         }
     }
     

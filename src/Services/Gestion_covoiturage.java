@@ -258,6 +258,18 @@ public class Gestion_covoiturage {
     }
 
     /**
+     * Obtenir TOUTES les notifications pour un passager (sans limite)
+     */
+    public List<Notification> getToutesNotifications(String cinPassager) {
+        List<Notification> allNotifs = new ArrayList<>(notifications_par_passager.getOrDefault(cinPassager, new ArrayList<>()));
+        
+        // Trier par date décroissante (les plus récentes en premier)
+        allNotifs.sort((n1, n2) -> n2.getDateCreation().compareTo(n1.getDateCreation()));
+        
+        return allNotifs;
+    }
+
+    /**
      * Compter les notifications non lues pour un passager
      */
     public int compterNotificationsNonLues(String cinPassager) {
@@ -389,6 +401,18 @@ public class Gestion_covoiturage {
     }
 
     /**
+     * Obtenir TOUTES les notifications pour un conducteur (sans limite)
+     */
+    public List<Notification> getToutesNotificationsConducteur(String cinConducteur) {
+        List<Notification> allNotifs = new ArrayList<>(notifications_par_conducteur.getOrDefault(cinConducteur, new ArrayList<>()));
+        
+        // Trier par date décroissante (les plus récentes en premier)
+        allNotifs.sort((n1, n2) -> n2.getDateCreation().compareTo(n1.getDateCreation()));
+        
+        return allNotifs;
+    }
+
+    /**
      * Compter les notifications non lues pour un conducteur
      */
     public int compterNotificationsNonLuesConducteur(String cinConducteur) {
@@ -441,10 +465,70 @@ public class Gestion_covoiturage {
     }
 
     /**
+     * Créer une notification d'annulation de réservation pour le conducteur
+     * Envoyée lorsqu'un passager annule sa réservation
+     */
+    public void creerNotificationAnnulationReservation(String cinConducteur, String cinPassager, String trajetId, Trajet trajet) {
+        String notificationId = "NOTIF_" + System.currentTimeMillis() + "_" + cinConducteur;
+        
+        // Récupérer le passager pour obtenir son nom et prénom
+        Passager passager = rechercher_passager(cinPassager);
+        String nomPassager = (passager != null) ? passager.getNom() + " " + passager.getPrenom() : "Passager inconnu";
+        
+        String message = passager != null 
+            ? "Annulation de réservation par " + nomPassager + " pour le trajet " + trajet.getDepartTrajet() + " → " + trajet.getArriveeTrajet()
+            : "Annulation de réservation pour le trajet " + trajet.getDepartTrajet() + " → " + trajet.getArriveeTrajet();
+        
+        Notification notif = new Notification(notificationId, cinConducteur, cinPassager, trajetId, "ANNULATION", message);
+        
+        // Ajouter à la map des notifications
+        List<Notification> notifications = notifications_par_conducteur.computeIfAbsent(cinConducteur, k -> new ArrayList<>());
+        notifications.add(notif);
+    }
+
+    /**
      * Ajouter une notification existante pour un conducteur (utilisé lors du chargement du CSV)
      */
     public void ajouterNotificationConducteur(Notification notification) {
         List<Notification> notifs = notifications_par_conducteur.computeIfAbsent(notification.getPassagerId(), k -> new ArrayList<>());
         notifs.add(notification);
+    }
+
+    /**
+     * Créer une notification de message provenant d'un conducteur pour un passager
+     */
+    public void creerNotificationMessageDuConducteur(String cinPassager, String cinConducteur, String messageContent) {
+        String notificationId = "NOTIF_" + System.currentTimeMillis() + "_" + cinPassager;
+        
+        // Récupérer le conducteur pour obtenir son nom et prénom
+        Conducteur conducteur = rechercher_conducteur(cinConducteur);
+        String nomConducteur = (conducteur != null) ? conducteur.getNom() + " " + conducteur.getPrenom() : "Conducteur";
+        
+        String message = "📨 Message de " + nomConducteur + ": " + (messageContent.length() > 50 ? messageContent.substring(0, 50) + "..." : messageContent);
+        
+        Notification notif = new Notification(notificationId, cinPassager, cinConducteur, "", "MESSAGE", message);
+        
+        // Ajouter à la map des notifications du passager
+        List<Notification> notifications = notifications_par_passager.computeIfAbsent(cinPassager, k -> new ArrayList<>());
+        notifications.add(notif);
+    }
+
+    /**
+     * Créer une notification de message provenant d'un passager pour un conducteur
+     */
+    public void creerNotificationMessageDuPassager(String cinConducteur, String cinPassager, String messageContent) {
+        String notificationId = "NOTIF_" + System.currentTimeMillis() + "_" + cinConducteur;
+        
+        // Récupérer le passager pour obtenir son nom et prénom
+        Passager passager = rechercher_passager(cinPassager);
+        String nomPassager = (passager != null) ? passager.getNom() + " " + passager.getPrenom() : "Passager";
+        
+        String message = "📨 Message de " + nomPassager + ": " + (messageContent.length() > 50 ? messageContent.substring(0, 50) + "..." : messageContent);
+        
+        Notification notif = new Notification(notificationId, cinConducteur, cinPassager, "", "MESSAGE", message);
+        
+        // Ajouter à la map des notifications du conducteur
+        List<Notification> notifications = notifications_par_conducteur.computeIfAbsent(cinConducteur, k -> new ArrayList<>());
+        notifications.add(notif);
     }
 }

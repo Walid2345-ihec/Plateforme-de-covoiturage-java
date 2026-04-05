@@ -27,6 +27,9 @@ public class EnhancedPassengerPanel extends JPanel {
     private JTable mesReservationsTable;
     private DefaultTableModel reservationsModel;
     
+    // Conductor mapping for reservations
+    private java.util.Map<Integer, Conducteur> reservationsConductorMap = new java.util.HashMap<>();
+    
     // Notification badge
     private JLabel notificationBadge;
     
@@ -443,6 +446,18 @@ public class EnhancedPassengerPanel extends JPanel {
         // Info panel at bottom
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         infoPanel.setOpaque(false);
+        
+        ModernUIComponents.RoundedButton deleteBtn = new ModernUIComponents.RoundedButton(
+            "Supprimer", Colors.ACCENT_CORAL);
+        deleteBtn.setPreferredSize(new Dimension(130, 42));
+        deleteBtn.addActionListener(e -> supprimerReservation());
+        infoPanel.add(deleteBtn);
+        
+        ModernUIComponents.RoundedButton messagingBtn = new ModernUIComponents.RoundedButton(
+            "💬 Messagerie", Colors.ACCENT_MINT);
+        messagingBtn.setPreferredSize(new Dimension(130, 42));
+        messagingBtn.addActionListener(e -> openMessagingWithConductor());
+        infoPanel.add(messagingBtn);
         
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
             "Actualiser", Colors.TEXT_MUTED);
@@ -873,6 +888,8 @@ public class EnhancedPassengerPanel extends JPanel {
 
     private void refreshReservationsTable() {
         reservationsModel.setRowCount(0);
+        reservationsConductorMap.clear();
+        int rowIndex = 0;
         Passager passager = mainFrame.getCurrentPassager();
         if (passager == null) return;
 
@@ -888,9 +905,10 @@ public class EnhancedPassengerPanel extends JPanel {
                             c.getNomVoiture() + " " + c.getMarqueVoiture(),
                             t.getDepartTrajet(),
                             t.getArriveeTrajet(),
-                            String.format("%.2f", t.getPrix()),
-                            "Accepté"
+                            String.format("%.2f", t.getPrix())
                         });
+                        reservationsConductorMap.put(rowIndex, c);
+                        rowIndex++;
                     }
                     break;
                 }
@@ -909,12 +927,134 @@ public class EnhancedPassengerPanel extends JPanel {
                         car,
                         t.getDepartTrajet(),
                         t.getArriveeTrajet(),
-                        String.format("%.2f", t.getPrix()),
-                        "En attente"
+                        String.format("%.2f", t.getPrix())
                     });
+                    if (c != null) {
+                        reservationsConductorMap.put(rowIndex, c);
+                    }
+                    rowIndex++;
                     break;
                 }
             }
         }
     }
+    
+    /**
+     * Delete a reservation from the current passenger's reservations list
+     */
+    private void supprimerReservation() {
+        int selectedRow = mesReservationsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner une réservation à supprimer");
+            return;
+        }
+
+        if (JOptionPane.showConfirmDialog(this, 
+            "Êtes-vous sûr de supprimer cette réservation ?\nCette action est irréversible.",
+            "Confirmer la suppression",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        Passager passager = mainFrame.getCurrentPassager();
+        if (passager == null) return;
+
+        // Find the corresponding trajet
+        int count = 0;
+        for (Trajet t : mainFrame.getGestion().getTrajets()) {
+            // Check in accepted reservations
+            for (Passager p : t.getPassagersAcceptes()) {
+                if (p.getCin().equals(passager.getCin())) {
+                    if (count == selectedRow) {
+                        // Get conductor info before removing passenger
+                        Conducteur conducteur = t.getConducteur();
+                        String trajetId = "";
+                        if (conducteur != null) {
+                            trajetId = conducteur.getCin() + "_" + t.getDepartTrajet() + "_" + t.getArriveeTrajet();
+                        }
+                        
+                        // Remove passenger from accepted list and restore places
+                        t.removeAccepted(passager);
+                        
+                        // Restore the conductor's available places
+                        if (conducteur != null) {
+                            conducteur.setPlacesDisponibles(conducteur.getPlacesDisponibles() + 1);
+                            
+                            // Send notification to conductor about reservation cancellation
+                            mainFrame.getGestion().creerNotificationAnnulationReservation(
+                                conducteur.getCin(), 
+                                passager.getCin(), 
+                                trajetId, 
+                                t
+                            );
+                        }
+                        
+                        JOptionPane.showMessageDialog(this, 
+                            "Réservation supprimée avec succès !");
+
+                        refreshReservationsTable();
+                        refreshDashboard();
+                        
+                        // Notify conductor panel to refresh
+                        if (mainFrame != null) {
+                            mainFrame.notifyDataChanged();
+                        }
+                        return;
+                    }
+                    count++;
+                }
+            }
+            
+            // Check in pending demandes
+            for (Passager p : t.getPassagersDemandes()) {
+                if (p.getCin().equals(passager.getCin())) {
+                    if (count == selectedRow) {
+                        // Remove passenger from demandes list
+                        t.removeDemand(passager);
+                        
+                        JOptionPane.showMessageDialog(this, 
+                            "Demande annulée avec succès !");
+
+                        refreshReservationsTable();
+                        refreshDashboard();
+                        
+                        // Notify conductor panel to refresh
+                        if (mainFrame != null) {
+                            mainFrame.notifyDataChanged();
+                        }
+                        return;
+                    }
+                    count++;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Ouvrir la messagerie avec le conducteur sélectionné
+     */
+    private void openMessagingWithConductor() {
+        int selectedRow = mesReservationsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner une réservation", 
+                "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        Conducteur conductor = reservationsConductorMap.get(selectedRow);
+        if (conductor == null) {
+            JOptionPane.showMessageDialog(this, "Conducteur non trouvé", 
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        Passager passager = mainFrame.getCurrentPassager();
+        if (passager == null) return;
+        
+        // Ouvrir la MessagingPanel
+        MessagingPanel messagingPanel = new MessagingPanel(mainFrame, passager, conductor);
+        mainFrame.showMessagingPanel(messagingPanel);
+    }
 }
+

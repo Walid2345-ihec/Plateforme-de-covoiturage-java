@@ -3,7 +3,7 @@ package Models;
 import java.time.Year;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
-import java.util.regex.Pattern;
+
 
 /**
  * User - Base class for all users in the carpooling platform
@@ -29,6 +29,7 @@ public class User {
     // ═══════════════════════════════════════════════════════════════════════════
     
     // Constructeur par défaut (interactif avec gestion des exceptions)
+    @SuppressWarnings("resource")
     public User() {
         // Utilisation d'un Scanner local. Il est préférable de ne pas le fermer
         // car cela fermerait System.in, affectant d'autres Scanners potentiels.
@@ -78,6 +79,7 @@ public class User {
     }
     
     
+        @SuppressWarnings("resource")
         public User(String cin) {
         // Utilisation d'un Scanner local. Il est préférable de ne pas le fermer
         // car cela fermerait System.in, affectant d'autres Scanners potentiels.

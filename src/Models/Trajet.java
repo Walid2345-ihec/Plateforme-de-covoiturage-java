@@ -41,7 +41,7 @@ public class Trajet {
 
     // Constructeur par défaut (interactif)
     public Trajet() {
-        Scanner sc = new Scanner(System.in);
+        try (Scanner sc = new Scanner(System.in)) {
         this.trajet_valide = false;
         System.out.println("--- Saisie des informations Trajet ---");
 
@@ -80,17 +80,18 @@ public class Trajet {
 
         System.out.println("Entrez le prix du trajet par personne:");
         this.prix = sc.nextFloat();
-        sc.nextLine();
+            this.prix = Float.parseFloat(sc.nextLine());
 
-        System.out.println("Entrez le nombre maximal de places pour ce trajet:");
-        try {
-            this.maxPlaces = Integer.parseInt(sc.nextLine());
-            if (this.maxPlaces < 1) this.maxPlaces = 1;
-        } catch (NumberFormatException e) {
-            this.maxPlaces = 1;
+            System.out.println("Entrez le nombre maximal de places pour ce trajet:");
+            try {
+                this.maxPlaces = Integer.parseInt(sc.nextLine());
+                if (this.maxPlaces < 1) this.maxPlaces = 1;
+            } catch (NumberFormatException e) {
+                this.maxPlaces = 1;
+            }
+
+            this.conducteur = null;
         }
-
-        this.conducteur = null;
     }
 
     // Constructeur paramétré (avec validation)

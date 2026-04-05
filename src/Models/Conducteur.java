@@ -13,7 +13,7 @@ public class Conducteur extends User {
     // Constructeur par défaut (interactif)
     public Conducteur() {
         super();
-        Scanner sc = new Scanner(System.in);
+        try (Scanner sc = new Scanner(System.in)) {
         System.out.println("--- Saisie des informations Conducteur ---");
 
         System.out.println("Entrez le nom de la voiture :");
@@ -40,6 +40,7 @@ public class Conducteur extends User {
             } catch (IllegalArgumentException e) {
                 System.err.println("Erreur: " + e.getMessage());
             }
+        }
         }
     }
     
@@ -113,21 +114,21 @@ public class Conducteur extends User {
     // les informations spécifiques au Conducteur.
     public Conducteur(String cin) {
         super(cin);
-        Scanner sc = new Scanner(System.in);
-        System.out.println("--- Saisie des informations Conducteur ---");
+        try (Scanner sc = new Scanner(System.in)) {
+            System.out.println("--- Saisie des informations Conducteur ---");
 
-        System.out.println("Entrez le nom de la voiture :");
-        this.nomVoiture = sc.nextLine();
+            System.out.println("Entrez le nom de la voiture :");
+            this.nomVoiture = sc.nextLine();
 
-        System.out.println("Entrez la marque de la voiture :");
-        this.marqueVoiture = sc.nextLine();
+            System.out.println("Entrez la marque de la voiture :");
+            this.marqueVoiture = sc.nextLine();
 
-        System.out.println("Entrez le matricule (ID) de la voiture :");
-        this.matricule = sc.nextLine();
+            System.out.println("Entrez le matricule (ID) de la voiture :");
+            this.matricule = sc.nextLine();
 
-        // Gestion des exceptions pour les places disponibles
-        boolean placesValides = false;
-        while (!placesValides) {
+            // Gestion des exceptions pour les places disponibles
+            boolean placesValides = false;
+            while (!placesValides) {
             System.out.println("Entrez le nombre de places disponibles :");
             try {
                 this.placesDisponibles = Integer.parseInt(sc.nextLine());
@@ -140,6 +141,7 @@ public class Conducteur extends User {
             } catch (IllegalArgumentException e) {
                 System.err.println("Erreur: " + e.getMessage());
             }
+        }
         }
     }
 

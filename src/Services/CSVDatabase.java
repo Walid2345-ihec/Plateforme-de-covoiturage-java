@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 /**
  * CSVDatabase - A utility class for reading and writing data to CSV files.
@@ -43,6 +43,8 @@ public class CSVDatabase {
     private static final String PASSAGERS_FILE = DATA_FOLDER + "passagers.csv";
     private static final String TRAJETS_FILE = DATA_FOLDER + "trajets.csv";
     private static final String NOTIFICATIONS_FILE = DATA_FOLDER + "notifications.csv";
+    private static final String CONDUCTEUR_NOTIFICATIONS_FILE = DATA_FOLDER + "conducteur_notifications.csv";
+    private static final String MESSAGES_FILE = DATA_FOLDER + "messages.csv";
     
     // Delimiter - using semicolon to avoid conflicts with French text
     private static final String DELIMITER = ";";
@@ -235,8 +237,7 @@ public class CSVDatabase {
             
             // DATA ROWS - one per conducteur
             for (User user : users) {
-                if (user instanceof Conducteur) {
-                    Conducteur c = (Conducteur) user;
+                if (user instanceof Conducteur c) {
                     
                     // Build the CSV line by joining fields with delimiter
                     String line = String.join(DELIMITER,
@@ -287,8 +288,7 @@ public class CSVDatabase {
             
             for (int i = 0; i < users.size(); i++) {
                 User user = users.get(i);
-                if (user instanceof Conducteur) {
-                    Conducteur c = (Conducteur) user;
+                if (user instanceof Conducteur c) {
                     if (c.getCin().equals(conducteur.getCin())) {
                         // Update the weekly schedule
                         c.setWeeklySchedule(conducteur.getWeeklySchedule());
@@ -329,8 +329,7 @@ public class CSVDatabase {
             
             // DATA ROWS
             for (User user : users) {
-                if (user instanceof Passager) {
-                    Passager p = (Passager) user;
+                if (user instanceof Passager p) {
                     
                     String line = String.join(DELIMITER,
                         escapeCSV(p.getCin()),
@@ -600,8 +599,8 @@ public class CSVDatabase {
 
                         // If newer format (with maxPlaces and lists)
                         int maxPlaces = 1;
-                        Vector<Passager> accepted = new Vector<>();
-                        Vector<Passager> pending = new Vector<>();
+                        ArrayList<Passager> accepted = new ArrayList<>();
+                        ArrayList<Passager> pending = new ArrayList<>();
                         LocalDateTime startDateTime = null;
                         LocalDateTime endDateTime = null;
 
@@ -780,7 +779,7 @@ public class CSVDatabase {
         saveConducteurs(gestion.getUsers());
         savePassagers(gestion.getUsers());
         saveTrajets(gestion.getTrajets());
-        saveNotifications(gestion.getNotificationsParPassager());
+        saveAllNotifications(gestion);
         System.out.println("✓ Toutes les données sauvegardées!\n");
     }
     
@@ -809,10 +808,16 @@ public class CSVDatabase {
             gestion.getTrajets().add(t);
         }
         
-        // Load notifications
+        // Load notifications for passagers
         List<Notification> notifications = loadNotifications();
         for (Notification n : notifications) {
             gestion.ajouterNotification(n);
+        }
+        
+        // Load notifications for conducteurs
+        List<Notification> conducteurNotifications = loadConducteurNotifications();
+        for (Notification n : conducteurNotifications) {
+            gestion.ajouterNotificationConducteur(n);
         }
         
         System.out.println("✓ Toutes les données chargées!\n");
@@ -938,6 +943,22 @@ public class CSVDatabase {
     }
     
     /**
+     * Save all notifications for passengers and conducteurs
+     */
+    public static void saveAllNotifications(Gestion_covoiturage gestion) {
+        Map<String, List<Notification>> allNotifications = new HashMap<>();
+        
+        // Combine passenger and driver notifications
+        allNotifications.putAll(gestion.getNotificationsParPassager());
+        allNotifications.putAll(gestion.getNotificationsParConducteur());
+        
+        saveNotifications(allNotifications);
+        
+        // Save driver notifications to separate file
+        saveConducteurNotifications(gestion.getNotificationsParConducteur());
+    }
+    
+    /**
      * Save all notifications to CSV
      */
     public static void saveNotifications(Map<String, List<Notification>> notificationsParPassager) {
@@ -979,6 +1000,211 @@ public class CSVDatabase {
             
         } catch (IOException e) {
             System.err.println("✗ Erreur sauvegarde notifications: " + e.getMessage());
+        }
+    }
+    
+    // ============================================================
+    // CONDUCTEUR NOTIFICATIONS - Load/Save Methods
+    // ============================================================
+    
+    /**
+     * Load all notifications for conducteurs from dedicated CSV file
+     */
+    public static List<Notification> loadConducteurNotifications() {
+        initializeDataFolder();
+        List<Notification> notifications = new ArrayList<>();
+        
+        try {
+            Path path = Paths.get(CONDUCTEUR_NOTIFICATIONS_FILE);
+            if (!Files.exists(path)) {
+                System.out.println("✓ Aucun fichier de notifications conducteur (nouveau)");
+                return notifications;
+            }
+            
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return notifications;
+            
+            // Skip header
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+                
+                String[] parts = line.split(DELIMITER, -1);
+                if (parts.length < 8) continue;
+                
+                try {
+                    String notificationId = parts[0].trim();
+                    String conducteurId = parts[1].trim();
+                    String passagerId = parts[2].trim();
+                    String trajetId = parts[3].trim();
+                    String type = parts[4].trim();
+                    String message = parts[5].trim();
+                    LocalDateTime dateCreation = Notification.parseDate(parts[6].trim());
+                    boolean estLue = Boolean.parseBoolean(parts[7].trim());
+                    
+                    Notification notif = new Notification(notificationId, passagerId, conducteurId, 
+                                                         trajetId, type, message, dateCreation, estLue);
+                    notifications.add(notif);
+                    
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing notification conducteur ligne " + (i+1) + ": " + e.getMessage());
+                }
+            }
+            
+            System.out.println("✓ " + notifications.size() + " notifications conducteur chargées");
+            
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture notifications conducteur: " + e.getMessage());
+        }
+        
+        return notifications;
+    }
+    
+    /**
+     * Save all notifications for conducteurs from gestion object
+     */
+    public static void saveConducteurNotifications(Map<String, List<Notification>> notificationsParConducteur) {
+        initializeDataFolder();
+        
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(CONDUCTEUR_NOTIFICATIONS_FILE), 
+                    StandardCharsets.UTF_8))) {
+            
+            // BOM for UTF-8 compatibility
+            writer.write('\ufeff');
+            
+            // Header
+            writer.write("notificationId;conducteurId;passagerId;trajetId;type;message;dateCreation;estLue");
+            writer.newLine();
+            
+            // Write all notifications
+            int count = 0;
+            for (List<Notification> notifs : notificationsParConducteur.values()) {
+                for (Notification n : notifs) {
+                    String line = String.join(DELIMITER,
+                        n.getNotificationId(),
+                        n.getConducteurId(),
+                        n.getPassagerId(),
+                        n.getTrajetId(),
+                        n.getType(),
+                        n.getMessage(),
+                        n.getDateCreationAsString(),
+                        String.valueOf(n.isEstLue())
+                    );
+                    writer.write(line);
+                    writer.newLine();
+                    count++;
+                }
+            }
+            
+            System.out.println("✓ " + count + " notifications conducteur sauvegardées");
+            
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde notifications conducteur: " + e.getMessage());
+        }
+    }
+    
+    // ============================================================
+    // MESSAGES - Load/Save Methods
+    // ============================================================
+    
+    /**
+     * Load all messages from CSV
+     */
+    public static List<Message> loadMessages() {
+        initializeDataFolder();
+        List<Message> messages = new ArrayList<>();
+        
+        try {
+            Path path = Paths.get(MESSAGES_FILE);
+            if (!Files.exists(path)) {
+                System.out.println("✓ Aucun fichier de messages (nouveau)");
+                return messages;
+            }
+            
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return messages;
+            
+            // Skip header
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+                
+                String[] parts = line.split(DELIMITER, -1);
+                if (parts.length < 9) continue;
+                
+                try {
+                    String messageId = parts[0].trim();
+                    String senderCin = parts[1].trim();
+                    String senderName = unescapeCSV(parts[2]);
+                    String recipientCin = parts[3].trim();
+                    String recipientName = unescapeCSV(parts[4]);
+                    String content = unescapeCSV(parts[5]);
+                    LocalDateTime timestamp = LocalDateTime.parse(parts[6].trim(), 
+                        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                    boolean isDeleted = Boolean.parseBoolean(parts[7].trim());
+                    String trajetId = parts[8].trim();
+                    
+                    Message msg = new Message(messageId, senderCin, senderName, recipientCin, 
+                                             recipientName, content, timestamp, isDeleted, trajetId);
+                    messages.add(msg);
+                    
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing message ligne " + (i+1) + ": " + e.getMessage());
+                }
+            }
+            
+            System.out.println("✓ " + messages.size() + " messages chargés");
+            
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture messages: " + e.getMessage());
+        }
+        
+        return messages;
+    }
+    
+    /**
+     * Save all messages to CSV
+     */
+    public static void saveMessages(List<Message> messages) {
+        initializeDataFolder();
+        
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(MESSAGES_FILE), 
+                    StandardCharsets.UTF_8))) {
+            
+            // BOM for UTF-8 compatibility
+            writer.write('\ufeff');
+            
+            // Header
+            writer.write("messageId;senderCin;senderName;recipientCin;recipientName;content;timestamp;isDeleted;trajetId");
+            writer.newLine();
+            
+            // Write all messages
+            int count = 0;
+            for (Message msg : messages) {
+                String line = String.join(DELIMITER,
+                    escapeCSV(msg.getMessageId()),
+                    escapeCSV(msg.getSenderCin()),
+                    escapeCSV(msg.getSenderName()),
+                    escapeCSV(msg.getRecipientCin()),
+                    escapeCSV(msg.getRecipientName()),
+                    escapeCSV(msg.getContent()),
+                    escapeCSV(msg.getFormattedTimestamp()),
+                    String.valueOf(msg.isDeleted()),
+                    escapeCSV(msg.getTrajetId())
+                );
+                writer.write(line);
+                writer.newLine();
+                count++;
+            }
+            
+            System.out.println("✓ " + count + " messages sauvegardés");
+            
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde messages: " + e.getMessage());
         }
     }
 }

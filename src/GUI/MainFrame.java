@@ -29,6 +29,8 @@ public class MainFrame extends JFrame {
     private EnhancedPassengerPanel passengerPanel;
     private NotificationPanel notificationPanel;
     private DriverNotificationPanel driverNotificationPanel;
+    private JPanel messagingPanel;
+    private String previousPanelName; // Track previous panel for return from messaging
     
     // Current user info
     private User currentUser;
@@ -407,5 +409,43 @@ public class MainFrame extends JFrame {
             MainFrame frame = new MainFrame();
             frame.setVisible(true);
         });
+    }
+    
+    /**
+     * Show the messaging panel
+     */
+    public void showMessagingPanel(JPanel messagingPanelView) {
+        this.messagingPanel = messagingPanelView;
+        
+        // Determine which panel we're coming from
+        if (currentUser instanceof Passager) {
+            previousPanelName = "PASSENGER";
+        } else if (currentUser instanceof Conducteur) {
+            previousPanelName = "DRIVER";
+        }
+        
+        // Remove old messaging panel if exists
+        mainPanel.remove(messagingPanelView);
+        
+        // Add new messaging panel
+        mainPanel.add(messagingPanelView, "MESSAGING");
+        
+        // Show messaging panel
+        cardLayout.show(mainPanel, "MESSAGING");
+    }
+    
+    /**
+     * Refresh the current panel and return from messaging
+     */
+    public void refreshCurrentPanel() {
+        if (previousPanelName != null) {
+            if (previousPanelName.equals("PASSENGER")) {
+                passengerPanel.refreshModels();
+                cardLayout.show(mainPanel, "PASSENGER");
+            } else if (previousPanelName.equals("DRIVER")) {
+                driverPanel.refresh();
+                cardLayout.show(mainPanel, "DRIVER");
+            }
+        }
     }
 }

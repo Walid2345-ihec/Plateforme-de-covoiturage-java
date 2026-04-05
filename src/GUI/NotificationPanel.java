@@ -11,19 +11,18 @@ import javax.swing.*;
 
 /**
  * Notification Panel - Affiche les notifications du passager
- * Affiche jusqu'à 10 dernières notifications (récentes)
+ * Affiche TOUTES les notifications (récentes et anciennes, lues ou non)
  */
 public class NotificationPanel extends JPanel {
     
-    private MainFrame mainFrame;
-    private Gestion_covoiturage gestion;
+    private final MainFrame mainFrame;
+    private final Gestion_covoiturage gestion;
     private String currentPassagerCIN;
     
     private JPanel notificationsContainer;
     private JLabel noNotificationsLabel;
     
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final int MAX_NOTIFICATIONS_DISPLAY = 10;
     
     public NotificationPanel(MainFrame mainFrame, Gestion_covoiturage gestion, String passagerCIN) {
         this.mainFrame = mainFrame;
@@ -108,7 +107,7 @@ public class NotificationPanel extends JPanel {
                 // Retourner au dashboard
                 mainFrame.showPassengerPanel();
             } catch (Exception ex) {
-                ex.printStackTrace();
+                System.err.println("Erreur lors du marquage des notifications: " + ex.getMessage());
             }
         });
         
@@ -132,8 +131,8 @@ public class NotificationPanel extends JPanel {
     public void refreshNotifications() {
         notificationsContainer.removeAll();
         
-        // Récupérer les 10 dernières notifications
-        List<Notification> notifications = gestion.getDernieresNotifications(currentPassagerCIN, MAX_NOTIFICATIONS_DISPLAY);
+        // Récupérer TOUTES les notifications du passager
+        List<Notification> notifications = gestion.getToutesNotifications(currentPassagerCIN);
         
         if (notifications.isEmpty()) {
             notificationsContainer.add(noNotificationsLabel);

@@ -146,32 +146,24 @@ public class Notification {
      * Retourne le label du type de notification (avec emoji)
      */
     public String getTypeLabel() {
-        switch (type) {
-            case "ACCEPTATION":
-                return "✓ Accepté";
-            case "REFUS":
-                return "✗ Refusé";
-            case "ANNULATION":
-                return "⊘ Annulé";
-            default:
-                return type;
-        }
+        return switch (type) {
+            case "ACCEPTATION" -> "✓ Accepté";
+            case "REFUS" -> "✗ Refusé";
+            case "ANNULATION" -> "⊘ Annulé";
+            default -> type;
+        };
     }
     
     /**
      * Retourne la couleur du type (en hex)
      */
     public String getTypeColor() {
-        switch (type) {
-            case "ACCEPTATION":
-                return "#27AE60"; // Vert
-            case "REFUS":
-                return "#E74C3C"; // Rouge
-            case "ANNULATION":
-                return "#F39C12"; // Orange
-            default:
-                return "#95A5A6"; // Gris
-        }
+        return switch (type) {
+            case "ACCEPTATION" -> "#27AE60"; // Vert
+            case "REFUS" -> "#E74C3C"; // Rouge
+            case "ANNULATION" -> "#F39C12"; // Orange
+            default -> "#95A5A6"; // Gris
+        };
     }
     
     @Override

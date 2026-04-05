@@ -1046,8 +1046,23 @@ public class PassengerPanel extends JPanel {
             for (Passager p : t.getPassagersAcceptes()) {
                 if (p.getCin().equals(passager.getCin())) {
                     if (count == selectedRow) {
+                        // Get conductor info before removing passenger
+                        Conducteur conducteur = t.getConducteur();
+                        
                         // Remove passenger from accepted list
                         t.removeAccepted(passager);
+                        
+                        // Send notification to conductor about reservation cancellation
+                        if (conducteur != null) {
+                            String trajetId = conducteur.getCin() + "_" + t.getDepartTrajet() + "_" + t.getArriveeTrajet();
+                            mainFrame.getGestion().creerNotificationAnnulationReservation(
+                                conducteur.getCin(), 
+                                passager.getCin(), 
+                                trajetId, 
+                                t
+                            );
+                        }
+                        
                         StyleUtils.showSuccess(this, "Réservation supprimée avec succès !");
 
                         refreshMesReservations();

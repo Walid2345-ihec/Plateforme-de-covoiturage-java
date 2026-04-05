@@ -5,26 +5,24 @@ import GUI.ModernUIComponents.Fonts;
 import Models.*;
 import Services.*;
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javax.swing.*;
 
 /**
  * Driver Notification Panel - Affiche les notifications du conducteur
- * Affiche jusqu'à 10 dernières notifications (récentes)
+ * Affiche TOUTES les notifications (récentes et anciennes, lues ou non)
  */
 public class DriverNotificationPanel extends JPanel {
     
-    private MainFrame mainFrame;
-    private Gestion_covoiturage gestion;
-    private String currentConducteurCIN;
+    private final MainFrame mainFrame;
+    private final Gestion_covoiturage gestion;
+    private final String currentConducteurCIN;
     
     private JPanel notificationsContainer;
     private JLabel noNotificationsLabel;
     
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final int MAX_NOTIFICATIONS_DISPLAY = 10;
     
     public DriverNotificationPanel(MainFrame mainFrame, Gestion_covoiturage gestion, String conducteurCIN) {
         this.mainFrame = mainFrame;
@@ -109,7 +107,7 @@ public class DriverNotificationPanel extends JPanel {
                 // Retourner au dashboard
                 mainFrame.showDriverPanel();
             } catch (Exception ex) {
-                ex.printStackTrace();
+                System.err.println("Erreur lors du marquage des notifications: " + ex.getMessage());
             }
         });
         
@@ -129,17 +127,30 @@ public class DriverNotificationPanel extends JPanel {
     
     /**
      * Rafraîchir l'affichage des notifications
+     * Affiche seulement les 10 dernières notifications (les plus récentes)
      */
     public void refreshNotifications() {
         notificationsContainer.removeAll();
         
-        // Récupérer les 10 dernières notifications
-        List<Notification> notifications = gestion.getDernieresNotificationsConducteur(currentConducteurCIN, MAX_NOTIFICATIONS_DISPLAY);
+        // Récupérer TOUTES les notifications du conducteur
+        List<Notification> allNotifications = gestion.getToutesNotificationsConducteur(currentConducteurCIN);
+        
+        // Limiter à 10 derniers messages (déjà triés par date décroissante)
+        List<Notification> notifications = allNotifications.size() > 10 
+            ? allNotifications.subList(0, 10) 
+            : allNotifications;
         
         if (notifications.isEmpty()) {
             notificationsContainer.add(noNotificationsLabel);
             notificationsContainer.add(Box.createVerticalGlue());
         } else {
+            // Ajouter un compteur
+            JLabel countLabel = new JLabel("Affichage des " + notifications.size() + " dernières notifications");
+            countLabel.setFont(Fonts.CAPTION);
+            countLabel.setForeground(Colors.TEXT_MUTED);
+            countLabel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            notificationsContainer.add(countLabel);
+            
             for (Notification notif : notifications) {
                 notificationsContainer.add(createNotificationCard(notif));
                 notificationsContainer.add(Box.createVerticalStrut(12));
