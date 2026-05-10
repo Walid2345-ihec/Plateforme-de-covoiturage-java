@@ -20,6 +20,12 @@ public class Gestion_covoiturage {
     private final Map<String, List<Notification>> notifications_par_passager = new HashMap<>();
     // Notifications conducteur : clé = CIN du conducteur, valeur = liste des notifications
     private final Map<String, List<Notification>> notifications_par_conducteur = new HashMap<>();
+    // Groupes de discussion
+    private final List<Group> groups = new ArrayList<>();
+    // Messages de groupe (tous groupes confondus, filtrés par groupId à l'usage)
+    private final List<GroupMessage> groupMessages = new ArrayList<>();
+    // Évaluations passager → conducteur
+    private final List<Evaluation> evaluations = new ArrayList<>();
 
     // Getters
     public List<User> getUsers() { return users; }
@@ -64,6 +70,53 @@ public class Gestion_covoiturage {
             return (Passager) user;
         }
         return null;
+    }
+
+    /**
+     * Recherche un administrateur par son CIN
+     */
+    public Admin rechercher_admin(String cin) {
+        User user = rechercher_user(cin);
+        if (user != null && user instanceof Admin) {
+            return (Admin) user;
+        }
+        return null;
+    }
+
+    /**
+     * Récupère tous les utilisateurs du système
+     */
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users);
+    }
+
+    /**
+     * Supprime un utilisateur du système par son CIN
+     */
+    public boolean supprimerUtilisateur(String cin) {
+        return users.removeIf(u -> u.getCin().equalsIgnoreCase(cin));
+    }
+
+    /**
+     * Récupère tous les trajets du système
+     */
+    public List<Trajet> getAllTrajets() {
+        return new ArrayList<>(trajets);
+    }
+
+    /**
+     * Supprime un trajet spécifique
+     */
+    public boolean supprimerTrajet(Trajet t) {
+        if (t == null) return false;
+        return trajets.remove(t);
+    }
+
+    /**
+     * Récupère toutes les évaluations du système
+     */
+    public List<Evaluation> getAllEvaluations() {
+        return new ArrayList<>(evaluations);
     }
 
     // ===== API utilisée par l'UI (gestion des demandes / acceptations) =====
@@ -490,7 +543,12 @@ public class Gestion_covoiturage {
      * Ajouter une notification existante pour un conducteur (utilisé lors du chargement du CSV)
      */
     public void ajouterNotificationConducteur(Notification notification) {
-        List<Notification> notifs = notifications_par_conducteur.computeIfAbsent(notification.getPassagerId(), k -> new ArrayList<>());
+        String conducteurCin = notification.getConducteurId();
+        if (rechercher_conducteur(conducteurCin) == null
+                && rechercher_conducteur(notification.getPassagerId()) != null) {
+            conducteurCin = notification.getPassagerId();
+        }
+        List<Notification> notifs = notifications_par_conducteur.computeIfAbsent(conducteurCin, k -> new ArrayList<>());
         notifs.add(notification);
     }
 
@@ -518,17 +576,295 @@ public class Gestion_covoiturage {
      */
     public void creerNotificationMessageDuPassager(String cinConducteur, String cinPassager, String messageContent) {
         String notificationId = "NOTIF_" + System.currentTimeMillis() + "_" + cinConducteur;
-        
+
         // Récupérer le passager pour obtenir son nom et prénom
         Passager passager = rechercher_passager(cinPassager);
         String nomPassager = (passager != null) ? passager.getNom() + " " + passager.getPrenom() : "Passager";
-        
+
         String message = "📨 Message de " + nomPassager + ": " + (messageContent.length() > 50 ? messageContent.substring(0, 50) + "..." : messageContent);
-        
+
         Notification notif = new Notification(notificationId, cinConducteur, cinPassager, "", "MESSAGE", message);
-        
+
         // Ajouter à la map des notifications du conducteur
         List<Notification> notifications = notifications_par_conducteur.computeIfAbsent(cinConducteur, k -> new ArrayList<>());
         notifications.add(notif);
+    }
+
+    // ==================== GROUPES ====================
+
+    public List<Group> getGroups() { return groups; }
+    public List<GroupMessage> getGroupMessages() { return groupMessages; }
+
+    /**
+     * Ajoute un groupe existant (utilisé lors du chargement CSV).
+     */
+    public void ajouterGroupe(Group group) {
+        if (group == null) return;
+        for (Group g : groups) {
+            if (g.getGroupId().equals(group.getGroupId())) return;
+        }
+        groups.add(group);
+    }
+
+    /**
+     * Ajoute un message de groupe existant (utilisé lors du chargement CSV).
+     */
+    public void ajouterGroupMessage(GroupMessage message) {
+        if (message == null) return;
+        groupMessages.add(message);
+    }
+
+    /**
+     * Crée un nouveau groupe de covoiturage. Le conducteur sélectionne les passagers.
+     * Envoie automatiquement une notification d'appartenance à chaque passager membre.
+     * Retourne le groupe créé, ou null en cas d'erreur.
+     */
+    public Group creerGroupe(String groupName, String conducteurCin, List<String> passagerCins) {
+        if (groupName == null || groupName.trim().isEmpty()) return null;
+        if (conducteurCin == null || conducteurCin.trim().isEmpty()) return null;
+        if (passagerCins == null || passagerCins.isEmpty()) return null;
+
+        String groupId = "GRP_" + System.currentTimeMillis() + "_" + conducteurCin;
+        Group group = new Group(groupId, groupName.trim(), conducteurCin, passagerCins);
+        groups.add(group);
+
+        // Notifier chaque passager membre du groupe
+        for (String passagerCin : passagerCins) {
+            creerNotificationAppartenanceGroupe(passagerCin, conducteurCin, groupId, groupName.trim());
+        }
+
+        return group;
+    }
+
+    /**
+     * Notification d'appartenance à un nouveau groupe pour un passager.
+     */
+    public void creerNotificationAppartenanceGroupe(String cinPassager, String cinConducteur,
+                                                    String groupId, String groupName) {
+        String notificationId = "NOTIF_" + System.currentTimeMillis() + "_" + cinPassager + "_GRP";
+        Conducteur conducteur = rechercher_conducteur(cinConducteur);
+        String nomConducteur = (conducteur != null)
+                ? conducteur.getNom() + " " + conducteur.getPrenom()
+                : "Conducteur inconnu";
+
+        String message = "👥 Vous avez été ajouté au groupe « " + groupName + " » par " + nomConducteur;
+        Notification notif = new Notification(notificationId, cinPassager, cinConducteur,
+                groupId, "GROUPE", message);
+
+        List<Notification> notifications = notifications_par_passager
+                .computeIfAbsent(cinPassager, k -> new ArrayList<>());
+        notifications.add(notif);
+    }
+
+    /**
+     * Récupère tous les groupes auxquels un utilisateur appartient (en tant que conducteur ou passager).
+     */
+    public List<Group> getGroupesPourUtilisateur(String cin) {
+        List<Group> result = new ArrayList<>();
+        if (cin == null) return result;
+        for (Group g : groups) {
+            if (g.containsUser(cin)) result.add(g);
+        }
+        return result;
+    }
+
+    /**
+     * Recherche un groupe par son identifiant.
+     */
+    public Group rechercher_groupe(String groupId) {
+        if (groupId == null) return null;
+        for (Group g : groups) {
+            if (g.getGroupId().equals(groupId)) return g;
+        }
+        return null;
+    }
+
+    /**
+     * Récupère tous les messages d'un groupe, triés par date croissante.
+     */
+    public List<GroupMessage> getMessagesPourGroupe(String groupId) {
+        List<GroupMessage> result = new ArrayList<>();
+        if (groupId == null) return result;
+        for (GroupMessage m : groupMessages) {
+            if (groupId.equals(m.getGroupId())) result.add(m);
+        }
+        result.sort((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()));
+        return result;
+    }
+
+    /**
+     * Envoie un message dans un groupe et notifie tous les autres membres.
+     * Retourne le message créé.
+     */
+    public GroupMessage envoyerMessageDeGroupe(String groupId, String senderCin,
+                                               String senderName, String content) {
+        if (groupId == null || senderCin == null || content == null || content.trim().isEmpty()) {
+            return null;
+        }
+        Group group = rechercher_groupe(groupId);
+        if (group == null) return null;
+
+        String messageId = "GMSG_" + System.currentTimeMillis() + "_" + senderCin;
+        GroupMessage message = new GroupMessage(messageId, groupId, senderCin, senderName, content.trim());
+        groupMessages.add(message);
+
+        // Notifier les autres membres (passagers et conducteur)
+        String previewContent = content.length() > 50 ? content.substring(0, 50) + "..." : content;
+        notifierMembresGroupeMessage(group, senderCin, senderName, previewContent);
+
+        return message;
+    }
+
+    /**
+     * Notifie tous les membres d'un groupe (sauf l'expéditeur) qu'un message a été envoyé.
+     */
+    private void notifierMembresGroupeMessage(Group group, String senderCin, String senderName,
+                                              String previewContent) {
+        // Notifier le conducteur si ce n'est pas lui qui a envoyé
+        if (group.getConducteurCin() != null && !group.getConducteurCin().equals(senderCin)) {
+            String notifId = "NOTIF_" + System.currentTimeMillis() + "_" + group.getConducteurCin() + "_GRPMSG";
+            String message = "💬 [" + group.getGroupName() + "] " + senderName + ": " + previewContent;
+            Notification notif = new Notification(notifId, group.getConducteurCin(), senderCin,
+                    group.getGroupId(), "MESSAGE_GROUPE", message);
+            List<Notification> notifs = notifications_par_conducteur
+                    .computeIfAbsent(group.getConducteurCin(), k -> new ArrayList<>());
+            notifs.add(notif);
+        }
+
+        // Notifier chaque passager (sauf l'expéditeur)
+        for (String memberCin : group.getMemberCins()) {
+            if (memberCin.equals(senderCin)) continue;
+            String notifId = "NOTIF_" + System.currentTimeMillis() + "_" + memberCin + "_GRPMSG";
+            String message = "💬 [" + group.getGroupName() + "] " + senderName + ": " + previewContent;
+            Notification notif = new Notification(notifId, memberCin, senderCin,
+                    group.getGroupId(), "MESSAGE_GROUPE", message);
+            List<Notification> notifs = notifications_par_passager
+                    .computeIfAbsent(memberCin, k -> new ArrayList<>());
+            notifs.add(notif);
+        }
+    }
+
+    /**
+     * Supprime (marque comme supprimé) un message de groupe.
+     * Seul l'expéditeur peut supprimer son message. Le contenu est remplacé par "message supprimée".
+     * Retourne true en cas de succès.
+     */
+    public boolean supprimerMessageDeGroupe(String messageId, String requesterCin) {
+        if (messageId == null || requesterCin == null) return false;
+        for (GroupMessage m : groupMessages) {
+            if (m.getMessageId().equals(messageId)) {
+                if (!m.getSenderCin().equals(requesterCin)) return false;
+                m.delete();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ==================== ÉVALUATIONS ====================
+
+    public List<Evaluation> getEvaluations() { return evaluations; }
+
+    /**
+     * Ajoute une évaluation existante (utilisé lors du chargement CSV).
+     */
+    public void ajouterEvaluation(Evaluation evaluation) {
+        if (evaluation == null) return;
+        evaluations.add(evaluation);
+    }
+
+    /**
+     * Crée une évaluation pour un conducteur. Met à jour la moyenne du conducteur
+     * et envoie une notification au conducteur.
+     * Retourne l'évaluation créée, ou null en cas d'erreur.
+     */
+    public Evaluation creerEvaluation(String passagerCin, String conducteurCin, String trajetId,
+                                      int rating, String comment) {
+        if (passagerCin == null || conducteurCin == null) return null;
+        if (rating < 1 || rating > 5) return null;
+
+        Passager passager = rechercher_passager(passagerCin);
+        Conducteur conducteur = rechercher_conducteur(conducteurCin);
+        if (passager == null || conducteur == null) return null;
+
+        String passagerName = passager.getNom() + " " + passager.getPrenom();
+        String evaluationId = "EVAL_" + System.currentTimeMillis() + "_" + passagerCin;
+
+        Evaluation eval = new Evaluation(evaluationId, passagerCin, passagerName,
+                conducteurCin, trajetId != null ? trajetId : "", rating,
+                comment != null ? comment : "");
+        evaluations.add(eval);
+
+        // Mettre à jour la moyenne du conducteur
+        recalculerMoyenneConducteur(conducteurCin);
+
+        // Notification au conducteur
+        creerNotificationEvaluation(conducteurCin, passagerCin, passagerName, rating, comment);
+
+        return eval;
+    }
+
+    /**
+     * Recalcule la moyenne d'évaluation d'un conducteur à partir de ses évaluations.
+     */
+    public void recalculerMoyenneConducteur(String conducteurCin) {
+        Conducteur c = rechercher_conducteur(conducteurCin);
+        if (c == null) return;
+
+        double sum = 0;
+        int count = 0;
+        for (Evaluation e : evaluations) {
+            if (e.getConducteurCin().equals(conducteurCin)) {
+                sum += e.getRating();
+                count++;
+            }
+        }
+        c.setMoyenneEvaluation(count > 0 ? (sum / count) : 0.0);
+    }
+
+    /**
+     * Recalcule la moyenne pour tous les conducteurs (appelé après chargement CSV).
+     */
+    public void recalculerToutesMoyennes() {
+        for (User u : users) {
+            if (u instanceof Conducteur c) {
+                recalculerMoyenneConducteur(c.getCin());
+            }
+        }
+    }
+
+    /**
+     * Récupère toutes les évaluations reçues par un conducteur, triées par date décroissante.
+     */
+    public List<Evaluation> getEvaluationsPourConducteur(String conducteurCin) {
+        List<Evaluation> result = new ArrayList<>();
+        if (conducteurCin == null) return result;
+        for (Evaluation e : evaluations) {
+            if (conducteurCin.equals(e.getConducteurCin())) result.add(e);
+        }
+        result.sort((a, b) -> b.getDateCreation().compareTo(a.getDateCreation()));
+        return result;
+    }
+
+    /**
+     * Notification au conducteur quand un passager l'évalue.
+     */
+    public void creerNotificationEvaluation(String conducteurCin, String passagerCin,
+                                            String passagerName, int rating, String comment) {
+        String notifId = "NOTIF_" + System.currentTimeMillis() + "_" + conducteurCin + "_EVAL";
+        StringBuilder stars = new StringBuilder();
+        for (int i = 1; i <= 5; i++) stars.append(i <= rating ? "★" : "☆");
+
+        String preview = (comment != null && !comment.isEmpty())
+                ? (comment.length() > 50 ? comment.substring(0, 50) + "..." : comment)
+                : "(sans commentaire)";
+        String message = "⭐ " + passagerName + " vous a évalué " + stars + " : " + preview;
+
+        Notification notif = new Notification(notifId, conducteurCin, passagerCin,
+                "", "EVALUATION", message);
+
+        List<Notification> notifs = notifications_par_conducteur
+                .computeIfAbsent(conducteurCin, k -> new ArrayList<>());
+        notifs.add(notif);
     }
 }

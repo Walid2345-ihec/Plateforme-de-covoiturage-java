@@ -45,6 +45,10 @@ public class CSVDatabase {
     private static final String NOTIFICATIONS_FILE = DATA_FOLDER + "notifications.csv";
     private static final String CONDUCTEUR_NOTIFICATIONS_FILE = DATA_FOLDER + "conducteur_notifications.csv";
     private static final String MESSAGES_FILE = DATA_FOLDER + "messages.csv";
+    private static final String GROUPS_FILE = DATA_FOLDER + "groups.csv";
+    private static final String GROUP_MESSAGES_FILE = DATA_FOLDER + "group_messages.csv";
+    private static final String EVALUATIONS_FILE = DATA_FOLDER + "evaluations.csv";
+    private static final String ADMINS_FILE = DATA_FOLDER + "admins.csv";
     
     // Delimiter - using semicolon to avoid conflicts with French text
     private static final String DELIMITER = ";";
@@ -232,13 +236,13 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW - defines the columns
-            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles;WeeklySchedule");
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles;WeeklySchedule;MoyenneEvaluation;Card;Banned");
             writer.newLine();
-            
+
             // DATA ROWS - one per conducteur
             for (User user : users) {
                 if (user instanceof Conducteur c) {
-                    
+
                     // Build the CSV line by joining fields with delimiter
                     String line = String.join(DELIMITER,
                         escapeCSV(c.getCin()),
@@ -253,9 +257,12 @@ public class CSVDatabase {
                         escapeCSV(c.getMarqueVoiture()),
                         escapeCSV(c.getMatricule()),
                         String.valueOf(c.getPlacesDisponibles()),
-                        escapeCSV(c.getWeeklySchedule())
+                        escapeCSV(c.getWeeklySchedule()),
+                        String.format(java.util.Locale.US, "%.2f", c.getMoyenneEvaluation()),
+                        escapeCSV(c.getCard()),
+                        String.valueOf(c.isBanned())
                     );
-                    
+
                     writer.write(line);
                     writer.newLine();
                 }
@@ -324,13 +331,13 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW
-            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;ChercheCovoit");
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;ChercheCovoit;Card;Banned");
             writer.newLine();
-            
+
             // DATA ROWS
             for (User user : users) {
                 if (user instanceof Passager p) {
-                    
+
                     String line = String.join(DELIMITER,
                         escapeCSV(p.getCin()),
                         escapeCSV(p.getNom()),
@@ -340,9 +347,11 @@ public class CSVDatabase {
                         escapeCSV(p.getAdresse()),
                         escapeCSV(p.getMail()),
                         escapeCSV(p.getPasswordHash() != null ? p.getPasswordHash() : ""),
-                        String.valueOf(p.isChercheCovoit())
+                        String.valueOf(p.isChercheCovoit()),
+                        escapeCSV(p.getCard()),
+                        String.valueOf(p.isBanned())
                     );
-                    
+
                     writer.write(line);
                     writer.newLine();
                 }
@@ -464,7 +473,27 @@ public class CSVDatabase {
                     try {
                         // Get weeklySchedule if available (new format with 13 columns)
                         String weeklySchedule = (values.length >= 13) ? unescapeCSV(values[12]) : "";
-                        
+
+                        // Get average rating if available (new format with 14 columns)
+                        double moyenneEvaluation = 0.0;
+                        if (values.length >= 14) {
+                            String rawAvg = unescapeCSV(values[13]).trim();
+                            if (!rawAvg.isEmpty()) {
+                                try {
+                                    moyenneEvaluation = Double.parseDouble(rawAvg.replace(',', '.'));
+                                } catch (NumberFormatException nfe) {
+                                    moyenneEvaluation = 0.0;
+                                }
+                            }
+                        }
+
+                        // Card and banned status (new format with 16 columns)
+                        String card = (values.length >= 15) ? unescapeCSV(values[14]) : "GREEN";
+                        boolean banned = false;
+                        if (values.length >= 16) {
+                            banned = Boolean.parseBoolean(values[15].trim());
+                        }
+
                         Conducteur c = new Conducteur(
                             unescapeCSV(values[0]),  // CIN
                             unescapeCSV(values[1]),  // Nom
@@ -481,6 +510,9 @@ public class CSVDatabase {
                             Integer.parseInt(values[11]), // PlacesDisponibles
                             weeklySchedule          // WeeklySchedule (new format)
                         );
+                        c.setMoyenneEvaluation(moyenneEvaluation);
+                        c.setCard(card);
+                        c.setBanned(banned);
                         conducteurs.add(c);
                     } catch (Exception e) {
                         System.err.println("⚠ Erreur parsing conducteur: " + e.getMessage());
@@ -516,7 +548,6 @@ public class CSVDatabase {
             
             String line;
             boolean isHeader = true;
-            
             while ((line = reader.readLine()) != null) {
                 if (isHeader) {
                     isHeader = false;
@@ -544,6 +575,13 @@ public class CSVDatabase {
                             Boolean.parseBoolean(values[8]), // ChercheCovoit
                             null  // Conducteur - will be set when loading trajets
                         );
+                        // Card and banned status (new format)
+                        if (values.length >= 10) {
+                            p.setCard(unescapeCSV(values[9]));
+                        }
+                        if (values.length >= 11) {
+                            p.setBanned(Boolean.parseBoolean(values[10].trim()));
+                        }
                         passagers.add(p);
                     } catch (Exception e) {
                         System.err.println("⚠ Erreur parsing passager: " + e.getMessage());
@@ -728,12 +766,20 @@ public class CSVDatabase {
     private static String unescapeCSV(String value) {
         if (value == null) return "";
         value = value.trim();
+        value = stripBom(value);
         
         // Remove surrounding quotes
         if (value.startsWith("\"") && value.endsWith("\"")) {
             value = value.substring(1, value.length() - 1);
             // Unescape internal quotes
             value = value.replace("\"\"", "\"");
+        }
+        return value;
+    }
+
+    private static String stripBom(String value) {
+        if (value != null && value.startsWith("\ufeff")) {
+            return value.substring(1);
         }
         return value;
     }
@@ -766,10 +812,146 @@ public class CSVDatabase {
         return null;
     }
     
-    // ============================================================
-    // STEP 5: Convenience Methods - Save/Load All
-    // ============================================================
-    
+    /**
+     * Loads admins from CSV file.
+     */
+    public static List<Admin> loadAdmins() {
+        List<Admin> admins = new ArrayList<>();
+        Path filePath = Paths.get(ADMINS_FILE);
+
+        if (!Files.exists(filePath)) {
+            System.out.println("ℹ Fichier admins non trouvé, liste vide retournée");
+            return admins;
+        }
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                    new FileInputStream(ADMINS_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            String line;
+            boolean isHeader = true;
+            Map<String, Integer> headerIndexes = new HashMap<>();
+
+            while ((line = reader.readLine()) != null) {
+                if (isHeader) {
+                    String[] headers = line.split(DELIMITER, -1);
+                    for (int i = 0; i < headers.length; i++) {
+                        headerIndexes.put(stripBom(headers[i]).trim().toLowerCase(), i);
+                    }
+                    isHeader = false;
+                    continue;
+                }
+                if (line.trim().isEmpty()) continue;
+
+                String[] values = line.split(DELIMITER, -1);
+                if (values.length >= 4) {
+                    try {
+                        String cin = getCsvValue(values, headerIndexes, "cin", 0);
+                        String nom = getCsvValue(values, headerIndexes, "nom", 1);
+                        String prenom = getCsvValue(values, headerIndexes, "prenom", 2);
+                        String mail = getCsvValue(values, headerIndexes, "mail", 6);
+                        String passwordHash = getCsvValue(values, headerIndexes, "passwordhash", 7);
+                        String role = getCsvValue(values, headerIndexes, "role", 8);
+                        String dateCreation = getCsvValue(values, headerIndexes, "datecreation", 9);
+
+                        if (mail.isEmpty() && values.length >= 4) {
+                            mail = unescapeCSV(values[3]);
+                        }
+                        if (passwordHash.isEmpty() && values.length >= 5) {
+                            passwordHash = unescapeCSV(values[4]);
+                        }
+                        if (role.isEmpty() && values.length >= 6) {
+                            role = unescapeCSV(values[5]);
+                        }
+
+                        Admin a = new Admin(
+                            cin,
+                            nom,
+                            prenom,
+                            mail,
+                            passwordHash,
+                            role.isEmpty() ? "ADMIN" : role,
+                            Admin.parseDate(dateCreation)
+                        );
+                        admins.add(a);
+                    } catch (Exception e) {
+                        System.err.println("⚠ Erreur parsing admin: " + e.getMessage());
+                    }
+                }
+            }
+            System.out.println("✓ " + admins.size() + " admins chargés");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture admins: " + e.getMessage());
+        }
+        if (admins.isEmpty()) {
+            admins.add(createDefaultAdmin());
+        }
+        return admins;
+    }
+
+    private static Admin createDefaultAdmin() {
+        return new Admin(
+            "99999999",
+            "Admin",
+            "Principal",
+            "admin@gmail.com",
+            "admin123",
+            "SUPER_ADMIN",
+            Admin.parseDate("2026-05-10 14:30:00")
+        );
+    }
+
+    private static String getCsvValue(String[] values, Map<String, Integer> headerIndexes, String headerName, int fallbackIndex) {
+        Integer index = headerIndexes.get(headerName);
+        if (index != null && index >= 0 && index < values.length) {
+            return unescapeCSV(values[index]);
+        }
+        if (fallbackIndex >= 0 && fallbackIndex < values.length) {
+            return unescapeCSV(values[fallbackIndex]);
+        }
+        return "";
+    }
+
+    /**
+     * Saves all admins to CSV file.
+     */
+    public static void saveAdmins(List<User> users) {
+        initializeDataFolder();
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(ADMINS_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;Role;DateCreation");
+            writer.newLine();
+
+            int count = 0;
+            for (User user : users) {
+                if (user instanceof Admin a) {
+                    String line = String.join(DELIMITER,
+                        escapeCSV(a.getCin()),
+                        escapeCSV(a.getNom()),
+                        escapeCSV(a.getPrenom()),
+                        escapeCSV(a.getTel()),
+                        String.valueOf(a.getAnneeUniversitaire().getValue()),
+                        escapeCSV(a.getAdresse()),
+                        escapeCSV(a.getMail()),
+                        escapeCSV(a.getPasswordHash()),
+                        escapeCSV(a.getRole()),
+                        escapeCSV(a.getDateCreationAsString())
+                    );
+                    writer.write(line);
+                    writer.newLine();
+                    count++;
+                }
+            }
+            System.out.println("✓ " + count + " admins sauvegardés");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde admins: " + e.getMessage());
+        }
+    }
+
     /**
      * Saves all data to CSV files.
      * Call this when the application closes or after important changes.
@@ -778,11 +960,15 @@ public class CSVDatabase {
         System.out.println("\n📁 Sauvegarde des données...");
         saveConducteurs(gestion.getUsers());
         savePassagers(gestion.getUsers());
+        saveAdmins(gestion.getUsers());
         saveTrajets(gestion.getTrajets());
         saveAllNotifications(gestion);
+        saveGroups(gestion.getGroups());
+        saveGroupMessages(gestion.getGroupMessages());
+        saveEvaluations(gestion.getEvaluations());
         System.out.println("✓ Toutes les données sauvegardées!\n");
     }
-    
+
     /**
      * Loads all data from CSV files into the gestion object.
      * Call this when the application starts.
@@ -800,6 +986,12 @@ public class CSVDatabase {
         List<Passager> passagers = loadPassagers();
         for (Passager p : passagers) {
             gestion.getUsers().add(p);
+        }
+
+        // Load admins
+        List<Admin> admins = loadAdmins();
+        for (Admin a : admins) {
+            gestion.getUsers().add(a);
         }
         
         // Load trajets (needs users to be loaded first)
@@ -819,7 +1011,25 @@ public class CSVDatabase {
         for (Notification n : conducteurNotifications) {
             gestion.ajouterNotificationConducteur(n);
         }
-        
+
+        // Load groups and group messages
+        List<Group> groups = loadGroups();
+        for (Group g : groups) {
+            gestion.ajouterGroupe(g);
+        }
+        List<GroupMessage> groupMessages = loadGroupMessages();
+        for (GroupMessage m : groupMessages) {
+            gestion.ajouterGroupMessage(m);
+        }
+
+        // Load evaluations
+        List<Evaluation> evaluations = loadEvaluations();
+        for (Evaluation e : evaluations) {
+            gestion.ajouterEvaluation(e);
+        }
+        // Recalculer la moyenne pour chaque conducteur (au cas où le CSV serait désynchronisé)
+        gestion.recalculerToutesMoyennes();
+
         System.out.println("✓ Toutes les données chargées!\n");
     }
     
@@ -946,15 +1156,7 @@ public class CSVDatabase {
      * Save all notifications for passengers and conducteurs
      */
     public static void saveAllNotifications(Gestion_covoiturage gestion) {
-        Map<String, List<Notification>> allNotifications = new HashMap<>();
-        
-        // Combine passenger and driver notifications
-        allNotifications.putAll(gestion.getNotificationsParPassager());
-        allNotifications.putAll(gestion.getNotificationsParConducteur());
-        
-        saveNotifications(allNotifications);
-        
-        // Save driver notifications to separate file
+        saveNotifications(gestion.getNotificationsParPassager());
         saveConducteurNotifications(gestion.getNotificationsParConducteur());
     }
     
@@ -1164,6 +1366,284 @@ public class CSVDatabase {
         return messages;
     }
     
+    // ============================================================
+    // GROUPS - Load/Save Methods
+    // ============================================================
+
+    /**
+     * Load all groups from CSV
+     */
+    public static List<Group> loadGroups() {
+        initializeDataFolder();
+        List<Group> groups = new ArrayList<>();
+
+        try {
+            Path path = Paths.get(GROUPS_FILE);
+            if (!Files.exists(path)) {
+                System.out.println("✓ Aucun fichier de groupes (nouveau)");
+                return groups;
+            }
+
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return groups;
+
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+                if (line.startsWith("﻿")) line = line.substring(1);
+
+                String[] parts = line.split(DELIMITER, -1);
+                if (parts.length < 5) continue;
+
+                try {
+                    String groupId = unescapeCSV(parts[0]);
+                    String groupName = unescapeCSV(parts[1]);
+                    String conducteurCin = unescapeCSV(parts[2]);
+                    String memberCinsStr = unescapeCSV(parts[3]);
+                    LocalDateTime dateCreation = Group.parseDate(parts[4].trim());
+
+                    List<String> memberCins = new ArrayList<>();
+                    if (!memberCinsStr.isEmpty()) {
+                        for (String c : memberCinsStr.split(",")) {
+                            String trimmed = c.trim();
+                            if (!trimmed.isEmpty()) memberCins.add(trimmed);
+                        }
+                    }
+
+                    Group g = new Group(groupId, groupName, conducteurCin, memberCins, dateCreation);
+                    groups.add(g);
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing groupe ligne " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+
+            System.out.println("✓ " + groups.size() + " groupes chargés");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture groupes: " + e.getMessage());
+        }
+
+        return groups;
+    }
+
+    /**
+     * Save all groups to CSV
+     */
+    public static void saveGroups(List<Group> groups) {
+        initializeDataFolder();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(GROUPS_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            writer.write('﻿');
+            writer.write("groupId;groupName;conducteurCin;memberCins;dateCreation");
+            writer.newLine();
+
+            int count = 0;
+            for (Group g : groups) {
+                String line = String.join(DELIMITER,
+                        escapeCSV(g.getGroupId()),
+                        escapeCSV(g.getGroupName()),
+                        escapeCSV(g.getConducteurCin()),
+                        escapeCSV(g.getMemberCinsAsString()),
+                        escapeCSV(g.getDateCreationAsString())
+                );
+                writer.write(line);
+                writer.newLine();
+                count++;
+            }
+
+            System.out.println("✓ " + count + " groupes sauvegardés");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde groupes: " + e.getMessage());
+        }
+    }
+
+    // ============================================================
+    // GROUP MESSAGES - Load/Save Methods
+    // ============================================================
+
+    /**
+     * Load all group messages from CSV
+     */
+    public static List<GroupMessage> loadGroupMessages() {
+        initializeDataFolder();
+        List<GroupMessage> messages = new ArrayList<>();
+
+        try {
+            Path path = Paths.get(GROUP_MESSAGES_FILE);
+            if (!Files.exists(path)) {
+                System.out.println("✓ Aucun fichier de messages de groupe (nouveau)");
+                return messages;
+            }
+
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return messages;
+
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+                if (line.startsWith("﻿")) line = line.substring(1);
+
+                String[] parts = line.split(DELIMITER, -1);
+                if (parts.length < 7) continue;
+
+                try {
+                    String messageId = unescapeCSV(parts[0]);
+                    String groupId = unescapeCSV(parts[1]);
+                    String senderCin = unescapeCSV(parts[2]);
+                    String senderName = unescapeCSV(parts[3]);
+                    String content = unescapeCSV(parts[4]);
+                    LocalDateTime timestamp = GroupMessage.parseTimestamp(parts[5].trim());
+                    boolean isDeleted = Boolean.parseBoolean(parts[6].trim());
+
+                    GroupMessage m = new GroupMessage(messageId, groupId, senderCin, senderName,
+                            content, timestamp, isDeleted);
+                    messages.add(m);
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing message groupe ligne " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+
+            System.out.println("✓ " + messages.size() + " messages de groupe chargés");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture messages de groupe: " + e.getMessage());
+        }
+
+        return messages;
+    }
+
+    /**
+     * Save all group messages to CSV
+     */
+    public static void saveGroupMessages(List<GroupMessage> messages) {
+        initializeDataFolder();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(GROUP_MESSAGES_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            writer.write('﻿');
+            writer.write("messageId;groupId;senderCin;senderName;content;timestamp;isDeleted");
+            writer.newLine();
+
+            int count = 0;
+            for (GroupMessage m : messages) {
+                String line = String.join(DELIMITER,
+                        escapeCSV(m.getMessageId()),
+                        escapeCSV(m.getGroupId()),
+                        escapeCSV(m.getSenderCin()),
+                        escapeCSV(m.getSenderName()),
+                        escapeCSV(m.getContent()),
+                        escapeCSV(m.getFormattedTimestamp()),
+                        String.valueOf(m.isDeleted())
+                );
+                writer.write(line);
+                writer.newLine();
+                count++;
+            }
+
+            System.out.println("✓ " + count + " messages de groupe sauvegardés");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde messages de groupe: " + e.getMessage());
+        }
+    }
+
+    // ============================================================
+    // EVALUATIONS - Load/Save Methods
+    // ============================================================
+
+    /**
+     * Load all evaluations from CSV
+     */
+    public static List<Evaluation> loadEvaluations() {
+        initializeDataFolder();
+        List<Evaluation> evaluations = new ArrayList<>();
+
+        try {
+            Path path = Paths.get(EVALUATIONS_FILE);
+            if (!Files.exists(path)) {
+                System.out.println("✓ Aucun fichier d'évaluations (nouveau)");
+                return evaluations;
+            }
+
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return evaluations;
+
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+                if (line.startsWith("﻿")) line = line.substring(1);
+
+                String[] parts = line.split(DELIMITER, -1);
+                if (parts.length < 8) continue;
+
+                try {
+                    String evaluationId = unescapeCSV(parts[0]);
+                    String passagerCin = unescapeCSV(parts[1]);
+                    String passagerName = unescapeCSV(parts[2]);
+                    String conducteurCin = unescapeCSV(parts[3]);
+                    String trajetId = unescapeCSV(parts[4]);
+                    int rating = Integer.parseInt(parts[5].trim());
+                    String comment = unescapeCSV(parts[6]);
+                    LocalDateTime dateCreation = Evaluation.parseDate(parts[7].trim());
+
+                    Evaluation eval = new Evaluation(evaluationId, passagerCin, passagerName,
+                            conducteurCin, trajetId, rating, comment, dateCreation);
+                    evaluations.add(eval);
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing évaluation ligne " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+
+            System.out.println("✓ " + evaluations.size() + " évaluations chargées");
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture évaluations: " + e.getMessage());
+        }
+
+        return evaluations;
+    }
+
+    /**
+     * Save all evaluations to CSV
+     */
+    public static void saveEvaluations(List<Evaluation> evaluations) {
+        initializeDataFolder();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(EVALUATIONS_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            writer.write('﻿');
+            writer.write("evaluationId;passagerCin;passagerName;conducteurCin;trajetId;rating;comment;dateCreation");
+            writer.newLine();
+
+            int count = 0;
+            for (Evaluation e : evaluations) {
+                String line = String.join(DELIMITER,
+                        escapeCSV(e.getEvaluationId()),
+                        escapeCSV(e.getPassagerCin()),
+                        escapeCSV(e.getPassagerName()),
+                        escapeCSV(e.getConducteurCin()),
+                        escapeCSV(e.getTrajetId()),
+                        String.valueOf(e.getRating()),
+                        escapeCSV(e.getComment()),
+                        escapeCSV(e.getDateCreationAsString())
+                );
+                writer.write(line);
+                writer.newLine();
+                count++;
+            }
+
+            System.out.println("✓ " + count + " évaluations sauvegardées");
+        } catch (IOException ioe) {
+            System.err.println("✗ Erreur sauvegarde évaluations: " + ioe.getMessage());
+        }
+    }
+
     /**
      * Save all messages to CSV
      */

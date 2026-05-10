@@ -24,7 +24,8 @@ public class EnhancedLoginPanel extends JPanel {
     private JPasswordField loginPasswordField;
     private JRadioButton driverRadio;
     private JRadioButton passengerRadio;
-    
+    private JRadioButton adminRadio;
+
     // Registration fields
     private ModernUIComponents.ModernTextField regCinField;
     private ModernUIComponents.ModernTextField regNomField;
@@ -184,14 +185,14 @@ public class EnhancedLoginPanel extends JPanel {
         JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
         typePanel.setOpaque(false);
         typePanel.setMaximumSize(new Dimension(340, 40));
-        
+
         driverRadio = createStyledRadio("Conducteur", true);
         passengerRadio = createStyledRadio("Passager", false);
-        
+
         ButtonGroup group = new ButtonGroup();
         group.add(driverRadio);
         group.add(passengerRadio);
-        
+
         typePanel.add(driverRadio);
         typePanel.add(passengerRadio);
         card.add(typePanel);
@@ -733,25 +734,35 @@ public class EnhancedLoginPanel extends JPanel {
     private void performLogin() {
         String cin = loginCinField.getText().trim();
         String password = new String(loginPasswordField.getPassword());
-        
+
         // Validate CIN format using regex
         if (!ValidationUtils.isValidCIN(cin)) {
             showModernError(ValidationUtils.CIN_ERROR);
             return;
         }
-        
+
         // Validate password is not empty
         if (password.isEmpty()) {
             showModernError("Veuillez entrer votre mot de passe");
             return;
         }
-        
+
         Gestion_covoiturage gestion = mainFrame.getGestion();
-        
+
+        // 1. ALWAYS check for Admin first (Automatic Detection)
+        Admin admin = gestion.rechercher_admin(cin);
+        if (admin != null && admin.verifyPassword(password)) {
+            showModernSuccess("Bienvenue Administrateur " + admin.getPrenom() + " !");
+            mainFrame.showAdminPanel(admin);
+            loginCinField.setText("");
+            loginPasswordField.setText("");
+            return;
+        }
+
+        // 2. Otherwise, check based on the selected role
         if (driverRadio.isSelected()) {
             Conducteur conducteur = gestion.rechercher_conducteur(cin);
             if (conducteur != null) {
-                // Verify password
                 if (conducteur.verifyPassword(password)) {
                     showModernSuccess("Bienvenue " + conducteur.getPrenom() + " !");
                     mainFrame.showDriverPanel(conducteur);
@@ -766,7 +777,6 @@ public class EnhancedLoginPanel extends JPanel {
         } else {
             Passager passager = gestion.rechercher_passager(cin);
             if (passager != null) {
-                // Verify password
                 if (passager.verifyPassword(password)) {
                     showModernSuccess("Bienvenue " + passager.getPrenom() + " !");
                     mainFrame.showPassengerPanel(passager);

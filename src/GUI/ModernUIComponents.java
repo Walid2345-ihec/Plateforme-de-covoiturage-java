@@ -649,6 +649,72 @@ public class ModernUIComponents {
         }
     }
     
+    // ==================== STAR RATING ====================
+    /**
+     * Widget de notation par étoiles (1 à 5).
+     * Mode editable : l'utilisateur clique sur les étoiles.
+     * Mode non editable : utilisé pour afficher une moyenne.
+     */
+    public static class StarRating extends JPanel {
+        private int rating;
+        private final JLabel[] stars = new JLabel[5];
+        private final boolean editable;
+        private final int starSize;
+
+        public StarRating(boolean editable, int initialRating) {
+            this(editable, initialRating, 28);
+        }
+
+        public StarRating(boolean editable, int initialRating, int starSize) {
+            this.editable = editable;
+            this.rating = clamp(initialRating);
+            this.starSize = starSize;
+            setOpaque(false);
+            setLayout(new FlowLayout(FlowLayout.LEFT, 4, 0));
+
+            Font starFont = new Font("Dialog", Font.PLAIN, starSize);
+            for (int i = 0; i < 5; i++) {
+                final int starIndex = i + 1;
+                JLabel star = new JLabel("☆");
+                star.setFont(starFont);
+                star.setForeground(Colors.ACCENT_GOLD);
+                if (editable) {
+                    star.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    star.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            setRating(starIndex);
+                        }
+                    });
+                }
+                stars[i] = star;
+                add(star);
+            }
+            updateStars();
+        }
+
+        public void setRating(int rating) {
+            this.rating = clamp(rating);
+            updateStars();
+        }
+
+        public int getRating() {
+            return rating;
+        }
+
+        private void updateStars() {
+            for (int i = 0; i < 5; i++) {
+                stars[i].setText(i < rating ? "★" : "☆");
+            }
+        }
+
+        private static int clamp(int v) {
+            if (v < 0) return 0;
+            if (v > 5) return 5;
+            return v;
+        }
+    }
+
     // ==================== UTILITY METHODS ====================
     
     public static Color brighten(Color color, float factor) {

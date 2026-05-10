@@ -1,4 +1,0 @@
-Depart;Arrivee;DureeMinutes;Status;Prix;ConducteurCIN;PassagerCIN;MaxPlaces;AcceptedCINs;PendingCINs;StartDateTime;EndDateTime;WeeklySchedule
-khaireddine;IHEC;20;IN_PROGRESS;3.0;15033214;15033211;4;15033211;;;;
-rades melyen;IHEC;35;PENDING;5.0;11111111;;3;;;;;
-kram;IHEC;15;IN_PROGRESS;3.0;41233051;;4;;;;;MON:7:30-17:00|TUE:7:30-17:00|WED:7:30-14:00|THU:7:30-12:00|FRI:7:30-16:00||

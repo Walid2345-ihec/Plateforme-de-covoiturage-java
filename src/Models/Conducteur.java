@@ -9,6 +9,9 @@ public class Conducteur extends User {
     private String matricule; // id
     private int placesDisponibles;
     private String weeklySchedule = ""; // Format: "MON:09:00-17:00|TUE:09:00-17:00|..."
+    private double moyenneEvaluation = 0.0; // Moyenne des évaluations reçues (0 si jamais évalué)
+    private String card = "GREEN"; // Carte d'avertissement: GREEN (par défaut) / YELLOW / RED
+    private boolean banned = false; // Si true, l'utilisateur ne peut plus se connecter
     
     // Constructeur par défaut (interactif)
     public Conducteur() {
@@ -158,6 +161,27 @@ public class Conducteur extends User {
     public void setMatricule(String matricule) { this.matricule = matricule; }
     public void setPlacesDisponibles(int placesDisponibles) { this.placesDisponibles = placesDisponibles; }
     public void setWeeklySchedule(String weeklySchedule) { this.weeklySchedule = weeklySchedule != null ? weeklySchedule : ""; }
+
+    public double getMoyenneEvaluation() { return moyenneEvaluation; }
+    public void setMoyenneEvaluation(double moyenneEvaluation) {
+        if (moyenneEvaluation < 0) moyenneEvaluation = 0;
+        if (moyenneEvaluation > 5) moyenneEvaluation = 5;
+        this.moyenneEvaluation = moyenneEvaluation;
+    }
+
+    public String getCard() { return card != null ? card : "GREEN"; }
+    public void setCard(String card) {
+        if (card == null) { this.card = "GREEN"; return; }
+        String upper = card.trim().toUpperCase();
+        if (upper.equals("GREEN") || upper.equals("YELLOW") || upper.equals("RED")) {
+            this.card = upper;
+        } else {
+            this.card = "GREEN";
+        }
+    }
+
+    public boolean isBanned() { return banned; }
+    public void setBanned(boolean banned) { this.banned = banned; }
 
     @Override
     public String toString() {

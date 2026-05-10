@@ -1,0 +1,2 @@
+CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;Role;DateCreation
+99999999;Admin;Principal;00000000;2024;—;admin@gmail.com;admin123;SUPER_ADMIN;2026-05-10 14:30:00

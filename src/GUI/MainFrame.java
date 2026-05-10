@@ -27,9 +27,12 @@ public class MainFrame extends JFrame {
     private EnhancedLoginPanel loginPanel;
     private EnhancedDriverPanel driverPanel;
     private EnhancedPassengerPanel passengerPanel;
+    private AdminPanel adminPanel;
     private NotificationPanel notificationPanel;
     private DriverNotificationPanel driverNotificationPanel;
     private JPanel messagingPanel;
+    private GroupsPanel groupsPanel;
+    private GroupChatPanel groupChatPanel;
     private String previousPanelName; // Track previous panel for return from messaging
     
     // Current user info
@@ -245,15 +248,17 @@ public class MainFrame extends JFrame {
         loginPanel = new EnhancedLoginPanel(this);
         driverPanel = new EnhancedDriverPanel(this);
         passengerPanel = new EnhancedPassengerPanel(this);
+        adminPanel = new AdminPanel(this);
         notificationPanel = new NotificationPanel(this, gestion, "");
         driverNotificationPanel = new DriverNotificationPanel(this, gestion, "");
-        
+
         mainPanel.add(loginPanel, "LOGIN");
         mainPanel.add(driverPanel, "DRIVER");
         mainPanel.add(passengerPanel, "PASSENGER");
+        mainPanel.add(adminPanel, "ADMIN");
         mainPanel.add(notificationPanel, "NOTIFICATIONS");
         mainPanel.add(driverNotificationPanel, "DRIVER_NOTIFICATIONS");
-        
+
         showLogin();
     }
     
@@ -340,6 +345,16 @@ public class MainFrame extends JFrame {
     }
 
     /**
+     * Affiche le panel d'administration pour l'administrateur courant
+     */
+    public void showAdminPanel(Admin admin) {
+        this.currentUser = admin;
+        this.userType = "ADMIN";
+        adminPanel.refresh();
+        cardLayout.show(mainPanel, "ADMIN");
+    }
+
+    /**
      * Afficher la page des notifications pour le conducteur courant
      */
     public void showDriverNotificationPanel() {
@@ -411,6 +426,34 @@ public class MainFrame extends JFrame {
         });
     }
     
+    /**
+     * Affiche la page des groupes pour l'utilisateur courant.
+     */
+    public void showGroupsPanel() {
+        if (currentUser == null) return;
+
+        // Recreate to ensure user-specific data
+        if (groupsPanel != null) {
+            mainPanel.remove(groupsPanel);
+        }
+        groupsPanel = new GroupsPanel(this, gestion, currentUser);
+        mainPanel.add(groupsPanel, "GROUPS");
+        groupsPanel.refreshGroups();
+        cardLayout.show(mainPanel, "GROUPS");
+    }
+
+    /**
+     * Affiche la page de discussion d'un groupe.
+     */
+    public void showGroupChatPanel(GroupChatPanel chatPanelView) {
+        if (groupChatPanel != null) {
+            mainPanel.remove(groupChatPanel);
+        }
+        this.groupChatPanel = chatPanelView;
+        mainPanel.add(groupChatPanel, "GROUP_CHAT");
+        cardLayout.show(mainPanel, "GROUP_CHAT");
+    }
+
     /**
      * Show the messaging panel
      */

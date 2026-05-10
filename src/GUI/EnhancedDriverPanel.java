@@ -39,6 +39,11 @@ public class EnhancedDriverPanel extends JPanel {
     
     // Notification badge
     private JLabel notificationBadge;
+
+    // Evaluations dashboard section
+    private JPanel evaluationsContainer;
+    private ModernUIComponents.StarRating averageStarsWidget;
+    private JLabel averageRatingLabel;
     
     public EnhancedDriverPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -121,6 +126,7 @@ public class EnhancedDriverPanel extends JPanel {
         addSidebarButton(sidebar, "Demandes Reçues", "DEMANDES", false);
         addSidebarButton(sidebar, "Passagers Acceptés", "PASSAGERS", false);
         addSidebarButton(sidebar, "Nouveau Trajet", "NEW_TRAJET", false);
+        addSidebarButton(sidebar, "Mes Groupes", "GROUPS", false);
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -156,6 +162,12 @@ public class EnhancedDriverPanel extends JPanel {
             }
             button.setSelected(true);
             
+            // For groups, navigate to a top-level page (different layout)
+            if (cardName.equals("GROUPS")) {
+                mainFrame.showGroupsPanel();
+                return;
+            }
+
             // Show content and refresh
             contentLayout.show(contentPanel, cardName);
             if (cardName.equals("DASHBOARD")) refreshDashboard();
@@ -206,9 +218,29 @@ public class EnhancedDriverPanel extends JPanel {
         statsPanel.add(placesCard);
         statsPanel.add(trajetsCard);
         statsPanel.add(demandesCard);
-        
-        panel.add(statsPanel, BorderLayout.CENTER);
-        
+
+        // ─── Center: stats + evaluations stacked vertically ───
+        JPanel centerContent = new JPanel();
+        centerContent.setLayout(new BoxLayout(centerContent, BoxLayout.Y_AXIS));
+        centerContent.setOpaque(false);
+
+        statsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        centerContent.add(statsPanel);
+
+        JPanel evalSection = buildEvaluationsSection();
+        evalSection.setAlignmentX(Component.LEFT_ALIGNMENT);
+        centerContent.add(evalSection);
+        centerContent.add(Box.createVerticalGlue());
+
+        JScrollPane centerScroll = new JScrollPane(centerContent);
+        centerScroll.setBorder(BorderFactory.createEmptyBorder());
+        centerScroll.setBackground(Colors.SURFACE);
+        centerScroll.getViewport().setBackground(Colors.SURFACE);
+        centerScroll.getVerticalScrollBar().setUnitIncrement(16);
+        ModernUIComponents.applyModernScrollBar(centerScroll);
+
+        panel.add(centerScroll, BorderLayout.CENTER);
+
         // Quick actions
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         actionsPanel.setOpaque(false);
@@ -240,6 +272,173 @@ public class EnhancedDriverPanel extends JPanel {
         return panel;
     }
     
+    /**
+     * Construit la section « Mes Évaluations » du tableau de bord :
+     * - Moyenne (étoiles + valeur numérique + nombre d'évaluations)
+     * - Liste défilante des évaluations reçues : passager, étoiles, date, commentaire
+     */
+    private JPanel buildEvaluationsSection() {
+        JPanel section = new JPanel();
+        section.setOpaque(false);
+        section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        // Title
+        JLabel sectionTitle = new JLabel("⭐ Mes Évaluations");
+        sectionTitle.setFont(Fonts.HEADING_2);
+        sectionTitle.setForeground(Colors.TEXT_DARK);
+        sectionTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Summary (average) card
+        ModernUIComponents.GlassCard summaryCard = new ModernUIComponents.GlassCard();
+        summaryCard.setLayout(new BoxLayout(summaryCard, BoxLayout.X_AXIS));
+        summaryCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        summaryCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel summaryLeft = new JPanel();
+        summaryLeft.setOpaque(false);
+        summaryLeft.setLayout(new BoxLayout(summaryLeft, BoxLayout.Y_AXIS));
+
+        JLabel avgTitleLabel = new JLabel("Note moyenne");
+        avgTitleLabel.setFont(Fonts.BODY_BOLD);
+        avgTitleLabel.setForeground(Colors.TEXT_DARK);
+
+        averageStarsWidget = new ModernUIComponents.StarRating(false, 0, 28);
+
+        averageRatingLabel = new JLabel("Aucune évaluation pour le moment.");
+        averageRatingLabel.setFont(Fonts.BODY);
+        averageRatingLabel.setForeground(Colors.TEXT_MUTED);
+
+        summaryLeft.add(avgTitleLabel);
+        summaryLeft.add(Box.createVerticalStrut(8));
+        summaryLeft.add(averageStarsWidget);
+        summaryLeft.add(Box.createVerticalStrut(6));
+        summaryLeft.add(averageRatingLabel);
+
+        summaryCard.add(summaryLeft);
+        summaryCard.add(Box.createHorizontalGlue());
+
+        // Comments container
+        evaluationsContainer = new JPanel();
+        evaluationsContainer.setOpaque(false);
+        evaluationsContainer.setLayout(new BoxLayout(evaluationsContainer, BoxLayout.Y_AXIS));
+        evaluationsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JScrollPane commentsScroll = new JScrollPane(evaluationsContainer);
+        commentsScroll.setBorder(BorderFactory.createEmptyBorder());
+        commentsScroll.setBackground(Colors.SURFACE);
+        commentsScroll.getViewport().setBackground(Colors.SURFACE);
+        commentsScroll.setPreferredSize(new Dimension(0, 280));
+        commentsScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
+        commentsScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        ModernUIComponents.applyModernScrollBar(commentsScroll);
+
+        section.add(sectionTitle);
+        section.add(Box.createVerticalStrut(12));
+        section.add(summaryCard);
+        section.add(Box.createVerticalStrut(15));
+        section.add(commentsScroll);
+
+        return section;
+    }
+
+    /**
+     * Met à jour la section Évaluations (moyenne + commentaires).
+     */
+    private void refreshEvaluationsSection() {
+        if (evaluationsContainer == null) return;
+        Conducteur conducteur = mainFrame.getCurrentConducteur();
+        if (conducteur == null) return;
+
+        java.util.List<Evaluation> evals = mainFrame.getGestion()
+                .getEvaluationsPourConducteur(conducteur.getCin());
+
+        // Update summary
+        double moyenne = conducteur.getMoyenneEvaluation();
+        int rounded = (int) Math.round(moyenne);
+        if (averageStarsWidget != null) averageStarsWidget.setRating(rounded);
+        if (averageRatingLabel != null) {
+            int count = evals.size();
+            averageRatingLabel.setText(count == 0
+                    ? "Aucune évaluation pour le moment."
+                    : String.format("%.1f / 5  •  %d évaluation%s",
+                            moyenne, count, count > 1 ? "s" : ""));
+        }
+
+        // Update comments list
+        evaluationsContainer.removeAll();
+
+        if (evals.isEmpty()) {
+            JLabel empty = new JLabel("Vos passagers pourront vous évaluer après leur trajet.");
+            empty.setFont(Fonts.BODY);
+            empty.setForeground(Colors.TEXT_MUTED);
+            empty.setBorder(BorderFactory.createEmptyBorder(20, 5, 5, 5));
+            evaluationsContainer.add(empty);
+        } else {
+            for (Evaluation e : evals) {
+                evaluationsContainer.add(buildEvaluationRow(e));
+                evaluationsContainer.add(Box.createVerticalStrut(10));
+            }
+        }
+        evaluationsContainer.add(Box.createVerticalGlue());
+        evaluationsContainer.revalidate();
+        evaluationsContainer.repaint();
+    }
+
+    /**
+     * Construit une ligne d'évaluation (carte avec passager + étoiles + commentaire + date).
+     */
+    private JPanel buildEvaluationRow(Evaluation e) {
+        ModernUIComponents.GlassCard row = new ModernUIComponents.GlassCard();
+        row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Top: passenger + stars + date
+        JPanel top = new JPanel(new BorderLayout(10, 0));
+        top.setOpaque(false);
+        top.setAlignmentX(Component.LEFT_ALIGNMENT);
+        top.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+
+        JLabel name = new JLabel(e.getPassagerName());
+        name.setFont(Fonts.BODY_BOLD);
+        name.setForeground(Colors.TEXT_DARK);
+
+        ModernUIComponents.StarRating stars = new ModernUIComponents.StarRating(false, e.getRating(), 18);
+
+        java.time.format.DateTimeFormatter fmt =
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        JLabel date = new JLabel(e.getDateCreation().format(fmt));
+        date.setFont(Fonts.CAPTION);
+        date.setForeground(Colors.TEXT_MUTED);
+
+        JPanel leftTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        leftTop.setOpaque(false);
+        leftTop.add(name);
+        leftTop.add(stars);
+
+        top.add(leftTop, BorderLayout.WEST);
+        top.add(date, BorderLayout.EAST);
+
+        // Comment
+        String commentText = e.getComment().isEmpty() ? "(Sans commentaire)" : e.getComment();
+        JTextArea commentArea = new JTextArea(commentText);
+        commentArea.setEditable(false);
+        commentArea.setFont(Fonts.BODY);
+        commentArea.setForeground(e.getComment().isEmpty() ? Colors.TEXT_MUTED : Colors.TEXT_DARK);
+        commentArea.setLineWrap(true);
+        commentArea.setWrapStyleWord(true);
+        commentArea.setOpaque(false);
+        commentArea.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
+        commentArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        row.add(top);
+        row.add(Box.createVerticalStrut(4));
+        row.add(commentArea);
+
+        return row;
+    }
+
     private JPanel createTrajetsView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
@@ -373,34 +572,42 @@ public class EnhancedDriverPanel extends JPanel {
             }
         };
         passagersTable = createModernTable(passagersModel);
-        
+        // Allow multi-selection so the driver can pick multiple passengers for a group
+        passagersTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
         JScrollPane scrollPane = new JScrollPane(passagersTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         ModernUIComponents.applyModernScrollBar(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         buttonPanel.setOpaque(false);
-        
+
         ModernUIComponents.RoundedButton deleteBtn = new ModernUIComponents.RoundedButton(
             "Supprimer", Colors.ACCENT_CORAL);
         deleteBtn.setPreferredSize(new Dimension(130, 42));
         deleteBtn.addActionListener(e -> deletePassengerFromAccepted());
         buttonPanel.add(deleteBtn);
-        
+
         ModernUIComponents.RoundedButton messagingBtn = new ModernUIComponents.RoundedButton(
             "💬 Messagerie", Colors.ACCENT_MINT);
         messagingBtn.setPreferredSize(new Dimension(130, 42));
         messagingBtn.addActionListener(e -> openMessagingWithPassenger());
         buttonPanel.add(messagingBtn);
-        
+
+        ModernUIComponents.GradientButton createGroupBtn = new ModernUIComponents.GradientButton(
+            "👥 Créer Groupe", Colors.PRIMARY_START, Colors.PRIMARY_END);
+        createGroupBtn.setPreferredSize(new Dimension(170, 42));
+        createGroupBtn.addActionListener(e -> createGroupFromSelection());
+        buttonPanel.add(createGroupBtn);
+
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
             "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshPassagersTable());
         buttonPanel.add(refreshBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
     
@@ -983,9 +1190,12 @@ public class EnhancedDriverPanel extends JPanel {
             }
         }
         demandesCard.setValue(String.valueOf(demandesCount));
-        
+
         // Update notification badge
         updateNotificationBadge();
+
+        // Update evaluations section
+        refreshEvaluationsSection();
     }
     
     private void refreshTrajetsTable() {
@@ -1402,6 +1612,83 @@ public class EnhancedDriverPanel extends JPanel {
         }
     }
     
+    /**
+     * Crée un groupe à partir des passagers sélectionnés dans le tableau.
+     * Affiche une boîte de dialogue pour saisir le nom du groupe et envoie
+     * une notification d'appartenance à chaque passager membre.
+     */
+    private void createGroupFromSelection() {
+        int[] selectedRows = passagersTable.getSelectedRows();
+        if (selectedRows == null || selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this,
+                "Veuillez sélectionner au moins un passager.\n" +
+                "Astuce: maintenez Ctrl pour sélectionner plusieurs lignes.",
+                "Sélection requise", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Conducteur conducteur = mainFrame.getCurrentConducteur();
+        if (conducteur == null) {
+            JOptionPane.showMessageDialog(this, "Erreur: Conducteur non connecté",
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Collecter les passagers uniques (un même passager peut apparaître dans plusieurs lignes
+        // s'il est accepté sur plusieurs trajets)
+        java.util.LinkedHashMap<String, Passager> uniqueByCin = new java.util.LinkedHashMap<>();
+        for (int row : selectedRows) {
+            Passager p = passagersMap.get(row);
+            if (p != null) uniqueByCin.put(p.getCin(), p);
+        }
+        if (uniqueByCin.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Aucun passager valide sélectionné.",
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Demander le nom du groupe
+        String groupName = JOptionPane.showInputDialog(this,
+            "Nom du groupe (" + uniqueByCin.size() + " passager(s) sélectionné(s)):",
+            "Créer un groupe", JOptionPane.PLAIN_MESSAGE);
+
+        if (groupName == null) return; // Annulé
+        groupName = groupName.trim();
+        if (groupName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Le nom du groupe ne peut pas être vide.",
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        java.util.List<String> memberCins = new java.util.ArrayList<>(uniqueByCin.keySet());
+        Models.Group created = mainFrame.getGestion().creerGroupe(
+            groupName, conducteur.getCin(), memberCins);
+
+        if (created == null) {
+            JOptionPane.showMessageDialog(this, "Erreur lors de la création du groupe.",
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Persister
+        Services.CSVDatabase.saveGroups(mainFrame.getGestion().getGroups());
+        Services.CSVDatabase.saveAllNotifications(mainFrame.getGestion());
+        mainFrame.markUnsavedChanges();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Groupe « ").append(groupName).append(" » créé avec succès !\n\n");
+        sb.append("Membres (").append(uniqueByCin.size()).append(") :\n");
+        for (Passager p : uniqueByCin.values()) {
+            sb.append("• ").append(p.getPrenom()).append(" ").append(p.getNom()).append("\n");
+        }
+        sb.append("\nUne notification d'appartenance a été envoyée à chaque passager.");
+
+        JOptionPane.showMessageDialog(this, sb.toString(),
+            "Groupe créé ✓", JOptionPane.INFORMATION_MESSAGE);
+
+        if (mainFrame != null) mainFrame.notifyDataChanged();
+    }
+
     /**
      * Ouvrir la messagerie avec le passager sélectionné
      */

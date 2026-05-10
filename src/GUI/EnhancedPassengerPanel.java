@@ -113,6 +113,7 @@ public class EnhancedPassengerPanel extends JPanel {
         addSidebarButton(sidebar, "Tableau de Bord", "DASHBOARD", true);
         addSidebarButton(sidebar, "Rechercher Trajets", "SEARCH", false);
         addSidebarButton(sidebar, "Mes Réservations", "RESERVATIONS", false);
+        addSidebarButton(sidebar, "Mes Groupes", "GROUPS", false);
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -146,8 +147,15 @@ public class EnhancedPassengerPanel extends JPanel {
                 btn.setSelected(false);
             }
             button.setSelected(true);
+
+            // Groups is a top-level page, not a card in this panel
+            if (cardName.equals("GROUPS")) {
+                mainFrame.showGroupsPanel();
+                return;
+            }
+
             contentLayout.show(contentPanel, cardName);
-            
+
             if (cardName.equals("DASHBOARD")) refreshDashboard();
             if (cardName.equals("SEARCH")) refreshTrajetsTable();
             if (cardName.equals("RESERVATIONS")) refreshReservationsTable();
@@ -458,7 +466,13 @@ public class EnhancedPassengerPanel extends JPanel {
         messagingBtn.setPreferredSize(new Dimension(130, 42));
         messagingBtn.addActionListener(e -> openMessagingWithConductor());
         infoPanel.add(messagingBtn);
-        
+
+        ModernUIComponents.RoundedButton evaluateBtn = new ModernUIComponents.RoundedButton(
+            "⭐ Évaluer", Colors.ACCENT_GOLD);
+        evaluateBtn.setPreferredSize(new Dimension(130, 42));
+        evaluateBtn.addActionListener(e -> openEvaluationForm());
+        infoPanel.add(evaluateBtn);
+
         ModernUIComponents.RoundedButton refreshBtn = new ModernUIComponents.RoundedButton(
             "Actualiser", Colors.TEXT_MUTED);
         refreshBtn.setPreferredSize(new Dimension(130, 42));
@@ -761,6 +775,10 @@ public class EnhancedPassengerPanel extends JPanel {
             mainPanel.add(scrollPane);
             mainPanel.add(Box.createVerticalStrut(15));
 
+            // ───── Moyenne d'évaluation du conducteur ─────
+            mainPanel.add(buildAverageRatingCard(conductor));
+            mainPanel.add(Box.createVerticalStrut(15));
+
             // Close button
             ModernUIComponents.GradientButton closeBtn = new ModernUIComponents.GradientButton(
                 "Fermer", Colors.TEXT_MUTED, Colors.ACCENT_MINT);
@@ -780,6 +798,47 @@ public class EnhancedPassengerPanel extends JPanel {
                 "Erreur", JOptionPane.ERROR_MESSAGE);
             System.err.println("Erreur lors du rechargement: " + e.getMessage());
         }
+    }
+
+    /**
+     * Construit une carte affichant la moyenne d'évaluation d'un conducteur
+     * (étoiles, valeur numérique, nombre d'évaluations).
+     */
+    private JPanel buildAverageRatingCard(Conducteur conductor) {
+        ModernUIComponents.GlassCard card = new ModernUIComponents.GlassCard();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(450, 130));
+
+        JLabel title = new JLabel("⭐ Évaluation du conducteur");
+        title.setFont(Fonts.BODY_BOLD);
+        title.setForeground(Colors.TEXT_DARK);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        double moyenne = conductor.getMoyenneEvaluation();
+        java.util.List<Models.Evaluation> evals = mainFrame.getGestion()
+                .getEvaluationsPourConducteur(conductor.getCin());
+        int count = evals.size();
+
+        int roundedRating = (int) Math.round(moyenne);
+        ModernUIComponents.StarRating stars = new ModernUIComponents.StarRating(false, roundedRating, 24);
+        stars.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String summary = count == 0
+                ? "Aucune évaluation pour le moment."
+                : String.format("%.1f / 5  •  %d évaluation%s",
+                        moyenne, count, count > 1 ? "s" : "");
+        JLabel summaryLabel = new JLabel(summary);
+        summaryLabel.setFont(Fonts.BODY);
+        summaryLabel.setForeground(Colors.TEXT_MUTED);
+        summaryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(8));
+        card.add(stars);
+        card.add(Box.createVerticalStrut(6));
+        card.add(summaryLabel);
+
+        return card;
     }
 
     /**
@@ -1031,6 +1090,179 @@ public class EnhancedPassengerPanel extends JPanel {
         }
     }
     
+    /**
+     * Ouvre le formulaire d'évaluation pour le conducteur de la réservation sélectionnée.
+     */
+    private void openEvaluationForm() {
+        int selectedRow = mesReservationsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner une réservation",
+                "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Conducteur conductor = reservationsConductorMap.get(selectedRow);
+        if (conductor == null) {
+            JOptionPane.showMessageDialog(this, "Conducteur non trouvé",
+                "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Passager passager = mainFrame.getCurrentPassager();
+        if (passager == null) return;
+
+        showEvaluationDialog(passager, conductor);
+    }
+
+    /**
+     * Affiche la boîte de dialogue d'évaluation avec étoiles et commentaire.
+     */
+    private void showEvaluationDialog(Passager passager, Conducteur conductor) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+            "Évaluer le conducteur", true);
+        dialog.setSize(500, 500);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(0, 15));
+        mainPanel.setBackground(Colors.SURFACE);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+
+        // Header
+        JPanel headerPanel = new JPanel();
+        headerPanel.setOpaque(false);
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+
+        JLabel titleLabel = new JLabel("⭐ Évaluer le conducteur");
+        titleLabel.setFont(Fonts.HEADING_2);
+        titleLabel.setForeground(Colors.TEXT_DARK);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel nameLabel = new JLabel(conductor.getNom() + " " + conductor.getPrenom());
+        nameLabel.setFont(Fonts.BODY_BOLD);
+        nameLabel.setForeground(Colors.TEXT_MUTED);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        headerPanel.add(titleLabel);
+        headerPanel.add(Box.createVerticalStrut(8));
+        headerPanel.add(nameLabel);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+
+        // Center: stars + label + comment
+        JPanel centerPanel = new JPanel();
+        centerPanel.setOpaque(false);
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+
+        JLabel ratingLabel = new JLabel("Votre note :");
+        ratingLabel.setFont(Fonts.BODY_BOLD);
+        ratingLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        ratingLabel.setForeground(Colors.TEXT_DARK);
+
+        ModernUIComponents.StarRating starRating = new ModernUIComponents.StarRating(true, 0, 36);
+        starRating.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        centerPanel.add(Box.createVerticalStrut(15));
+        centerPanel.add(ratingLabel);
+        centerPanel.add(Box.createVerticalStrut(8));
+        centerPanel.add(starRating);
+        centerPanel.add(Box.createVerticalStrut(20));
+
+        JLabel commentLabel = new JLabel("Commentaire (facultatif) :");
+        commentLabel.setFont(Fonts.BODY_BOLD);
+        commentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        commentLabel.setForeground(Colors.TEXT_DARK);
+
+        JTextArea commentArea = new JTextArea(5, 30);
+        commentArea.setFont(Fonts.BODY);
+        commentArea.setLineWrap(true);
+        commentArea.setWrapStyleWord(true);
+        JScrollPane commentScroll = new JScrollPane(commentArea);
+        commentScroll.setBorder(BorderFactory.createLineBorder(Colors.BORDER, 1));
+        commentScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        commentScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
+
+        centerPanel.add(commentLabel);
+        centerPanel.add(Box.createVerticalStrut(6));
+        centerPanel.add(commentScroll);
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+        // Buttons
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        buttons.setOpaque(false);
+
+        ModernUIComponents.RoundedButton cancelBtn = new ModernUIComponents.RoundedButton(
+            "Annuler", Colors.TEXT_MUTED);
+        cancelBtn.setPreferredSize(new Dimension(140, 42));
+        cancelBtn.addActionListener(e -> dialog.dispose());
+
+        ModernUIComponents.GradientButton submitBtn = new ModernUIComponents.GradientButton(
+            "Envoyer l'évaluation", Colors.ACCENT_GOLD, Colors.ACCENT_CORAL);
+        submitBtn.setPreferredSize(new Dimension(220, 42));
+        submitBtn.addActionListener(e -> {
+            int rating = starRating.getRating();
+            if (rating < 1) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Veuillez sélectionner au moins une étoile.",
+                    "Note manquante", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String comment = commentArea.getText().trim();
+
+            // Trouver le trajetId si possible (premier trajet entre ce passager et ce conducteur)
+            String trajetId = "";
+            for (Trajet t : mainFrame.getGestion().getTrajets()) {
+                if (t.getConducteur() != null
+                    && t.getConducteur().getCin().equals(conductor.getCin())) {
+                    boolean isPassengerOnTrip = false;
+                    for (Passager p : t.getPassagersAcceptes()) {
+                        if (p.getCin().equals(passager.getCin())) {
+                            isPassengerOnTrip = true; break;
+                        }
+                    }
+                    if (isPassengerOnTrip) {
+                        trajetId = conductor.getCin() + "_"
+                            + t.getDepartTrajet() + "_" + t.getArriveeTrajet();
+                        break;
+                    }
+                }
+            }
+
+            Evaluation created = mainFrame.getGestion().creerEvaluation(
+                passager.getCin(), conductor.getCin(), trajetId, rating, comment);
+
+            if (created == null) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Erreur lors de l'enregistrement de l'évaluation.",
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Persister
+            Services.CSVDatabase.saveEvaluations(mainFrame.getGestion().getEvaluations());
+            Services.CSVDatabase.saveConducteurs(mainFrame.getGestion().getUsers());
+            Services.CSVDatabase.saveAllNotifications(mainFrame.getGestion());
+            mainFrame.markUnsavedChanges();
+
+            JOptionPane.showMessageDialog(dialog,
+                "Merci ! Votre évaluation a été envoyée au conducteur.",
+                "Évaluation envoyée ✓", JOptionPane.INFORMATION_MESSAGE);
+
+            dialog.dispose();
+            if (mainFrame != null) mainFrame.notifyDataChanged();
+        });
+
+        buttons.add(cancelBtn);
+        buttons.add(submitBtn);
+
+        mainPanel.add(buttons, BorderLayout.SOUTH);
+
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
+    }
+
     /**
      * Ouvrir la messagerie avec le conducteur sélectionné
      */

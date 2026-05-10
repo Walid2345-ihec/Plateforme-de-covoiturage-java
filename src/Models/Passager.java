@@ -8,6 +8,8 @@ public class Passager extends User {
     private boolean chercheCovoit;
     private Conducteur conducteur;
     private Vector<String> notifications = new Vector<>();  // Liste des notifications pour ce passager
+    private String card = "GREEN"; // Carte d'avertissement: GREEN (par défaut) / YELLOW / RED
+    private boolean banned = false; // Si true, l'utilisateur ne peut plus se connecter
 
     // Constructeur par défaut (interactif)
     public Passager() {
@@ -88,6 +90,20 @@ public class Passager extends User {
 
     // Setters
     public void setChercheCovoit(boolean chercheCovoit) { this.chercheCovoit = chercheCovoit; }
+
+    public String getCard() { return card != null ? card : "GREEN"; }
+    public void setCard(String card) {
+        if (card == null) { this.card = "GREEN"; return; }
+        String upper = card.trim().toUpperCase();
+        if (upper.equals("GREEN") || upper.equals("YELLOW") || upper.equals("RED")) {
+            this.card = upper;
+        } else {
+            this.card = "GREEN";
+        }
+    }
+
+    public boolean isBanned() { return banned; }
+    public void setBanned(boolean banned) { this.banned = banned; }
 
     /**
      * Ajouter une notification pour ce passager

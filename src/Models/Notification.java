@@ -150,10 +150,13 @@ public class Notification {
             case "ACCEPTATION" -> "✓ Accepté";
             case "REFUS" -> "✗ Refusé";
             case "ANNULATION" -> "⊘ Annulé";
+            case "GROUPE" -> "👥 Groupe";
+            case "MESSAGE_GROUPE" -> "💬 Message Groupe";
+            case "EVALUATION" -> "⭐ Évaluation";
             default -> type;
         };
     }
-    
+
     /**
      * Retourne la couleur du type (en hex)
      */
@@ -162,6 +165,9 @@ public class Notification {
             case "ACCEPTATION" -> "#27AE60"; // Vert
             case "REFUS" -> "#E74C3C"; // Rouge
             case "ANNULATION" -> "#F39C12"; // Orange
+            case "GROUPE" -> "#8E44AD"; // Violet
+            case "MESSAGE_GROUPE" -> "#3498DB"; // Bleu
+            case "EVALUATION" -> "#F1C40F"; // Or
             default -> "#95A5A6"; // Gris
         };
     }
