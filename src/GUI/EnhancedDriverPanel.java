@@ -266,10 +266,52 @@ public class EnhancedDriverPanel extends JPanel {
         // Notifications button with badge
         JPanel notificationButtonPanel = createNotificationButtonWithBadge();
         actionsPanel.add(notificationButtonPanel);
+
+        ModernUIComponents.RoundedButton helpBtn = new ModernUIComponents.RoundedButton(
+            "Help", Colors.ACCENT_SKY);
+        helpBtn.addActionListener(e -> sendHelpRequest());
+        actionsPanel.add(helpBtn);
+
+        ModernUIComponents.RoundedButton adminChatBtn = new ModernUIComponents.RoundedButton(
+            "Discussion Admin", Colors.ACCENT_MINT);
+        adminChatBtn.addActionListener(e -> mainFrame.openAdminConversationForCurrentUser("admin"));
+        actionsPanel.add(adminChatBtn);
+
+        ModernUIComponents.RoundedButton complaintBtn = new ModernUIComponents.RoundedButton(
+            "Reclamation", Colors.ACCENT_CORAL);
+        complaintBtn.addActionListener(e -> submitComplaint());
+        actionsPanel.add(complaintBtn);
         
         panel.add(actionsPanel, BorderLayout.SOUTH);
         
         return panel;
+    }
+
+    private void sendHelpRequest() {
+        mainFrame.openAdminConversationForCurrentUser("help");
+    }
+
+    private void submitComplaint() {
+        User user = mainFrame.getCurrentUser();
+        if (user == null) return;
+
+        String detail = JOptionPane.showInputDialog(this,
+            "Decrivez votre reclamation :",
+            "Nouvelle reclamation",
+            JOptionPane.PLAIN_MESSAGE);
+        if (detail == null) return;
+
+        detail = detail.trim();
+        if (detail.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "La reclamation ne peut pas etre vide.",
+                "Reclamation",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        mainFrame.getGestion().submitComplaint(user, detail);
+        mainFrame.openAdminConversationForCurrentUser("reclamation", detail);
     }
     
     /**
@@ -1382,6 +1424,7 @@ public class EnhancedDriverPanel extends JPanel {
         detailsPanel.add(createDetailRow("Année Universitaire:", passenger.getAnneeUniversitaire() != null ? 
             passenger.getAnneeUniversitaire().toString() : "N/A"));
         detailsPanel.add(createDetailRow("Cherche Covoiturage:", passenger.isChercheCovoit() ? "Oui" : "Non"));
+        detailsPanel.add(createCardDetailRow("Carte:", passenger.getCardDisplayLabel(), passenger.getCard()));
         
         // Add spacer
         detailsPanel.add(Box.createVerticalStrut(10));
@@ -1445,6 +1488,24 @@ public class EnhancedDriverPanel extends JPanel {
         row.add(valueComponent, BorderLayout.CENTER);
         
         return row;
+    }
+
+    private JPanel createCardDetailRow(String label, String value, String cardValue) {
+        JPanel row = createDetailRow(label, "● " + value);
+        Component component = row.getComponent(1);
+        if (component instanceof JLabel valueComponent) {
+            valueComponent.setForeground(getCardColor(cardValue));
+            valueComponent.setFont(Fonts.BODY_BOLD);
+        }
+        return row;
+    }
+
+    private Color getCardColor(String cardValue) {
+        return switch (cardValue == null ? "verte" : cardValue.toLowerCase()) {
+            case "jaune" -> Colors.ACCENT_GOLD;
+            case "rouge" -> Colors.ACCENT_CORAL;
+            default -> Colors.ACCENT_MINT;
+        };
     }
     
     /**

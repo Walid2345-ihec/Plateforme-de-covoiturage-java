@@ -153,6 +153,10 @@ public class Notification {
             case "GROUPE" -> "👥 Groupe";
             case "MESSAGE_GROUPE" -> "💬 Message Groupe";
             case "EVALUATION" -> "⭐ Évaluation";
+            case "HELP" -> "Aide";
+            case "COMPLAINT" -> "Reclamation";
+            case "REGISTRATION" -> "Inscription";
+            case "SUPPRESSION" -> "Suppression";
             default -> type;
         };
     }
@@ -168,6 +172,10 @@ public class Notification {
             case "GROUPE" -> "#8E44AD"; // Violet
             case "MESSAGE_GROUPE" -> "#3498DB"; // Bleu
             case "EVALUATION" -> "#F1C40F"; // Or
+            case "HELP" -> "#3498DB"; // Bleu
+            case "COMPLAINT" -> "#E74C3C"; // Rouge
+            case "REGISTRATION" -> "#27AE60"; // Vert
+            case "SUPPRESSION" -> "#E67E22"; // Orange
             default -> "#95A5A6"; // Gris
         };
     }

@@ -1,9 +1,12 @@
 ﻿messageId;senderCin;senderName;recipientCin;recipientName;content;timestamp;isDeleted;trajetId
-e8f24b88-36e1-4a82-b53e-4b40455958f3;47586912;jaleli meriem;41233051;tlili mokhtar;svp je veux un covoiturage du kram à l'IHEC;2026-04-06 00:10:47;false;
-a17e4208-fb21-4bd3-843e-e217a490af2a;41233051;tlili mokhtar;47586912;jaleli meriem;ok ,ca coute 3DNT;2026-04-06 00:12:10;false;
-2aad074f-fabe-422c-a6f1-c9d5765f7ecc;47586912;jaleli meriem;41233051;tlili mokhtar;ook merciiiiii;2026-04-06 00:13:14;false;
-b2ca0ea2-41f4-4d5a-9159-a355cbf64d20;41233051;tlili mokhtar;47586912;jaleli meriem;avec plaisir;2026-04-06 00:14:41;false;
-77908a00-efc3-43c8-af3a-835d6ad5a624;47586912;jaleli meriem;41233051;tlili mokhtar;bonjour;2026-04-06 00:24:42;false;
-d0a0ec4d-f441-4bd5-8b51-61ed52a02c11;47586912;jaleli meriem;41233051;tlili mokhtar;je suis prés;2026-04-06 00:24:50;false;
-ebb70b86-f0f7-49db-972d-e77d74c43f99;41233051;tlili mokhtar;47586912;jaleli meriem;"ook 
-l'arrive";2026-04-06 00:25:57;false;
+c9026179-8137-4b65-b58e-bdb15235f755;12121212;dcc dd;15032608;Se Walid;bonjourrrr, najem nerkeb m3ak;2026-05-11 11:48:22;false;
+93398555-51be-46a4-b5d7-7d0ca560b63b;15032608;Se Walid;12121212;dcc dd;jawek ahla jaw;2026-05-11 11:50:27;false;
+c38c808c-9ed2-4f9f-a6c4-99e479e5c6d4;15032608;Se Walid;99999999;Admin Principal;i wanna know how to create trajet;2026-05-11 19:51:07;false;
+227eec43-e5c2-4137-8560-86379207390f;99999999;Admin Principal;15032608;Se Walid;ok;2026-05-11 19:51:38;false;
+00aaf0b9-7cf1-44ad-a55f-694548e7a669;99999999;Admin Principal;15032608;Se Walid;hh;2026-05-11 19:51:52;false;
+d52fe38b-43b9-466d-a1ba-3a833cbc07f5;99999999;Admin Principal;15032608;Se Walid;go to create;2026-05-11 19:51:58;false;
+cf764ade-477f-4d7d-b99d-704c604698ed;15032608;Se Walid;99999999;Admin Principal;Message supprimé;2026-05-11 19:52:28;true;
+86a6d406-570e-4174-8987-d763d81ef5c4;15032608;Se Walid;99999999;Admin Principal;HEEELP;2026-05-11 19:55:35;false;
+b5677d5c-506c-46c6-8c3a-970b6ae7d576;13131313;ddf dds;99999999;Admin Principal;sra9li flousi;2026-05-11 19:56:47;false;
+dfda6032-7238-4503-b69b-f7bb3e698232;99999999;Admin Principal;13131313;ddf dds;bch nbaniweh;2026-05-11 19:57:20;false;
+c092408a-b2a6-4502-919b-44c9f60ceffa;13131313;ddf dds;15032608;Se Walid;bch nerkbou lila?;2026-05-11 20:04:53;false;

@@ -5,8 +5,8 @@ import GUI.ModernUIComponents.Fonts;
 import Models.*;
 import Services.*;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.table.*;
 
@@ -31,13 +31,24 @@ public class AdminPanel extends JPanel {
     private JTable trajetsTable;
     private DefaultTableModel trajetsModel;
 
+    private JLabel adminNotificationBadge;
+    private JPopupMenu adminNotificationsPopup;
+    private JPanel adminNotificationsList;
+    private Timer adminNotificationsTimer;
+    private Timer conversationsTimer;
+    private JPanel conversationsListPanel;
+    private JPanel adminChatHolder;
+    private Conversation selectedConversation;
+
     private final java.util.List<ModernUIComponents.SidebarButton> sidebarButtons = new java.util.ArrayList<>();
+    private static final DateTimeFormatter NOTIFICATION_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public AdminPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         setLayout(new BorderLayout());
         setBackground(Colors.SURFACE);
         initializeComponents();
+        startAdminNotificationsTimer();
     }
 
     private void initializeComponents() {
@@ -53,6 +64,7 @@ public class AdminPanel extends JPanel {
         contentPanel.add(createUsersView(), "USERS");
         contentPanel.add(createTrajetsView(), "TRAJETS");
         contentPanel.add(createEvaluationsView(), "EVALUATIONS");
+        contentPanel.add(createConversationsView(), "CONVERSATIONS");
 
         add(contentPanel, BorderLayout.CENTER);
     }
@@ -110,6 +122,8 @@ public class AdminPanel extends JPanel {
         addSidebarButton(sidebar, "Gestion Trajets", "TRAJETS", false);
         addSidebarButton(sidebar, "Évaluations Globales", "EVALUATIONS", false);
 
+        addSidebarButton(sidebar, "Conversations", "CONVERSATIONS", false);
+
         sidebar.add(Box.createVerticalGlue());
 
         JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -145,6 +159,7 @@ public class AdminPanel extends JPanel {
             if (cardName.equals("DASHBOARD")) refreshDashboard();
             if (cardName.equals("USERS")) refreshUsersTable();
             if (cardName.equals("TRAJETS")) refreshTrajetsTable();
+            if (cardName.equals("CONVERSATIONS")) refreshConversationsList();
         });
         sidebarButtons.add(button);
         sidebar.add(button);
@@ -155,10 +170,16 @@ public class AdminPanel extends JPanel {
         panel.setBackground(Colors.SURFACE);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+
         JLabel titleLabel = new JLabel("Tableau de Bord Admin");
         titleLabel.setFont(Fonts.HEADING_1);
         titleLabel.setForeground(Colors.TEXT_DARK);
-        panel.add(titleLabel, BorderLayout.NORTH);
+
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(createAdminNotificationBell(), BorderLayout.EAST);
+        panel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 25));
         statsPanel.setOpaque(false);
@@ -176,6 +197,199 @@ public class AdminPanel extends JPanel {
         return panel;
     }
 
+    private JPanel createAdminNotificationBell() {
+        JPanel wrapper = new JPanel(null);
+        wrapper.setOpaque(false);
+        wrapper.setPreferredSize(new Dimension(70, 50));
+
+        JButton bellButton = new JButton("\uD83D\uDD14");
+        bellButton.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        bellButton.setBounds(5, 5, 44, 40);
+        bellButton.setFocusPainted(false);
+        bellButton.setBorderPainted(false);
+        bellButton.setContentAreaFilled(false);
+        bellButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        bellButton.setToolTipText("Notifications administrateur");
+        bellButton.addActionListener(e -> showAdminNotificationsPopup(bellButton));
+
+        adminNotificationBadge = new JLabel("0") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Colors.ACCENT_CORAL);
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 11));
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                g2.drawString(getText(), x, y);
+                g2.dispose();
+            }
+        };
+        adminNotificationBadge.setBounds(38, 2, 24, 24);
+        adminNotificationBadge.setHorizontalAlignment(SwingConstants.CENTER);
+
+        wrapper.add(bellButton);
+        wrapper.add(adminNotificationBadge);
+        updateAdminNotificationBadge();
+        return wrapper;
+    }
+
+    private void showAdminNotificationsPopup(Component invoker) {
+        adminNotificationsPopup = new JPopupMenu();
+        adminNotificationsPopup.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
+
+        JPanel popupContent = new JPanel(new BorderLayout());
+        popupContent.setBackground(Color.WHITE);
+        popupContent.setPreferredSize(new Dimension(440, 520));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Color.WHITE);
+        header.setBorder(BorderFactory.createEmptyBorder(14, 16, 10, 16));
+
+        JLabel title = new JLabel("Notifications admin");
+        title.setFont(Fonts.HEADING_3);
+        title.setForeground(Colors.TEXT_DARK);
+        header.add(title, BorderLayout.WEST);
+
+        JButton markAllButton = new JButton("Tout lire");
+        markAllButton.setFont(Fonts.CAPTION);
+        markAllButton.setFocusPainted(false);
+        markAllButton.addActionListener(e -> {
+            mainFrame.getGestion().markAllAdminNotificationsAsRead();
+            mainFrame.markUnsavedChanges();
+            refreshAdminNotificationsPopup();
+            updateAdminNotificationBadge();
+        });
+        header.add(markAllButton, BorderLayout.EAST);
+
+        adminNotificationsList = new JPanel();
+        adminNotificationsList.setBackground(Color.WHITE);
+        adminNotificationsList.setLayout(new BoxLayout(adminNotificationsList, BoxLayout.Y_AXIS));
+
+        JScrollPane scrollPane = new JScrollPane(adminNotificationsList);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        ModernUIComponents.applyModernScrollBar(scrollPane);
+
+        popupContent.add(header, BorderLayout.NORTH);
+        popupContent.add(scrollPane, BorderLayout.CENTER);
+        adminNotificationsPopup.add(popupContent);
+
+        refreshAdminNotificationsPopup();
+        adminNotificationsPopup.show(invoker, -380, invoker.getHeight() + 5);
+    }
+
+    private void refreshAdminNotificationsPopup() {
+        if (adminNotificationsList == null) return;
+
+        adminNotificationsList.removeAll();
+        java.util.List<Notification> notifications = mainFrame.getGestion().getAdminNotifications();
+        notifications.sort((n1, n2) -> n2.getDateCreation().compareTo(n1.getDateCreation()));
+
+        if (notifications.isEmpty()) {
+            JLabel emptyLabel = new JLabel("Aucune notification administrateur");
+            emptyLabel.setFont(Fonts.BODY);
+            emptyLabel.setForeground(Colors.TEXT_MUTED);
+            emptyLabel.setBorder(BorderFactory.createEmptyBorder(30, 16, 30, 16));
+            adminNotificationsList.add(emptyLabel);
+        } else {
+            for (Notification notification : notifications) {
+                adminNotificationsList.add(createAdminNotificationCard(notification));
+                adminNotificationsList.add(Box.createVerticalStrut(8));
+            }
+        }
+
+        adminNotificationsList.revalidate();
+        adminNotificationsList.repaint();
+    }
+
+    private JPanel createAdminNotificationCard(Notification notification) {
+        JPanel card = new JPanel(new BorderLayout(10, 8));
+        card.setBackground(notification.isEstLue() ? new Color(247, 248, 250) : new Color(255, 252, 242));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 4, 0, 0, Color.decode(notification.getTypeColor())),
+            BorderFactory.createEmptyBorder(10, 12, 10, 12)
+        ));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 118));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        JPanel textPanel = new JPanel();
+        textPanel.setOpaque(false);
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+
+        JLabel typeLabel = new JLabel(notification.getTypeLabel());
+        typeLabel.setFont(Fonts.BODY_BOLD);
+        typeLabel.setForeground(Color.decode(notification.getTypeColor()));
+
+        JLabel dateLabel = new JLabel(notification.getDateCreation().format(NOTIFICATION_DATE_FORMATTER));
+        dateLabel.setFont(Fonts.CAPTION);
+        dateLabel.setForeground(Colors.TEXT_MUTED);
+
+        top.add(typeLabel, BorderLayout.WEST);
+        top.add(dateLabel, BorderLayout.EAST);
+
+        JTextArea messageArea = new JTextArea(notification.getMessage());
+        messageArea.setFont(Fonts.BODY);
+        messageArea.setForeground(Colors.TEXT_DARK);
+        messageArea.setLineWrap(true);
+        messageArea.setWrapStyleWord(true);
+        messageArea.setEditable(false);
+        messageArea.setOpaque(false);
+        messageArea.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
+
+        textPanel.add(top);
+        textPanel.add(messageArea);
+
+        JButton deleteButton = new JButton("x");
+        deleteButton.setFont(new Font("Arial", Font.BOLD, 12));
+        deleteButton.setFocusPainted(false);
+        deleteButton.setMargin(new Insets(2, 7, 2, 7));
+        deleteButton.addActionListener(e -> {
+            mainFrame.getGestion().deleteAdminNotification(notification.getNotificationId());
+            mainFrame.markUnsavedChanges();
+            refreshAdminNotificationsPopup();
+            updateAdminNotificationBadge();
+        });
+
+        card.add(textPanel, BorderLayout.CENTER);
+        card.add(deleteButton, BorderLayout.EAST);
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                mainFrame.getGestion().markAdminNotificationAsRead(notification.getNotificationId());
+                mainFrame.markUnsavedChanges();
+                refreshAdminNotificationsPopup();
+                updateAdminNotificationBadge();
+            }
+        });
+
+        return card;
+    }
+
+    private void updateAdminNotificationBadge() {
+        if (adminNotificationBadge == null) return;
+
+        int unreadCount = mainFrame.getGestion().countUnreadAdminNotifications();
+        if (unreadCount > 0) {
+            adminNotificationBadge.setText(String.valueOf(Math.min(unreadCount, 99)));
+            adminNotificationBadge.setVisible(true);
+        } else {
+            adminNotificationBadge.setVisible(false);
+        }
+        adminNotificationBadge.repaint();
+    }
+
+    private void startAdminNotificationsTimer() {
+        adminNotificationsTimer = new Timer(2000, e -> updateAdminNotificationBadge());
+        adminNotificationsTimer.start();
+    }
+
     private JPanel createUsersView() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.SURFACE);
@@ -186,7 +400,7 @@ public class AdminPanel extends JPanel {
         titleLabel.setForeground(Colors.TEXT_DARK);
         panel.add(titleLabel, BorderLayout.NORTH);
 
-        String[] columns = {"CIN", "Nom", "Prénom", "Email"};
+        String[] columns = {"CIN", "Nom", "Prénom", "Email", "Carte"};
 
         // Conducteurs Section
         driversModel = new DefaultTableModel(columns, 0) {
@@ -237,8 +451,17 @@ public class AdminPanel extends JPanel {
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> refreshUsersTable());
 
+        JComboBox<String> cardCombo = new JComboBox<>(new String[]{"Verte", "Jaune", "Rouge"});
+        cardCombo.setPreferredSize(new Dimension(120, 42));
+
+        ModernUIComponents.RoundedButton cardBtn = new ModernUIComponents.RoundedButton("Changer Carte", Colors.ACCENT_GOLD);
+        cardBtn.setPreferredSize(new Dimension(160, 42));
+        cardBtn.addActionListener(e -> changeSelectedUserCard((String) cardCombo.getSelectedItem()));
+
         buttonPanel.add(deleteBtn);
         buttonPanel.add(refreshBtn);
+        buttonPanel.add(cardCombo);
+        buttonPanel.add(cardBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
@@ -315,6 +538,112 @@ public class AdminPanel extends JPanel {
         return panel;
     }
 
+    private JPanel createConversationsView() {
+        JPanel panel = new JPanel(new BorderLayout(20, 0));
+        panel.setBackground(Colors.SURFACE);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
+
+        conversationsListPanel = new JPanel();
+        conversationsListPanel.setLayout(new BoxLayout(conversationsListPanel, BoxLayout.Y_AXIS));
+        conversationsListPanel.setBackground(Color.WHITE);
+
+        JScrollPane listScroll = new JScrollPane(conversationsListPanel);
+        listScroll.setPreferredSize(new Dimension(330, 0));
+        listScroll.setBorder(BorderFactory.createTitledBorder("Conversations actives"));
+        ModernUIComponents.applyModernScrollBar(listScroll);
+
+        adminChatHolder = new JPanel(new BorderLayout());
+        adminChatHolder.setBackground(Colors.SURFACE);
+        JLabel empty = new JLabel("Selectionnez une conversation");
+        empty.setFont(Fonts.BODY);
+        empty.setForeground(Colors.TEXT_MUTED);
+        empty.setHorizontalAlignment(SwingConstants.CENTER);
+        adminChatHolder.add(empty, BorderLayout.CENTER);
+
+        panel.add(listScroll, BorderLayout.WEST);
+        panel.add(adminChatHolder, BorderLayout.CENTER);
+
+        conversationsTimer = new Timer(5000, e -> refreshConversationsList());
+        conversationsTimer.start();
+        refreshConversationsList();
+        return panel;
+    }
+
+    private void refreshConversationsList() {
+        if (conversationsListPanel == null) return;
+
+        conversationsListPanel.removeAll();
+        java.util.List<Conversation> conversations = mainFrame.getGestion().getConversations();
+        conversations.sort((c1, c2) -> c2.getCreatedAt().compareTo(c1.getCreatedAt()));
+
+        if (conversations.isEmpty()) {
+            JLabel empty = new JLabel("Aucune conversation");
+            empty.setFont(Fonts.BODY);
+            empty.setForeground(Colors.TEXT_MUTED);
+            empty.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
+            conversationsListPanel.add(empty);
+        } else {
+            for (Conversation conversation : conversations) {
+                conversationsListPanel.add(createConversationRow(conversation));
+                conversationsListPanel.add(Box.createVerticalStrut(6));
+            }
+        }
+
+        conversationsListPanel.revalidate();
+        conversationsListPanel.repaint();
+    }
+
+    private JPanel createConversationRow(Conversation conversation) {
+        User user = mainFrame.getGestion().rechercher_user(conversation.getUserId());
+        String userName = user != null ? user.getNom() + " " + user.getPrenom() : conversation.getUserId();
+
+        JPanel row = new JPanel(new BorderLayout(8, 4));
+        row.setBackground(conversation == selectedConversation ? new Color(232, 240, 254) : Color.WHITE);
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Colors.BORDER),
+            BorderFactory.createEmptyBorder(10, 12, 10, 12)
+        ));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 78));
+        row.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        JLabel name = new JLabel(userName);
+        name.setFont(Fonts.BODY_BOLD);
+        name.setForeground(Colors.TEXT_DARK);
+
+        JLabel meta = new JLabel(conversation.getTriggeredBy() + " - " + conversation.getCreatedAtAsString());
+        meta.setFont(Fonts.CAPTION);
+        meta.setForeground(Colors.TEXT_MUTED);
+
+        row.add(name, BorderLayout.NORTH);
+        row.add(meta, BorderLayout.CENTER);
+        row.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                openAdminConversation(conversation);
+            }
+        });
+
+        return row;
+    }
+
+    private void openAdminConversation(Conversation conversation) {
+        Admin admin = mainFrame.getCurrentUser() instanceof Admin
+            ? (Admin) mainFrame.getCurrentUser()
+            : mainFrame.getGestion().getDefaultAdmin();
+        User user = mainFrame.getGestion().rechercher_user(conversation.getUserId());
+        if (admin == null || user == null) {
+            JOptionPane.showMessageDialog(this, "Conversation invalide");
+            return;
+        }
+
+        selectedConversation = conversation;
+        adminChatHolder.removeAll();
+        adminChatHolder.add(new MessagingPanel(mainFrame, admin, user, this::refreshConversationsList), BorderLayout.CENTER);
+        adminChatHolder.revalidate();
+        adminChatHolder.repaint();
+        refreshConversationsList();
+    }
+
     private JTable createModernTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(Fonts.BODY);
@@ -339,6 +668,13 @@ public class AdminPanel extends JPanel {
                 if (!isSelected) {
                     c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 249, 250));
                 }
+                if (value instanceof String && isCardDisplayValue((String) value)) {
+                    setForeground(getCardColor((String) value));
+                    setFont(Fonts.BODY_BOLD);
+                } else {
+                    setForeground(Colors.TEXT_DARK);
+                    setFont(Fonts.BODY);
+                }
                 setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
                 return c;
             }
@@ -346,10 +682,23 @@ public class AdminPanel extends JPanel {
         return table;
     }
 
+    private boolean isCardDisplayValue(String value) {
+        String lower = value.toLowerCase();
+        return lower.contains("verte") || lower.contains("jaune") || lower.contains("rouge");
+    }
+
+    private Color getCardColor(String cardValue) {
+        String lower = cardValue.toLowerCase();
+        if (lower.contains("rouge")) return Colors.ACCENT_CORAL;
+        if (lower.contains("jaune")) return Colors.ACCENT_GOLD;
+        return Colors.ACCENT_MINT;
+    }
+
     public void refresh() {
         refreshDashboard();
         refreshUsersTable();
         refreshTrajetsTable();
+        refreshConversationsList();
         updateSidebarSelection(0);
         contentLayout.show(contentPanel, "DASHBOARD");
     }
@@ -362,19 +711,31 @@ public class AdminPanel extends JPanel {
         usersStatCard.setValue(String.valueOf(users.size()));
         trajetsStatCard.setValue(String.valueOf(trajets.size()));
         evaluationsStatCard.setValue(String.valueOf(evals.size()));
+        updateAdminNotificationBadge();
     }
 
     private void refreshUsersTable() {
         driversModel.setRowCount(0);
         passengersModel.setRowCount(0);
         for (User u : mainFrame.getGestion().getAllUsers()) {
-            Object[] row = {u.getCin(), u.getNom(), u.getPrenom(), u.getMail()};
             if (u instanceof Conducteur) {
+                Conducteur c = (Conducteur) u;
+                Object[] row = {c.getCin(), c.getNom(), c.getPrenom(), c.getMail(), getCardDisplay(c.getCard())};
                 driversModel.addRow(row);
             } else if (u instanceof Passager) {
+                Passager p = (Passager) u;
+                Object[] row = {p.getCin(), p.getNom(), p.getPrenom(), p.getMail(), getCardDisplay(p.getCard())};
                 passengersModel.addRow(row);
             }
         }
+    }
+
+    private String getCardDisplay(String card) {
+        return switch (card == null ? "verte" : card.toLowerCase()) {
+            case "jaune" -> "Jaune";
+            case "rouge" -> "Rouge";
+            default -> "Verte";
+        };
     }
 
     private void refreshTrajetsTable() {
@@ -409,6 +770,48 @@ public class AdminPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Erreur lors de la suppression.");
             }
         }
+    }
+
+    private void changeSelectedUserCard(String selectedCardLabel) {
+        String cin = null;
+        boolean selectedDriver = false;
+        int driverRow = driversTable.getSelectedRow();
+        int passengerRow = passengersTable.getSelectedRow();
+
+        if (driverRow != -1) {
+            cin = (String) driversModel.getValueAt(driverRow, 0);
+            selectedDriver = true;
+        } else if (passengerRow != -1) {
+            cin = (String) passengersModel.getValueAt(passengerRow, 0);
+        }
+
+        if (cin == null) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un utilisateur");
+            return;
+        }
+
+        String newCard = selectedCardLabel == null ? "verte" : selectedCardLabel.toLowerCase();
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Changer la carte de l'utilisateur " + cin + " vers " + selectedCardLabel + " ?",
+            "Confirmation",
+            JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        User user = mainFrame.getGestion().rechercher_user(cin);
+        if (selectedDriver && user instanceof Conducteur c) {
+            c.setCard(newCard);
+            CSVDatabase.saveConducteurs(mainFrame.getGestion().getUsers());
+        } else if (!selectedDriver && user instanceof Passager p) {
+            p.setCard(newCard);
+            CSVDatabase.savePassagers(mainFrame.getGestion().getUsers());
+        } else {
+            JOptionPane.showMessageDialog(this, "Utilisateur introuvable");
+            return;
+        }
+
+        mainFrame.saveDataToCSV();
+        refreshUsersTable();
+        JOptionPane.showMessageDialog(this, "Carte mise à jour avec succès.");
     }
 
     private void deleteTrajet() {

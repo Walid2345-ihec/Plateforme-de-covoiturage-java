@@ -886,6 +886,9 @@ public class EnhancedLoginPanel extends JPanel {
             Conducteur conducteur = new Conducteur(cin, nom, prenom, tel, annee, adresse, mail,
                 password, nomVoiture, marque, matricule, places);
             mainFrame.getGestion().getUsers().add(conducteur);
+            mainFrame.getGestion().addAdminNotification("Nouvel utilisateur (Conducteur) inscrit: " + nom + " " + prenom + " (CIN: " + cin + ")", "REGISTRATION");
+            mainFrame.markUnsavedChanges();
+            mainFrame.notifyDataChanged();
             showModernSuccess("Inscription réussie !");
             clearDriverFields();
             cardLayout.show(cardPanel, "LOGIN");
@@ -966,6 +969,9 @@ public class EnhancedLoginPanel extends JPanel {
             Passager passager = new Passager(cin.trim(), nom.trim(), prenom.trim(), tel.trim(), 
                 annee, adresse.trim(), mail.trim(), password, true, null);
             mainFrame.getGestion().getUsers().add(passager);
+            mainFrame.getGestion().addAdminNotification("Nouvel utilisateur (Passager) inscrit: " + nom + " " + prenom + " (CIN: " + cin + ")", "REGISTRATION");
+            mainFrame.markUnsavedChanges();
+            mainFrame.notifyDataChanged();
             showModernSuccess("Inscription réussie !");
             clearPassengerFields();
             cardLayout.show(cardPanel, "LOGIN");

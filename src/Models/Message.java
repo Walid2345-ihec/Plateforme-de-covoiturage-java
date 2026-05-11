@@ -30,7 +30,7 @@ public class Message {
         this.senderName = senderName;
         this.recipientCin = recipientCin;
         this.recipientName = recipientName;
-        this.content = isDeleted ? "message supprimée" : content;
+        this.content = isDeleted ? "Message supprimé" : content;
         this.timestamp = timestamp;
         this.isDeleted = isDeleted;
         this.trajetId = trajetId;
@@ -116,7 +116,7 @@ public class Message {
     
     public void delete() {
         this.isDeleted = true;
-        this.content = "message supprimée";
+        this.content = "Message supprimé";
     }
     
     public String getTrajetId() {

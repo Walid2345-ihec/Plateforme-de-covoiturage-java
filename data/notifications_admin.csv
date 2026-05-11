@@ -1,0 +1,4 @@
+﻿notificationId;passagerId;conducteurId;trajetId;type;message;dateCreation;estLue
+ADMIN_NOTIF_1778525732514;ADMIN;ADMIN;;HELP;Aide demandée par Se Walid (CIN: 15032608);2026-05-11 19:55:32;true
+ADMIN_NOTIF_1778525801664;ADMIN;ADMIN;;HELP;Aide demandée par ddf dds (CIN: 13131313);2026-05-11 19:56:41;false
+ADMIN_NOTIF_1778525866369;ADMIN;ADMIN;;HELP;Aide demandée par ddf dds (CIN: 13131313);2026-05-11 19:57:46;false

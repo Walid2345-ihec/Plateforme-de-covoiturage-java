@@ -10,7 +10,7 @@ public class Conducteur extends User {
     private int placesDisponibles;
     private String weeklySchedule = ""; // Format: "MON:09:00-17:00|TUE:09:00-17:00|..."
     private double moyenneEvaluation = 0.0; // Moyenne des évaluations reçues (0 si jamais évalué)
-    private String card = "GREEN"; // Carte d'avertissement: GREEN (par défaut) / YELLOW / RED
+    private String card = "verte"; // Carte d'avertissement: verte (par défaut) / jaune / rouge
     private boolean banned = false; // Si true, l'utilisateur ne peut plus se connecter
     
     // Constructeur par défaut (interactif)
@@ -169,15 +169,28 @@ public class Conducteur extends User {
         this.moyenneEvaluation = moyenneEvaluation;
     }
 
-    public String getCard() { return card != null ? card : "GREEN"; }
+    public String getCard() { return normalizeCard(card); }
     public void setCard(String card) {
-        if (card == null) { this.card = "GREEN"; return; }
-        String upper = card.trim().toUpperCase();
-        if (upper.equals("GREEN") || upper.equals("YELLOW") || upper.equals("RED")) {
-            this.card = upper;
-        } else {
-            this.card = "GREEN";
-        }
+        this.card = normalizeCard(card);
+    }
+
+    private String normalizeCard(String value) {
+        if (value == null) return "verte";
+        String normalized = value.trim().toLowerCase();
+        return switch (normalized) {
+            case "green", "vert", "verte" -> "verte";
+            case "yellow", "jaune" -> "jaune";
+            case "red", "rouge" -> "rouge";
+            default -> "verte";
+        };
+    }
+
+    public String getCardDisplayLabel() {
+        return switch (getCard()) {
+            case "jaune" -> "Jaune - Vigilance";
+            case "rouge" -> "Rouge - Risque eleve";
+            default -> "Verte - Comportement correct";
+        };
     }
 
     public boolean isBanned() { return banned; }

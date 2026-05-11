@@ -20,10 +20,14 @@ public class Gestion_covoiturage {
     private final Map<String, List<Notification>> notifications_par_passager = new HashMap<>();
     // Notifications conducteur : clé = CIN du conducteur, valeur = liste des notifications
     private final Map<String, List<Notification>> notifications_par_conducteur = new HashMap<>();
+    // Notifications administrateur
+    private final List<Notification> adminNotifications = new ArrayList<>();
     // Groupes de discussion
     private final List<Group> groups = new ArrayList<>();
     // Messages de groupe (tous groupes confondus, filtrés par groupId à l'usage)
     private final List<GroupMessage> groupMessages = new ArrayList<>();
+    // Conversations utilisateur <-> administrateur
+    private final List<Conversation> conversations = new ArrayList<>();
     // Évaluations passager → conducteur
     private final List<Evaluation> evaluations = new ArrayList<>();
 
@@ -33,6 +37,14 @@ public class Gestion_covoiturage {
     public List<User> getPassagers_acceptes() { return passagers_acceptes; }
     public Map<String, List<Notification>> getNotificationsParPassager() { return notifications_par_passager; }
     public Map<String, List<Notification>> getNotificationsParConducteur() { return notifications_par_conducteur; }
+
+    public List<Notification> getAdminNotifications() {
+        return new ArrayList<>(adminNotifications);
+    }
+
+    public List<Conversation> getConversations() {
+        return new ArrayList<>(conversations);
+    }
 
     // Setters
     public void setUsers(List<User> newUsers) { this.users.clear(); this.users.addAll(newUsers); }
@@ -79,6 +91,15 @@ public class Gestion_covoiturage {
         User user = rechercher_user(cin);
         if (user != null && user instanceof Admin) {
             return (Admin) user;
+        }
+        return null;
+    }
+
+    public Admin getDefaultAdmin() {
+        for (User user : users) {
+            if (user instanceof Admin) {
+                return (Admin) user;
+            }
         }
         return null;
     }
@@ -433,6 +454,115 @@ public class Gestion_covoiturage {
         notifications.add(notif);
     }
 
+    /**
+     * Ajoute une notification pour l'administrateur.
+     */
+    public void addAdminNotification(String message, String type) {
+        String notificationId = "ADMIN_NOTIF_" + System.currentTimeMillis();
+        Notification notif = new Notification(notificationId, "ADMIN", "ADMIN", "", type, message);
+
+        adminNotifications.add(notif);
+        CSVDatabase.saveAdminNotifications(adminNotifications);
+    }
+
+    /**
+     * Demande d'aide envoyée à l'administrateur.
+     */
+    public void requestHelp(User user) {
+        if (user == null) return;
+        addAdminNotification("Aide demandée par " + user.getNom() + " " + user.getPrenom() + " (CIN: " + user.getCin() + ")", "HELP");
+    }
+
+    /**
+     * Réclamation soumise à l'administrateur.
+     */
+    public void submitComplaint(User user, String detail) {
+        if (user == null) return;
+        addAdminNotification("Réclamation de " + user.getNom() + " " + user.getPrenom() + " : " + detail, "COMPLAINT");
+    }
+
+    /**
+     * Ajouter une notification admin existante (chargement CSV).
+     */
+    public void ajouterNotificationAdmin(Notification notification) {
+        adminNotifications.add(notification);
+    }
+
+    /**
+     * Marquer une notification admin comme lue.
+     */
+    public void markAdminNotificationAsRead(String notificationId) {
+        for (Notification n : adminNotifications) {
+            if (n.getNotificationId().equals(notificationId)) {
+                n.setEstLue(true);
+                break;
+            }
+        }
+        CSVDatabase.saveAdminNotifications(adminNotifications);
+    }
+
+    /**
+     * Marquer toutes les notifications admin comme lues.
+     */
+    public void markAllAdminNotificationsAsRead() {
+        for (Notification n : adminNotifications) {
+            n.setEstLue(true);
+        }
+        CSVDatabase.saveAdminNotifications(adminNotifications);
+    }
+
+    /**
+     * Compter les notifications admin non lues.
+     */
+    public int countUnreadAdminNotifications() {
+        return (int) adminNotifications.stream().filter(n -> !n.isEstLue()).count();
+    }
+
+    /**
+     * Supprimer de la liste la notification admin.
+     */
+    public void deleteAdminNotification(String notificationId) {
+        adminNotifications.removeIf(n -> n.getNotificationId().equals(notificationId));
+        CSVDatabase.saveAdminNotifications(adminNotifications);
+    }
+
+    // ==================== CONVERSATIONS ADMIN ====================
+
+    public void ajouterConversation(Conversation conversation) {
+        if (conversation == null) return;
+        for (Conversation existing : conversations) {
+            if (existing.getId().equals(conversation.getId())) return;
+        }
+        conversations.add(conversation);
+    }
+
+    public Conversation getOrCreateAdminConversation(String userId, String adminId, String triggeredBy) {
+        if (userId == null || adminId == null || userId.isBlank() || adminId.isBlank()) {
+            return null;
+        }
+
+        for (Conversation conversation : conversations) {
+            if (conversation.getUserId().equals(userId) && conversation.getAdminId().equals(adminId)) {
+                if (triggeredBy != null && !triggeredBy.isBlank()) {
+                    conversation.setTriggeredBy(triggeredBy);
+                }
+                CSVDatabase.saveConversations(conversations);
+                return conversation;
+            }
+        }
+
+        String normalizedTrigger = (triggeredBy == null || triggeredBy.isBlank()) ? "help" : triggeredBy;
+        Conversation created = new Conversation(
+            "CONV_" + System.currentTimeMillis() + "_" + userId,
+            userId,
+            adminId,
+            normalizedTrigger
+        );
+        conversations.add(created);
+        CSVDatabase.saveConversations(conversations);
+        return created;
+    }
+
     // ==================== NOTIFICATIONS CONDUCTEUR ====================
 
     /**
@@ -588,6 +718,29 @@ public class Gestion_covoiturage {
         // Ajouter à la map des notifications du conducteur
         List<Notification> notifications = notifications_par_conducteur.computeIfAbsent(cinConducteur, k -> new ArrayList<>());
         notifications.add(notif);
+    }
+
+    /**
+     * Créer une notification lorsqu'un administrateur répond à un utilisateur.
+     */
+    public void creerNotificationMessageAdmin(String userCin, String adminCin, String messageContent) {
+        if (userCin == null || userCin.isBlank()) return;
+
+        String notificationId = "NOTIF_ADMIN_MSG_" + System.currentTimeMillis() + "_" + userCin;
+        String preview = messageContent != null && messageContent.length() > 50
+            ? messageContent.substring(0, 50) + "..."
+            : (messageContent == null ? "" : messageContent);
+        String message = "Message de l'administrateur: " + preview;
+
+        Notification notif = new Notification(notificationId, userCin, adminCin, "", "MESSAGE", message);
+
+        if (rechercher_passager(userCin) != null) {
+            List<Notification> notifications = notifications_par_passager.computeIfAbsent(userCin, k -> new ArrayList<>());
+            notifications.add(notif);
+        } else if (rechercher_conducteur(userCin) != null) {
+            List<Notification> notifications = notifications_par_conducteur.computeIfAbsent(userCin, k -> new ArrayList<>());
+            notifications.add(notif);
+        }
     }
 
     // ==================== GROUPES ====================

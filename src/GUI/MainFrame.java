@@ -417,6 +417,9 @@ public class MainFrame extends JFrame {
         try {
             if (passengerPanel != null) passengerPanel.refreshModels();
         } catch (Exception ignored) {}
+        try {
+            if (adminPanel != null) adminPanel.refresh();
+        } catch (Exception ignored) {}
     }
 
     public static void main(String[] args) {
@@ -475,6 +478,49 @@ public class MainFrame extends JFrame {
         
         // Show messaging panel
         cardLayout.show(mainPanel, "MESSAGING");
+    }
+
+    public void openAdminConversationForCurrentUser(String triggeredBy) {
+        openAdminConversationForCurrentUser(triggeredBy, null);
+    }
+
+    public void openAdminConversationForCurrentUser(String triggeredBy, String initialMessage) {
+        if (!(currentUser instanceof Passager) && !(currentUser instanceof Conducteur)) {
+            return;
+        }
+
+        Admin admin = gestion.getDefaultAdmin();
+        if (admin == null) {
+            JOptionPane.showMessageDialog(this,
+                "Aucun administrateur n'est disponible pour le moment.",
+                "Discussion admin",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        gestion.getOrCreateAdminConversation(currentUser.getCin(), admin.getCin(), triggeredBy);
+        if ("help".equalsIgnoreCase(triggeredBy)) {
+            gestion.requestHelp(currentUser);
+        }
+        if (initialMessage != null && !initialMessage.trim().isEmpty()) {
+            Message msg = new Message(
+                java.util.UUID.randomUUID().toString(),
+                currentUser.getCin(),
+                currentUser.getNom() + " " + currentUser.getPrenom(),
+                admin.getCin(),
+                admin.getNom() + " " + admin.getPrenom(),
+                initialMessage.trim(),
+                ""
+            );
+            java.util.List<Message> allMessages = CSVDatabase.loadMessages();
+            allMessages.add(msg);
+            CSVDatabase.saveMessages(allMessages);
+        }
+        CSVDatabase.saveConversations(gestion.getConversations());
+        saveDataToCSV();
+
+        MessagingPanel adminChat = new MessagingPanel(this, currentUser, admin, this::refreshCurrentPanel);
+        showMessagingPanel(adminChat);
     }
     
     /**

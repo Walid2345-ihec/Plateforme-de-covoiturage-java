@@ -232,10 +232,52 @@ public class EnhancedPassengerPanel extends JPanel {
         // Notifications button with badge
         JPanel notificationButtonPanel = createNotificationButtonWithBadge();
         actionsPanel.add(notificationButtonPanel);
+
+        ModernUIComponents.RoundedButton helpBtn = new ModernUIComponents.RoundedButton(
+            "Help", Colors.ACCENT_SKY);
+        helpBtn.addActionListener(e -> sendHelpRequest());
+        actionsPanel.add(helpBtn);
+
+        ModernUIComponents.RoundedButton adminChatBtn = new ModernUIComponents.RoundedButton(
+            "Discussion Admin", Colors.ACCENT_MINT);
+        adminChatBtn.addActionListener(e -> mainFrame.openAdminConversationForCurrentUser("admin"));
+        actionsPanel.add(adminChatBtn);
+
+        ModernUIComponents.RoundedButton complaintBtn = new ModernUIComponents.RoundedButton(
+            "Reclamation", Colors.ACCENT_CORAL);
+        complaintBtn.addActionListener(e -> submitComplaint());
+        actionsPanel.add(complaintBtn);
         
         panel.add(actionsPanel, BorderLayout.SOUTH);
         
         return panel;
+    }
+
+    private void sendHelpRequest() {
+        mainFrame.openAdminConversationForCurrentUser("help");
+    }
+
+    private void submitComplaint() {
+        User user = mainFrame.getCurrentUser();
+        if (user == null) return;
+
+        String detail = JOptionPane.showInputDialog(this,
+            "Decrivez votre reclamation :",
+            "Nouvelle reclamation",
+            JOptionPane.PLAIN_MESSAGE);
+        if (detail == null) return;
+
+        detail = detail.trim();
+        if (detail.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "La reclamation ne peut pas etre vide.",
+                "Reclamation",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        mainFrame.getGestion().submitComplaint(user, detail);
+        mainFrame.openAdminConversationForCurrentUser("reclamation", detail);
     }
     
     /**
@@ -723,6 +765,9 @@ public class EnhancedPassengerPanel extends JPanel {
             mainPanel.add(routeLabel);
             mainPanel.add(Box.createVerticalStrut(20));
 
+            mainPanel.add(buildCardStatusCard(conductor.getCardDisplayLabel(), conductor.getCard()));
+            mainPanel.add(Box.createVerticalStrut(15));
+
             // Schedule display
             ModernUIComponents.GlassCard scheduleCard = new ModernUIComponents.GlassCard();
             scheduleCard.setLayout(new BoxLayout(scheduleCard, BoxLayout.Y_AXIS));
@@ -839,6 +884,38 @@ public class EnhancedPassengerPanel extends JPanel {
         card.add(summaryLabel);
 
         return card;
+    }
+
+    private JPanel buildCardStatusCard(String label, String cardValue) {
+        ModernUIComponents.GlassCard card = new ModernUIComponents.GlassCard();
+        card.setLayout(new BorderLayout(12, 0));
+        card.setMaximumSize(new Dimension(450, 72));
+
+        JLabel title = new JLabel("Carte de notation");
+        title.setFont(Fonts.BODY_BOLD);
+        title.setForeground(Colors.TEXT_DARK);
+
+        JLabel value = new JLabel("● " + label);
+        value.setFont(Fonts.BODY_BOLD);
+        value.setForeground(getCardColor(cardValue));
+
+        JPanel text = new JPanel();
+        text.setOpaque(false);
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+        text.add(title);
+        text.add(Box.createVerticalStrut(6));
+        text.add(value);
+
+        card.add(text, BorderLayout.CENTER);
+        return card;
+    }
+
+    private Color getCardColor(String cardValue) {
+        return switch (cardValue == null ? "verte" : cardValue.toLowerCase()) {
+            case "jaune" -> Colors.ACCENT_GOLD;
+            case "rouge" -> Colors.ACCENT_CORAL;
+            default -> Colors.ACCENT_MINT;
+        };
     }
 
     /**

@@ -45,11 +45,13 @@ public class CSVDatabase {
     private static final String NOTIFICATIONS_FILE = DATA_FOLDER + "notifications.csv";
     private static final String CONDUCTEUR_NOTIFICATIONS_FILE = DATA_FOLDER + "conducteur_notifications.csv";
     private static final String MESSAGES_FILE = DATA_FOLDER + "messages.csv";
+    private static final String CONVERSATIONS_FILE = DATA_FOLDER + "conversations.csv";
     private static final String GROUPS_FILE = DATA_FOLDER + "groups.csv";
     private static final String GROUP_MESSAGES_FILE = DATA_FOLDER + "group_messages.csv";
     private static final String EVALUATIONS_FILE = DATA_FOLDER + "evaluations.csv";
     private static final String ADMINS_FILE = DATA_FOLDER + "admins.csv";
-    
+    private static final String ADMIN_NOTIFICATIONS_FILE = DATA_FOLDER + "notifications_admin.csv";
+
     // Delimiter - using semicolon to avoid conflicts with French text
     private static final String DELIMITER = ";";
     
@@ -236,7 +238,7 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW - defines the columns
-            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles;WeeklySchedule;MoyenneEvaluation;Card;Banned");
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;NomVoiture;MarqueVoiture;Matricule;PlacesDisponibles;WeeklySchedule;MoyenneEvaluation;carte;Banned");
             writer.newLine();
 
             // DATA ROWS - one per conducteur
@@ -331,7 +333,7 @@ public class CSVDatabase {
                     StandardCharsets.UTF_8))) {
             
             // HEADER ROW
-            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;ChercheCovoit;Card;Banned");
+            writer.write("CIN;Nom;Prenom;Tel;AnneeUniv;Adresse;Mail;PasswordHash;ChercheCovoit;carte;Banned");
             writer.newLine();
 
             // DATA ROWS
@@ -963,6 +965,8 @@ public class CSVDatabase {
         saveAdmins(gestion.getUsers());
         saveTrajets(gestion.getTrajets());
         saveAllNotifications(gestion);
+        saveAdminNotifications(gestion.getAdminNotifications());
+        saveConversations(gestion.getConversations());
         saveGroups(gestion.getGroups());
         saveGroupMessages(gestion.getGroupMessages());
         saveEvaluations(gestion.getEvaluations());
@@ -1010,6 +1014,17 @@ public class CSVDatabase {
         List<Notification> conducteurNotifications = loadConducteurNotifications();
         for (Notification n : conducteurNotifications) {
             gestion.ajouterNotificationConducteur(n);
+        }
+
+        // Load notifications for admin
+        List<Notification> adminNotifications = loadAdminNotifications();
+        for (Notification n : adminNotifications) {
+            gestion.ajouterNotificationAdmin(n);
+        }
+
+        List<Conversation> conversations = loadConversations();
+        for (Conversation conversation : conversations) {
+            gestion.ajouterConversation(conversation);
         }
 
         // Load groups and group messages
@@ -1306,7 +1321,123 @@ public class CSVDatabase {
             System.err.println("✗ Erreur sauvegarde notifications conducteur: " + e.getMessage());
         }
     }
-    
+
+    /**
+     * Load all notifications for admin from dedicated CSV file
+     */
+    public static List<Notification> loadAdminNotifications() {
+        initializeDataFolder();
+        List<Notification> notifications = new ArrayList<>();
+
+        try {
+            Path path = Paths.get(ADMIN_NOTIFICATIONS_FILE);
+            if (!Files.exists(path)) {
+                System.out.println("✓ Aucun fichier de notifications admin (nouveau)");
+                return notifications;
+            }
+
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return notifications;
+
+            // Skip header
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(DELIMITER, -1);
+
+                try {
+                    String notificationId;
+                    String passagerId;
+                    String conducteurId;
+                    String trajetId;
+                    String type;
+                    String message;
+                    LocalDateTime dateCreation;
+                    boolean estLue;
+
+                    if (parts.length >= 8) {
+                        notificationId = stripBom(parts[0]).trim();
+                        passagerId = parts[1].trim();
+                        conducteurId = parts[2].trim();
+                        trajetId = parts[3].trim();
+                        type = parts[4].trim();
+                        message = unescapeCSV(parts[5].trim());
+                        dateCreation = Notification.parseDate(parts[6].trim());
+                        estLue = Boolean.parseBoolean(parts[7].trim());
+                    } else if (parts.length >= 5) {
+                        notificationId = stripBom(parts[0]).trim();
+                        passagerId = "ADMIN";
+                        conducteurId = "ADMIN";
+                        trajetId = "";
+                        message = unescapeCSV(parts[1].trim());
+                        type = parts[2].trim();
+                        estLue = Boolean.parseBoolean(parts[3].trim());
+                        dateCreation = Notification.parseDate(parts[4].trim());
+                    } else {
+                        continue;
+                    }
+
+                    Notification notif = new Notification(notificationId, passagerId, conducteurId,
+                                                         trajetId, type, message, dateCreation, estLue);
+                    notifications.add(notif);
+
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing notification admin ligne " + (i+1) + ": " + e.getMessage());
+                }
+            }
+
+            System.out.println("✓ " + notifications.size() + " notifications admin chargées");
+
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture notifications admin: " + e.getMessage());
+        }
+
+        return notifications;
+    }
+
+    /**
+     * Save all notifications for admin from list
+     */
+    public static void saveAdminNotifications(List<Notification> adminNotifications) {
+        initializeDataFolder();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(ADMIN_NOTIFICATIONS_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            // BOM for UTF-8 compatibility
+            writer.write('﻿');
+
+            // Header
+            writer.write("notificationId;passagerId;conducteurId;trajetId;type;message;dateCreation;estLue");
+            writer.newLine();
+
+            int count = 0;
+            for (Notification n : adminNotifications) {
+                String line = String.join(DELIMITER,
+                    n.getNotificationId(),
+                    n.getPassagerId(),
+                    n.getConducteurId(),
+                    n.getTrajetId(),
+                    n.getType(),
+                    escapeCSV(n.getMessage()),
+                    n.getDateCreationAsString(),
+                    String.valueOf(n.isEstLue())
+                );
+                writer.write(line);
+                writer.newLine();
+                count++;
+            }
+
+            System.out.println("✓ " + count + " notifications admin sauvegardées");
+
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde notifications admin: " + e.getMessage());
+        }
+    }
+
     // ============================================================
     // MESSAGES - Load/Save Methods
     // ============================================================
@@ -1364,6 +1495,80 @@ public class CSVDatabase {
         }
         
         return messages;
+    }
+
+    /**
+     * Load admin conversations from CSV.
+     */
+    public static List<Conversation> loadConversations() {
+        initializeDataFolder();
+        List<Conversation> conversations = new ArrayList<>();
+
+        try {
+            Path path = Paths.get(CONVERSATIONS_FILE);
+            if (!Files.exists(path)) {
+                return conversations;
+            }
+
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) return conversations;
+
+            for (int i = 1; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(DELIMITER, -1);
+                if (parts.length < 5) continue;
+
+                try {
+                    Conversation conversation = new Conversation(
+                        stripBom(unescapeCSV(parts[0])),
+                        unescapeCSV(parts[1]),
+                        unescapeCSV(parts[2]),
+                        unescapeCSV(parts[3]),
+                        Conversation.parseDate(parts[4].trim())
+                    );
+                    conversations.add(conversation);
+                } catch (Exception e) {
+                    System.err.println("✗ Erreur parsing conversation ligne " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("✗ Erreur lecture conversations: " + e.getMessage());
+        }
+
+        return conversations;
+    }
+
+    /**
+     * Save all admin conversations to CSV.
+     */
+    public static void saveConversations(List<Conversation> conversations) {
+        initializeDataFolder();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(CONVERSATIONS_FILE),
+                    StandardCharsets.UTF_8))) {
+
+            writer.write('\ufeff');
+            writer.write("id;user_id;admin_id;triggered_by;created_at");
+            writer.newLine();
+
+            for (Conversation conversation : conversations) {
+                String line = String.join(DELIMITER,
+                    escapeCSV(conversation.getId()),
+                    escapeCSV(conversation.getUserId()),
+                    escapeCSV(conversation.getAdminId()),
+                    escapeCSV(conversation.getTriggeredBy()),
+                    escapeCSV(conversation.getCreatedAtAsString())
+                );
+                writer.write(line);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("✗ Erreur sauvegarde conversations: " + e.getMessage());
+        }
     }
     
     // ============================================================
