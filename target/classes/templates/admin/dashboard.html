@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Tableau de Bord Admin</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('admin','Administration','Gestion du systeme','dashboard')}"></nav>
+    <main class="content">
+        <div class="page-header">
+            <div><h1>Tableau de Bord Admin</h1><p th:text="${session.name}">Administrateur</p></div>
+            <a class="gold" th:href="@{/admin/notifications}">Notifications admin <span class="badge" th:text="${unread}">0</span></a>
+        </div>
+        <section class="stats">
+            <article class="stat-card"><span>Utilisateurs Totaux</span><strong th:text="${conducteurs + passagers}">0</strong></article>
+            <article class="stat-card"><span>Trajets Actifs</span><strong th:text="${trajets}">0</strong></article>
+            <article class="stat-card"><span>Evaluations</span><strong th:text="${evaluations}">0</strong></article>
+        </section>
+    </main>
+</div>
+</body>
+</html>

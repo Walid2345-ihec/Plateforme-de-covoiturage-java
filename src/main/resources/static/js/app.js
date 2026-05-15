@@ -1,0 +1,1 @@
+document.addEventListener('submit',e=>{const b=e.target.querySelector('button.danger');if(b&&!confirm('Confirmer cette action ?'))e.preventDefault();});

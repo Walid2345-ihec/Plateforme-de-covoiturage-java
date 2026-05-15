@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Mes Groupes</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar(${role},'Mes Groupes','Discussions de trajet','groups')}"></nav>
+    <main class="content">
+        <div class="page-header">
+            <div><h1>Mes Groupes</h1><p>Discussions de covoiturage</p></div>
+            <a class="secondary" th:href="@{/groups}">Actualiser</a>
+        </div>
+        <section class="form-card wide" th:if="${role == 'conducteur'}">
+            <h2>Creer un groupe</h2>
+            <div th:if="${!trajets.isEmpty()}">
+                <p>Selectionnez un trajet pour creer un groupe avec ses passagers acceptes:</p>
+                <div th:each="t : ${trajets}" style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                    <strong th:text="${t.depart + ' -> ' + t.arrivee}"></strong>
+                    <span th:if="${t.acceptedCins}" th:text="${'(' + t.acceptedCins + ')'}"></span>
+                    <form th:action="@{/groups}" method="post" style="margin-top: 8px;">
+                        <input name="groupName" placeholder="Nom du groupe" required style="padding: 8px; margin-right: 8px;">
+                        <input name="memberCins" th:value="${t.acceptedCins}" type="hidden">
+                        <button class="primary" th:disabled="${t.acceptedCins == null || t.acceptedCins.isEmpty()}">Creer le groupe</button>
+                    </form>
+                </div>
+            </div>
+            <div th:if="${trajets.isEmpty()}">
+                <p>Aucun trajet avec passagers acceptes. <a th:href="@{/conducteur/passagers}">Voir mes passagers</a></p>
+            </div>
+        </section>
+        <section class="group-cards">
+            <article class="group-card" th:each="g : ${groups}">
+                <div>
+                    <h2 th:text="${g.groupName}">Groupe</h2>
+                    <p>Membres: <span th:text="${g.memberCins}">-</span></p>
+                    <p th:text="${'Cree le ' + g.dateCreation}">Date</p>
+                    <p>Conducteur: <span th:text="${g.conducteurCin}"></span></p>
+                </div>
+                <a class="primary" th:href="@{/groups/{id}(id=${g.groupId})}">Ouvrir la discussion</a>
+            </article>
+            <p class="empty-state" th:if="${groups.isEmpty()}">Aucun groupe pour le moment.</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>

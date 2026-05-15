@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Mes Trajets</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('conducteur','Espace Conducteur','Gerez vos trajets','trajets')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Mes Trajets</h1><p>Liste de vos trajets crees</p></div><a class="primary" th:href="@{/conducteur/trajets/new}">Creer un trajet</a></div>
+        <h2>Trajets recurrents</h2>
+        <table>
+            <thead><tr><th>Depart</th><th>Arrivee</th><th>Planning</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody><tr th:each="t : ${trajetsRecurrents}"><td th:text="${t.depart}"></td><td th:text="${t.arrivee}"></td><td th:text="${t.weeklySchedule}"></td><td><span class="badge" th:text="${t.status}"></span></td><td class="row-actions"><form th:action="@{/conducteur/trajets/{id}/delete(id=${t.id})}" method="post"><button class="danger">Supprimer</button></form><form th:action="@{/conducteur/trajets/{id}/finish(id=${t.id})}" method="post"><button class="gold">Terminer</button></form></td></tr></tbody>
+        </table>
+        <h2>Trajets ponctuels</h2>
+        <table>
+            <thead><tr><th>Depart</th><th>Arrivee</th><th>Duree</th><th>Prix (TND)</th><th>Statut</th><th>Passager</th><th>Actions</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${trajetsNormaux}">
+                <td th:text="${t.depart}"></td>
+                <td th:text="${t.arrivee}"></td>
+                <td th:text="${t.dureeMinutes + ' min'}"></td>
+                <td th:text="${t.prix}"></td>
+                <td><span class="badge" th:text="${t.status}"></span></td>
+                <td th:text="${t.acceptedCins}"></td>
+                <td class="row-actions">
+                    <form th:action="@{/conducteur/trajets/{id}/price(id=${t.id})}" method="post" class="inline">
+                        <input type="number" step="0.5" name="prix" th:value="${t.prix}" required>
+                        <button class="sky">Modifier Prix</button>
+                    </form>
+                    <form th:action="@{/conducteur/trajets/{id}/delete(id=${t.id})}" method="post"><button class="danger">Supprimer</button></form>
+                    <a class="secondary" th:href="@{/conducteur/trajets}">Actualiser</a>
+                    <form th:action="@{/conducteur/trajets/{id}/finish(id=${t.id})}" method="post"><button class="gold">Terminer Trajet</button></form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

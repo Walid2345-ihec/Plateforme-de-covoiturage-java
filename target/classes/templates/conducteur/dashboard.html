@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Tableau de Bord</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('conducteur','Espace Conducteur','Gerez vos trajets','dashboard')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Tableau de Bord</h1><p>Bienvenue sur votre espace conducteur</p></div></div>
+        <section class="stats">
+            <article class="stat-card"><span>Places Disponibles</span><strong th:text="${placesDisponibles}">0</strong></article>
+            <article class="stat-card"><span>Mes Trajets</span><strong th:text="${trajets.size()}">0</strong></article>
+            <article class="stat-card"><span>Demandes en attente</span><strong><span class="badge" th:text="${demandes}">0</span></strong></article>
+        </section>
+        <section class="actions">
+            <a class="primary" th:href="@{/conducteur/trajets/new}">Creer un Trajet</a>
+            <a class="sky" th:href="@{/conducteur/demandes}">Voir les Demandes</a>
+            <a class="mint" th:href="@{/conducteur/notifications}">Voir Notifications <span class="badge" th:text="${notifications}">0</span></a>
+            <a class="sky" th:href="@{/messages(with='admin',trajetId='help')}">Help</a>
+            <a class="mint" th:href="@{/messages(with='admin')}">Discussion Admin</a>
+            <a class="secondary" th:href="@{/groups}">Groupes</a>
+        </section>
+        <section class="panel-card">
+            <h2>Mes Evaluations</h2>
+            <p class="stars" th:text="${moyenne == 0 ? 'Aucune evaluation pour le moment.' : (moyenne >= 4.5 ? '★★★★★' : (moyenne >= 3.5 ? '★★★★☆' : (moyenne >= 2.5 ? '★★★☆☆' : (moyenne >= 1.5 ? '★★☆☆☆' : '★☆☆☆☆')))) + ' ' + moyenne + ' / 5'}">0 / 5</p>
+            <div class="list">
+                <article th:each="e : ${evaluations}">
+                    <strong th:text="${e.passagerName + ' - ' + e.rating + '/5'}">Evaluation</strong>
+                    <p th:text="${#strings.isEmpty(e.comment) ? '(Sans commentaire)' : e.comment}">Commentaire</p>
+                </article>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

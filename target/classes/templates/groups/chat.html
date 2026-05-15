@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Discussion Groupe</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar(${role},'Groupe','Discussion collective','groups')}"></nav>
+    <main class="chat-panel">
+        <header class="chat-header">
+            <div>
+                <h1 th:text="${group.groupName}">Groupe</h1>
+                <p th:text="${'Membres: ' + group.memberCins + ' - Discussion de groupe'}">Discussion</p>
+            </div>
+            <a class="secondary" th:href="@{/groups}">Retour</a>
+        </header>
+        <div class="message-thread">
+            <div class="empty-state" th:if="${messages.isEmpty()}">Aucun message. Soyez le premier a ecrire !</div>
+            <div th:each="m : ${messages}" class="message-line" th:classappend="${m.senderCin == session.cin} ? ' own' : ' other'">
+                <div class="message-content">
+                    <form th:if="${!m.isDeleted and m.senderCin == session.cin}" th:action="@{/groups/{groupId}/messages/{messageId}/delete(groupId=${group.groupId},messageId=${m.messageId})}" method="post" class="delete-message-form">
+                        <button class="danger">Supprimer</button>
+                    </form>
+                    <strong th:if="${m.senderCin != session.cin}" th:text="${m.senderName}">Nom</strong>
+                    <div class="bubble" th:classappend="${m.senderCin == session.cin} ? ' own-bubble' : ' other-bubble'">
+                        <p th:text="${m.content}">Message</p>
+                    </div>
+                    <small th:text="${#temporals.format(m.timestamp, 'HH:mm')}">00:00</small>
+                </div>
+            </div>
+        </div>
+        <form th:action="@{/groups/{id}/messages(id=${group.groupId})}" method="post" class="message-input-panel">
+            <textarea name="content" rows="3" placeholder="Votre message"></textarea>
+            <div class="message-input-actions">
+                <button class="secondary" type="reset">Effacer</button>
+                <button class="mint" type="submit">Envoyer</button>
+            </div>
+        </form>
+    </main>
+</div>
+</body>
+</html>

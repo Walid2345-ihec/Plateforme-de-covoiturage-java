@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Notifications</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('passager','Espace Passager','Trouvez votre trajet','notifications')}"></nav>
+    <main class="content">
+        <div class="page-header">
+            <div><h1>Notifications</h1><p>Notifications passager avec badge dans le menu Swing</p></div>
+            <form th:action="@{/passager/notifications/read-all}" method="post"><button class="secondary">Tout marquer comme lu</button></form>
+        </div>
+        <div class="list">
+            <article class="message-row" th:each="n : ${notifications}" th:classappend="${n.estLue} ? ' is-read' : ' unread'">
+                <strong class="badge" th:text="${n.type}"
+                        th:style="${n.type=='ACCEPTATION' ? 'background:#27AE60' : (n.type=='REFUS' ? 'background:#E74C3C' : (n.type=='SUPPRESSION' ? 'background:#E67E22' : (n.type=='GROUPE' ? 'background:#8E44AD' : (n.type=='MESSAGE_GROUPE' ? 'background:#3498DB' : (n.type=='EVALUATION' ? 'background:#F1C40F;color:#111' : 'background:#7f8c8d')))))}"></strong>
+                <p th:text="${n.message}"></p>
+                <small th:text="${n.dateCreation}"></small>
+                <form th:if="${!n.estLue}" th:action="@{/passager/notifications/{id}/read(id=${n.notificationId})}" method="post">
+                    <button class="mint">Marquer comme lu</button>
+                </form>
+            </article>
+        </div>
+    </main>
+</div>
+</body>
+</html>

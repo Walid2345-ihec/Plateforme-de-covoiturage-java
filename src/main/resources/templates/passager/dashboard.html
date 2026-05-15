@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Tableau de Bord</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('passager','Espace Passager','Trouvez votre trajet','dashboard')}"></nav>
+    <main class="content">
+        <div class="page-header">
+            <div><h1>Tableau de Bord</h1><p>Bienvenue sur votre espace passager</p></div>
+        </div>
+        <section class="stats">
+            <article class="stat-card"><span>Trajets Disponibles</span><strong th:text="${trajets.size()}">0</strong></article>
+            <article class="stat-card"><span>Mes Reservations</span><strong th:text="${reservations}">0</strong></article>
+            <article class="stat-card"><span>Statut</span><strong>En recherche</strong></article>
+        </section>
+        <section class="actions">
+            <a class="primary" th:href="@{/passager/trajets}">Rechercher un Trajet</a>
+            <a class="sky" th:href="@{/passager/reservations}">Voir mes Reservations</a>
+            <a class="danger" th:href="@{/passager/notifications}">Voir Notifications <span class="badge" th:text="${notifications}">0</span></a>
+            <form th:action="@{/passager/request-help}" method="post"><button class="sky">Demander de l'aide</button></form>
+            <a class="mint" th:href="@{/messages(with='admin')}">Discussion Admin</a>
+            <a class="secondary" th:href="@{/groups}">Groupes</a>
+        </section>
+        <section class="panel-card">
+            <h2>Reclamation rapide</h2>
+            <form th:action="@{/passager/reclamations}" method="post" class="grid-form">
+                <input type="hidden" name="reservationId" value="GENERAL">
+                <input type="hidden" name="accusedId" value="admin">
+                <select name="preset"><option>Message personnalise</option><option>Probleme general</option><option>Help</option></select>
+                <input name="message" placeholder="Decrivez votre reclamation" required>
+                <button class="danger">Reclamation</button>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

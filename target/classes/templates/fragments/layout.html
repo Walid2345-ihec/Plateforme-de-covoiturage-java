@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="sidebar(role,title,subtitle,active)" th:class="${'sidebar ' + role}">
+    <div class="side-head">
+        <div class="avatar" th:text="${role == 'admin' ? 'ADM' : (role == 'passager' ? 'USR' : 'CAR')}">CAR</div>
+        <h2 th:text="${title}">Espace</h2>
+        <p th:text="${subtitle}">Covoiturage</p>
+    </div>
+
+    <a th:classappend="${active == 'dashboard'} ? ' active'" th:href="@{/{r}/dashboard(r=${role})}">Tableau de Bord</a>
+
+    <a th:if="${role == 'passager'}" th:classappend="${active == 'search'} ? ' active'" th:href="@{/passager/trajets}">Rechercher Trajets</a>
+    <a th:if="${role == 'passager'}" th:classappend="${active == 'reservations'} ? ' active'" th:href="@{/passager/reservations}">Mes Reservations</a>
+    <a th:if="${role == 'passager'}" th:classappend="${active == 'groups'} ? ' active'" th:href="@{/groups}">Mes Groupes</a>
+
+    <a th:if="${role == 'conducteur'}" th:classappend="${active == 'trajets'} ? ' active'" th:href="@{/conducteur/trajets}">Mes Trajets</a>
+    <a th:if="${role == 'conducteur'}" th:classappend="${active == 'demandes'} ? ' active'" th:href="@{/conducteur/demandes}">Demandes Recues</a>
+    <a th:if="${role == 'conducteur'}" th:classappend="${active == 'passagers'} ? ' active'" th:href="@{/conducteur/passagers}">Passagers Acceptes</a>
+    <a th:if="${role == 'conducteur'}" th:classappend="${active == 'new-trajet'} ? ' active'" th:href="@{/conducteur/trajets/new}">Nouveau Trajet</a>
+    <a th:if="${role == 'conducteur'}" th:classappend="${active == 'groups'} ? ' active'" th:href="@{/groups}">Mes Groupes</a>
+
+    <a th:if="${role == 'admin'}" th:classappend="${active == 'users'} ? ' active'" th:href="@{/admin/users}">Gestion Utilisateurs</a>
+    <a th:if="${role == 'admin'}" th:classappend="${active == 'trajets'} ? ' active'" th:href="@{/admin/trajets}">Gestion Trajets</a>
+    <a th:if="${role == 'admin'}" th:classappend="${active == 'evaluations'} ? ' active'" th:href="@{/admin/evaluations}">Evaluations Globales</a>
+    <a th:if="${role == 'admin'}" th:classappend="${active == 'messages'} ? ' active'" th:href="@{/messages}">Messagerie</a>
+    <a th:if="${role == 'admin'}" th:classappend="${active == 'reclamations'} ? ' active'" th:href="@{/admin/reclamations}">Reclamations</a>
+
+    <a th:if="${role == 'passager' or role == 'conducteur'}" th:classappend="${active == 'messages'} ? ' active'" th:href="@{/messages}">Discussion Admin</a>
+    <a th:if="${role == 'passager' or role == 'conducteur'}" th:classappend="${active == 'notifications'} ? ' active'" th:href="@{/{r}/notifications(r=${role})}">Voir Notifications</a>
+    <a th:if="${role == 'admin'}" th:classappend="${active == 'notifications'} ? ' active'" th:href="@{/admin/notifications}">Notifications</a>
+
+    <form th:action="@{/logout}" method="post" class="logout"><button type="submit">Deconnexion</button></form>
+</nav>
+</body>
+</html>

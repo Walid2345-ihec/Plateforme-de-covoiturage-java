@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Nouveau Trajet</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('conducteur','Espace Conducteur','Gerez vos trajets','new-trajet')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Creer un Nouveau Trajet</h1><p>Formulaire conducteur comme dans Swing</p></div></div>
+        <form th:action="@{/conducteur/trajets}" th:object="${form}" method="post" class="form-card wide grid-form">
+            <label>Point de Depart<input th:field="*{depart}" placeholder="Ville de depart"></label>
+            <label>Point d'Arrivee<input th:field="*{arrivee}" placeholder="Ville d'arrivee"></label>
+            <label>Duree (minutes)<input type="number" min="5" step="5" th:field="*{dureeMinutes}"></label>
+            <label>Prix (TND)<input type="number" min="1" step="0.5" th:field="*{prix}"></label>
+            <label>Depart date/heure<input type="datetime-local" th:field="*{startDateTime}"></label>
+            <label>Arrivee date/heure<input type="datetime-local" th:field="*{endDateTime}"></label>
+            <label>Places<input type="number" min="1" max="8" th:field="*{maxPlaces}"></label>
+            <label class="full"><input type="checkbox" th:field="*{recurring}" id="isRecurring"> Trajet recurrent</label>
+            <section class="panel-card full" id="weeklyScheduleSection">
+                <h2>Planning hebdomadaire</h2>
+                <label><input type="checkbox" th:field="*{weekly.lundi}"> Lundi <input type="time" th:field="*{weekly.heureDepartLundi}"> <input type="time" th:field="*{weekly.heureRetourLundi}"></label>
+                <label><input type="checkbox" th:field="*{weekly.mardi}"> Mardi <input type="time" th:field="*{weekly.heureDepartMardi}"> <input type="time" th:field="*{weekly.heureRetourMardi}"></label>
+                <label><input type="checkbox" th:field="*{weekly.mercredi}"> Mercredi <input type="time" th:field="*{weekly.heureDepartMercredi}"> <input type="time" th:field="*{weekly.heureRetourMercredi}"></label>
+                <label><input type="checkbox" th:field="*{weekly.jeudi}"> Jeudi <input type="time" th:field="*{weekly.heureDepartJeudi}"> <input type="time" th:field="*{weekly.heureRetourJeudi}"></label>
+                <label><input type="checkbox" th:field="*{weekly.vendredi}"> Vendredi <input type="time" th:field="*{weekly.heureDepartVendredi}"> <input type="time" th:field="*{weekly.heureRetourVendredi}"></label>
+                <label><input type="checkbox" th:field="*{weekly.samedi}"> Samedi <input type="time" th:field="*{weekly.heureDepartSamedi}"> <input type="time" th:field="*{weekly.heureRetourSamedi}"></label>
+                <label><input type="checkbox" th:field="*{weekly.dimanche}"> Dimanche <input type="time" th:field="*{weekly.heureDepartDimanche}"> <input type="time" th:field="*{weekly.heureRetourDimanche}"></label>
+            </section>
+            <button class="primary">Creer le Trajet</button>
+        </form>
+    </main>
+</div>
+</body>
+</html>

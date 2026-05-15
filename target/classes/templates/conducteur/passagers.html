@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Passagers Acceptes</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('conducteur','Espace Conducteur','Gerez vos trajets','passagers')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Passagers Acceptes</h1><p>Passagers acceptes par trajet, messagerie et groupes</p></div></div>
+        <table>
+            <thead><tr><th>Trajet</th><th>CIN passagers acceptes</th><th>Reclamation</th><th>Actions</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${trajets}">
+                <td th:text="${t.depart + ' -> ' + t.arrivee}"></td>
+                <td th:text="${t.acceptedCins}"></td>
+                <td>
+                    <div th:each="cin : ${#strings.arraySplit(t.acceptedCins, ',')}">
+                        <span th:each="p : ${passagers}" th:if="${p.cin == cin.trim()}">
+                            <form th:action="@{/conducteur/reclamations}" method="post" class="inline" style="margin: 4px 0;">
+                                <input type="hidden" name="reservationId" th:value="${t.id}">
+                                <input type="hidden" name="accusedId" th:value="${cin.trim()}">
+                                <small th:text="${p.prenom + ' ' + p.nom + ' (' + '*****' + #strings.substring(cin.trim(), #strings.length(cin.trim()) - 3) + ')'}"></small>
+                                <select name="preset" style="margin: 0; padding: 4px;">
+                                    <option>Message personnalise</option>
+                                    <option>Retard</option>
+                                    <option>Comportement</option>
+                                    <option>Non presentation</option>
+                                </select>
+                                <input name="message" placeholder="Message" required style="margin: 0; padding: 4px; flex: 1;">
+                                <button class="danger" style="padding: 4px 8px; font-size: 0.9em;">Reclamation</button>
+                            </form>
+                        </span>
+                    </div>
+                </td>
+                <td class="row-actions">
+                    <div th:each="cin : ${#strings.arraySplit(t.acceptedCins, ',')}">
+                        <span th:each="p : ${passagers}" th:if="${p.cin == cin.trim()}">
+                            <strong th:text="${p.prenom + ' ' + p.nom}"></strong>
+                            <small style="color: #666;" th:text="${'(' + '*****' + #strings.substring(cin.trim(), #strings.length(cin.trim()) - 3) + ')'}"></small>
+                            <form th:action="@{/conducteur/trajets/{id}/passagers/remove(id=${t.id})}" method="post" class="inline" style="display: inline; margin: 0;">
+                                <input type="hidden" name="passagerCin" th:value="${cin.trim()}">
+                                <button class="danger" style="padding: 4px 8px; font-size: 0.9em;">Supprimer</button>
+                            </form>
+                            <br>
+                        </span>
+                    </div>
+                    <a class="mint" th:href="@{/messages(trajetId=${t.id})}">Messagerie</a>
+                    <a class="secondary" th:href="@{/conducteur/passagers}">Actualiser</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

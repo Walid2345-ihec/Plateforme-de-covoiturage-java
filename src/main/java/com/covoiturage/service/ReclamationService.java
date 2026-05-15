@@ -1,0 +1,1 @@
+package com.covoiturage.service; import com.covoiturage.entity.Reclamation;import java.util.List; public interface ReclamationService{List<Reclamation> all();Reclamation submit(String reservationId,String complainantId,String complainantRole,String accusedId,String accusedRole,String preset,String message);}

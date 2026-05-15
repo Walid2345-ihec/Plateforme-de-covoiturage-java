@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Reclamations</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('admin','Administration','Gestion du systeme','reclamations')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Reclamations</h1><p>Plaignant, accuse, motif et message</p></div></div>
+        <form class="filter">
+            <strong>Filtrer:</strong>
+            <button type="button" class="secondary" onclick="document.querySelectorAll('tbody tr').forEach(r=>r.style.display='')">Toutes</button>
+            <button type="button" class="sky" onclick="document.querySelectorAll('tbody tr').forEach(r=>r.style.display=r.dataset.accusedRole==='conducteur'?'':'none')">Conducteur accuse</button>
+            <button type="button" class="mint" onclick="document.querySelectorAll('tbody tr').forEach(r=>r.style.display=r.dataset.accusedRole==='passager'?'':'none')">Passager accuse</button>
+        </form>
+        <table>
+            <thead><tr><th>ID</th><th>Reservation</th><th>Plaignant</th><th>Role</th><th>Accuse</th><th>Role</th><th>Motif</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody><tr th:each="r : ${reclamations}" th:attr="data-accused-role=${r.accusedRole}"><td th:text="${r.id}"></td><td th:text="${r.reservationId}"></td><td th:text="${r.complainantId}"></td><td th:text="${r.complainantRole}"></td><td th:text="${r.accusedId}"></td><td th:text="${r.accusedRole}"></td><td th:text="${r.preset}"></td><td th:text="${r.message}"></td><td th:text="${r.createdAt}"></td></tr></tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

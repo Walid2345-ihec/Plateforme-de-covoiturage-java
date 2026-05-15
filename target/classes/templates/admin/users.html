@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Gestion Utilisateurs</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('admin','Administration','Gestion du systeme','users')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Gestion des Utilisateurs</h1><p>Listes des Utilisateurs</p></div></div>
+        <h2>Conducteurs</h2>
+        <table>
+            <thead><tr><th>CIN</th><th>Nom</th><th>Prenom</th><th>Email</th><th>Carte</th><th>Actions</th></tr></thead>
+            <tbody><tr th:each="u : ${conducteurs}">
+                <td th:text="${u.cin}"></td><td th:text="${u.nom}"></td><td th:text="${u.prenom}"></td><td th:text="${u.mail}"></td><td th:text="${u.carte}"></td>
+                <td class="row-actions">
+                    <form th:action="@{/admin/users/conducteur/{cin}/delete(cin=${u.cin})}" method="post"><button class="danger">Bannir/Supprimer</button></form>
+                    <form th:action="@{/admin/users/conducteur/{cin}/card(cin=${u.cin})}" method="post" class="inline">
+                        <select name="carte"><option value="verte">Verte</option><option value="jaune">Jaune</option><option value="rouge">Rouge</option></select>
+                        <button class="gold">Changer Carte</button>
+                    </form>
+                </td>
+            </tr></tbody>
+        </table>
+        <h2>Passagers</h2>
+        <table>
+            <thead><tr><th>CIN</th><th>Nom</th><th>Prenom</th><th>Email</th><th>Carte</th><th>Actions</th></tr></thead>
+            <tbody><tr th:each="u : ${passagers}">
+                <td th:text="${u.cin}"></td><td th:text="${u.nom}"></td><td th:text="${u.prenom}"></td><td th:text="${u.mail}"></td><td th:text="${u.carte}"></td>
+                <td class="row-actions">
+                    <form th:action="@{/admin/users/passager/{cin}/delete(cin=${u.cin})}" method="post"><button class="danger">Bannir/Supprimer</button></form>
+                    <form th:action="@{/admin/users/passager/{cin}/card(cin=${u.cin})}" method="post" class="inline">
+                        <select name="carte"><option value="verte">Verte</option><option value="jaune">Jaune</option><option value="rouge">Rouge</option></select>
+                        <button class="gold">Changer Carte</button>
+                    </form>
+                </td>
+            </tr></tbody>
+        </table>
+        <div class="actions"><a class="secondary" th:href="@{/admin/users}">Actualiser</a></div>
+    </main>
+</div>
+</body>
+</html>

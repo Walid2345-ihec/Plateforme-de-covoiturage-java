@@ -1,0 +1,1 @@
+package com.covoiturage.service; import com.covoiturage.entity.Evaluation;import java.util.List; public interface EvaluationService{List<Evaluation> all();List<Evaluation> forConducteur(String cin);Evaluation evaluate(String passagerCin,String passagerName,String conducteurCin,String trajetId,int rating,String comment);double moyenne(String cin);}

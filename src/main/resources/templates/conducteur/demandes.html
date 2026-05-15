@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Demandes Recues</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('conducteur','Espace Conducteur','Gerez vos trajets','demandes')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Demandes Recues</h1><p>Demandes des passagers a accepter ou refuser</p></div></div>
+        <table>
+            <thead><tr><th>Trajet</th><th>Passagers demandeurs</th><th>Actions</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${trajets}">
+                <td th:text="${t.depart + ' -> ' + t.arrivee}"></td>
+                <td>
+                    <div th:each="cin : ${#strings.arraySplit(t.pendingCins, ',')}">
+                        <span th:each="p : ${passagers}" th:if="${p.cin == cin.trim()}">
+                            <strong th:text="${p.prenom + ' ' + p.nom}"></strong>
+                            <small style="color: #666;" th:text="${'(' + '*****' + #strings.substring(cin.trim(), #strings.length(cin.trim()) - 3) + ')'}"></small>
+                            <form th:action="@{/conducteur/demandes/{id}/accept(id=${t.id})}" method="post" class="inline" style="margin: 0; display: inline;">
+                                <input type="hidden" name="passagerCin" th:value="${cin.trim()}">
+                                <button class="mint" style="padding: 4px 8px; font-size: 0.9em;">Accepter</button>
+                            </form>
+                            <form th:action="@{/conducteur/demandes/{id}/refuse(id=${t.id})}" method="post" class="inline" style="margin: 0; display: inline;">
+                                <input type="hidden" name="passagerCin" th:value="${cin.trim()}">
+                                <button class="danger" style="padding: 4px 8px; font-size: 0.9em;">Refuser</button>
+                            </form>
+                        </span>
+                        <br>
+                    </div>
+                </td>
+                <td class="row-actions">
+                    <a class="secondary" th:href="@{/conducteur/demandes}">Actualiser</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

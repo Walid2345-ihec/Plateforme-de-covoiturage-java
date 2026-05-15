@@ -1,0 +1,4 @@
+package com.covoiturage.dto; import jakarta.validation.constraints.Min;
+ import jakarta.validation.constraints.Pattern;
+import lombok.Data;
+ @Data public class UserRegistrationForm{@Pattern(regexp="^[0-9]{8}$") private String cin;@Pattern(regexp="^[a-zA-ZÀ-ÿ\\s'-]+$") private String nom;@Pattern(regexp="^[a-zA-ZÀ-ÿ\\s'-]+$") private String prenom;@Pattern(regexp="^[0-9]{8}$") private String tel;@Min(2000) private Integer anneeUniv;private String adresse;@Pattern(regexp="(?i)^[A-Z0-9._%+-]+@((gmail\\.com)|([A-Z0-9.-]+\\.tn))$") private String mail;@Pattern(regexp="^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$") private String password;private String role;@Pattern(regexp="^$|^[a-zA-Z0-9À-ÿ\\s'-]+$") private String nomVoiture;private String marqueVoiture;@Pattern(regexp="^$|^[0-9]{1,3}TU[0-9]{4}$") private String matricule;private Integer placesDisponibles=1;}

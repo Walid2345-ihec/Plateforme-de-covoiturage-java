@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Evaluations Globales</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('admin','Administration','Gestion du systeme','evaluations')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Evaluations Globales</h1><p>Notes et commentaires des passagers</p></div></div>
+        <table>
+            <thead><tr><th>Passager</th><th>Conducteur</th><th>Note</th><th>Commentaire</th></tr></thead>
+            <tbody><tr th:each="e : ${evaluations}"><td th:text="${e.passagerName}"></td><td th:text="${e.conducteurCin}"></td><td class="stars" th:text="${e.rating + '/5'}"></td><td th:text="${e.comment}"></td></tr></tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

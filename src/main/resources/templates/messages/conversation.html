@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Messagerie</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar(${role},'Messagerie','Discussions directes','messages')}"></nav>
+    <main class="messaging-shell">
+        <aside class="conversation-list">
+            <div class="conversation-toolbar">
+                <h2>Messagerie</h2>
+                <div class="new-conversation-form" id="newConversationForm" th:if="${role == 'admin'}">
+                    <input type="text" id="userSearchField" placeholder="Taper le nom du user..." class="search-input">
+                    <div id="userSearchResults" class="user-search-dropdown" style="display: none;">
+                        <ul id="userList"></ul>
+                    </div>
+                    <input type="hidden" id="selectedUserCin">
+                    <input type="hidden" id="triggeredBySelect" value="admin">
+                    <button id="startConversationBtn" class="mint" disabled>Nouvelle conversation</button>
+                </div>
+            </div>
+            <h3>Conversations actives</h3>
+            <div class="conversation-items">
+                <a th:each="c : ${conversations}" 
+                   th:href="@{/messages(with=${role == 'admin' ? c.userId : c['userId']})}" 
+                   class="conversation-item" 
+                   th:classappend="${(role == 'admin' and c.userId == otherCin) or (role != 'admin' and c['userId'] == otherCin)} ? ' selected'">
+                    <strong th:text="${role == 'admin' ? c.userId : c['userName']}">Utilisateur</strong>
+                    <span th:text="${role == 'admin' ? c.triggeredBy : c['userType']}">Type</span>
+                    <p th:text="${role == 'admin' ? '' : c['lastMessage']}">Message</p>
+                    <small th:text="${role == 'admin' ? c.createdAt : c['lastMessageTime']}">date</small>
+                </a>
+                <p class="empty-state" th:if="${conversations != null and conversations.isEmpty()}">Aucune conversation</p>
+            </div>
+        </aside>
+
+        <section class="chat-panel">
+            <header class="chat-header">
+                <div>
+                    <h1 th:text="${#strings.isEmpty(otherCin) ? 'Messagerie' : otherName}">Messagerie</h1>
+                    <p th:text="${#strings.isEmpty(otherCin) ? 'Choisissez un destinataire' : otherType}">Utilisateur</p>
+                </div>
+                <a class="secondary" th:href="@{/{r}/dashboard(r=${role})}">Retour</a>
+            </header>
+
+            <div th:if="${role != 'admin'}" class="message-recipient-bar">
+                <div class="new-conversation-form" id="userSearchFormPassenger" style="display: flex; gap: 10px; align-items: flex-start;">
+                    <div style="flex: 1; position: relative;">
+                        <input type="text" id="userSearchFieldPassenger" placeholder="Taper le nom du destinataire..." class="search-input">
+                        <div id="userSearchResultsPassenger" class="user-search-dropdown" style="display: none;">
+                            <ul id="userListPassenger"></ul>
+                        </div>
+                        <input type="hidden" id="selectedUserCinPassenger">
+                    </div>
+                    <input type="text" id="trajetIdInput" th:value="${trajetId}" placeholder="Trajet ID (optionnel)" style="flex: 0.5;">
+                    <button id="startConversationBtnPassenger" class="mint" disabled style="white-space: nowrap;">Ouvrir</button>
+                </div>
+            </div>
+
+            <div class="message-thread" th:if="${!#strings.isEmpty(otherCin)}">
+                <div class="empty-state" th:if="${messages == null or messages.isEmpty()}">Aucun message. Commencez la conversation!</div>
+                <div th:each="m : ${messages}" class="message-line" th:classappend="${m.senderCin == currentCin} ? ' own' : ' other'">
+                    <div class="message-content">
+                        <form th:if="${!m.isDeleted and (m.senderCin == currentCin or role == 'admin')}" th:action="@{/messages/{id}/delete(id=${m.messageId})}" method="post" class="delete-message-form">
+                            <input type="hidden" name="otherCin" th:value="${otherCin}">
+                            <button class="danger">Supprimer</button>
+                        </form>
+                        <strong th:if="${m.senderCin != currentCin}" th:text="${m.senderName}">Nom</strong>
+                        <div class="bubble" th:classappend="${m.senderCin == currentCin} ? ' own-bubble' : ' other-bubble'">
+                            <p th:text="${m.content}">Message</p>
+                        </div>
+                        <small th:text="${#temporals.format(m.timestamp, 'HH:mm')}">00:00</small>
+                    </div>
+                </div>
+            </div>
+
+            <form th:if="${!#strings.isEmpty(otherCin)}" th:action="@{/messages}" method="post" class="message-input-panel">
+                <textarea name="content" rows="3" placeholder="Votre message"></textarea>
+                <input type="hidden" name="recipientCin" th:value="${otherCin}">
+                <input type="hidden" name="trajetId" th:value="${trajetId}">
+                <div class="message-input-actions">
+                    <button class="secondary" type="reset">Annuler</button>
+                    <button class="mint" type="submit">Envoyer</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+<script>
+  // Auto-reload conversations
+  setInterval(() => {
+    if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+    if (new URLSearchParams(location.search).has('with')) location.reload();
+  }, 5000);
+
+  // User search functionality for ADMIN
+  const searchField = document.getElementById('userSearchField');
+  const searchResults = document.getElementById('userSearchResults');
+  const userList = document.getElementById('userList');
+  const selectedUserCinInput = document.getElementById('selectedUserCin');
+  const startConversationBtn = document.getElementById('startConversationBtn');
+
+  if (searchField) {
+    searchField.addEventListener('input', async (e) => {
+      const query = e.target.value.trim();
+      
+      if (query.length === 0) {
+        searchResults.style.display = 'none';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/messages/api/search?q=${encodeURIComponent(query)}`);
+        const users = await response.json();
+        
+        userList.innerHTML = '';
+        
+        if (users.length === 0) {
+          userList.innerHTML = '<li class="no-results">❌ Utilisateur introuvable</li>';
+          searchResults.style.display = 'block';
+        } else {
+          users.forEach(user => {
+            const li = document.createElement('li');
+            li.className = 'user-item';
+            li.innerHTML = `
+              <div class="user-name">${user.nom} ${user.prenom}</div>
+              <div class="user-meta">${user.role} - ${user.mail}</div>
+            `;
+            li.addEventListener('click', () => selectUserAdmin(user));
+            userList.appendChild(li);
+          });
+          searchResults.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        userList.innerHTML = '<li class="error">Erreur lors de la recherche</li>';
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.new-conversation-form') || e.target.closest('#userSearchFormPassenger')) {
+        searchResults.style.display = 'none';
+      }
+    });
+  }
+
+  function selectUserAdmin(user) {
+    searchField.value = user.nom + ' ' + user.prenom;
+    selectedUserCinInput.value = user.cin;
+    searchResults.style.display = 'none';
+    startConversationBtn.disabled = false;
+  }
+
+  if (startConversationBtn) {
+    startConversationBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      const userCin = selectedUserCinInput.value;
+
+      if (!userCin) {
+        alert('Veuillez sélectionner un utilisateur');
+        return;
+      }
+
+      try {
+        const response = await fetch('/messages/admin/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `userCin=${encodeURIComponent(userCin)}&triggeredBy=admin`
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Erreur lors de la création de la conversation');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la création de la conversation');
+      }
+    });
+  }
+
+  // User search functionality for CONDUCTEUR & PASSAGER
+  const searchFieldPassenger = document.getElementById('userSearchFieldPassenger');
+  const searchResultsPassenger = document.getElementById('userSearchResultsPassenger');
+  const userListPassenger = document.getElementById('userListPassenger');
+  const selectedUserCinPassenger = document.getElementById('selectedUserCinPassenger');
+  const startConversationBtnPassenger = document.getElementById('startConversationBtnPassenger');
+  const trajetIdInput = document.getElementById('trajetIdInput');
+
+  if (searchFieldPassenger) {
+    searchFieldPassenger.addEventListener('input', async (e) => {
+      const query = e.target.value.trim();
+      
+      if (query.length === 0) {
+        searchResultsPassenger.style.display = 'none';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/messages/api/search?q=${encodeURIComponent(query)}`);
+        const users = await response.json();
+        
+        userListPassenger.innerHTML = '';
+        
+        if (users.length === 0) {
+          userListPassenger.innerHTML = '<li class="no-results">❌ Utilisateur introuvable</li>';
+          searchResultsPassenger.style.display = 'block';
+        } else {
+          users.forEach(user => {
+            const li = document.createElement('li');
+            li.className = 'user-item';
+            li.innerHTML = `
+              <div class="user-name">${user.nom} ${user.prenom}</div>
+              <div class="user-meta">${user.role} - ${user.mail}</div>
+            `;
+            li.addEventListener('click', () => selectUserPassenger(user));
+            userListPassenger.appendChild(li);
+          });
+          searchResultsPassenger.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        userListPassenger.innerHTML = '<li class="error">Erreur lors de la recherche</li>';
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#userSearchFormPassenger')) {
+        searchResultsPassenger.style.display = 'none';
+      }
+    });
+  }
+
+  function selectUserPassenger(user) {
+    searchFieldPassenger.value = user.nom + ' ' + user.prenom;
+    selectedUserCinPassenger.value = user.cin;
+    searchResultsPassenger.style.display = 'none';
+    startConversationBtnPassenger.disabled = false;
+  }
+
+  if (startConversationBtnPassenger) {
+    startConversationBtnPassenger.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      const userCin = selectedUserCinPassenger.value;
+      const trajetId = trajetIdInput.value;
+
+      if (!userCin) {
+        alert('Veuillez sélectionner un utilisateur');
+        return;
+      }
+
+      try {
+        const url = new URL('/messages', window.location.origin);
+        url.searchParams.set('with', userCin);
+        if (trajetId) {
+          url.searchParams.set('trajetId', trajetId);
+        }
+        window.location.href = url.toString();
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'ouverture de la conversation');
+      }
+    });
+  }
+</script>
+</body>
+</html>

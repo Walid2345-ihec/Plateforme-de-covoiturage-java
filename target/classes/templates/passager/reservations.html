@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Mes Reservations</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('passager','Espace Passager','Trouvez votre trajet','reservations')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Mes Reservations</h1><p>Reservations acceptees et demandes en attente</p></div></div>
+        <table>
+            <thead><tr><th>Conducteur</th><th>Statut</th><th>Depart</th><th>Arrivee</th><th>Prix (TND)</th><th>Reclamation</th><th>Actions</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${trajets}">
+                <td th:text="${'*****' + #strings.substring(t.conducteurCin, #strings.length(t.conducteurCin) - 3)}"></td>
+                <td><span class="badge" th:text="${t.hasPending(session.cin) ? 'PENDING' : t.status}"></span></td>
+                <td th:text="${t.depart}"></td>
+                <td th:text="${t.arrivee}"></td>
+                <td th:text="${t.prix}"></td>
+                <td>
+                    <form th:action="@{/passager/reclamations}" method="post" class="inline">
+                        <input type="hidden" name="reservationId" th:value="${t.buildReservationId(session.cin)}">
+                        <input type="hidden" name="accusedId" th:value="${t.conducteurCin}">
+                        <select name="preset"><option>Message personnalise</option><option>Retard</option><option>Comportement</option><option>Annulation</option></select>
+                        <input name="message" placeholder="Message" required>
+                        <button class="danger">Reclamation sur</button>
+                    </form>
+                </td>
+                <td class="row-actions">
+                    <form th:if="${t.hasPending(session.cin)}" th:action="@{/passager/reservations/{id}/cancel(id=${t.id})}" method="post"><button class="danger">Annuler</button></form>
+                    <a class="mint" th:href="@{/messages(with=${t.conducteurCin},trajetId=${t.id})}">Messagerie</a>
+                    <form th:if="${t.hasAccepted(session.cin) && t.status == 'FINISHED'}" th:action="@{/passager/evaluate}" method="post" class="inline">
+                        <input type="hidden" name="conducteurCin" th:value="${t.conducteurCin}">
+                        <input type="hidden" name="trajetId" th:value="${t.id}">
+                        <select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select>
+                        <input name="comment" placeholder="Commentaire">
+                        <button class="gold">Evaluer</button>
+                    </form>
+                    <a class="secondary" th:href="@{/passager/reservations}">Actualiser</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

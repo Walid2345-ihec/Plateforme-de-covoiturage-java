@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Gestion Trajets</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<div class="app">
+    <nav th:replace="~{fragments/layout :: sidebar('admin','Administration','Gestion du systeme','trajets')}"></nav>
+    <main class="content">
+        <div class="page-header"><div><h1>Gestion des Trajets</h1><p>Surveillance des trajets</p></div></div>
+        <table>
+            <thead><tr><th>Depart</th><th>Arrivee</th><th>Prix</th><th>Statut</th><th>Conducteur</th><th>Actions</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${trajets}">
+                <td th:text="${t.depart}"></td><td th:text="${t.arrivee}"></td><td th:text="${t.prix}"></td><td th:text="${t.status}"></td><td th:text="${t.conducteurCin}"></td>
+                <td class="row-actions">
+                    <form th:action="@{/admin/trajets/{id}/delete(id=${t.id})}" method="post"><button class="danger">Supprimer Trajet</button></form>
+                    <a class="secondary" th:href="@{/admin/trajets}">Actualiser</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>
