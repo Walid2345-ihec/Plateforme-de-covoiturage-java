@@ -67,7 +67,17 @@ public class MessagingServiceImpl implements MessagingService {
     }
 
     public List<Conversation> adminConversations() {
-        return conversations.findAllByOrderByCreatedAtDesc();
+        List<Conversation> convs = conversations.findAllByOrderByCreatedAtDesc();
+        // Enrich conversations with user names
+        convs.forEach(c -> {
+            String displayName = users.passager(c.getUserId())
+                    .map(p -> p.getPrenom() + " " + p.getNom())
+                    .or(() -> users.conducteur(c.getUserId())
+                            .map(cd -> cd.getPrenom() + " " + cd.getNom()))
+                    .orElse(c.getUserId());
+            c.setUserName(displayName);
+        });
+        return convs;
     }
 
     @Transactional

@@ -3,21 +3,21 @@
 <head><meta charset="UTF-8"><title>Covoiturage</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
 <body class="login-page">
 <main class="login-card">
-    <div class="logo">CAR</div>
-    <h1>Covoiturage</h1>
-    <p>Connectez-vous pour continuer</p>
+    <div class="logo">🚗</div>
+    <h1>IHECovoit</h1>
+    <p>Fait par la Team ADHD</p>
     <div class="alert success" th:if="${success}" th:text="${success}"></div>
     <div class="alert danger" th:if="${error}" th:text="${error}"></div>
     <form th:action="@{/login}" th:object="${loginRequest}" method="post" class="stack">
         <input th:field="*{cin}" placeholder="Entrez votre CIN">
         <input th:field="*{password}" type="password" placeholder="Mot de passe">
-        <div class="inline" style="justify-content:center">
+        <div class="inline centered-actions">
             <label><input type="radio" th:field="*{role}" value="conducteur" checked> Conducteur</label>
             <label><input type="radio" th:field="*{role}" value="passager"> Passager</label>
         </div>
         <button class="primary">Se Connecter</button>
     </form>
-    <div class="actions" style="justify-content:center">
+    <div class="actions centered-actions">
         <a class="mint" th:href="@{/register/conducteur}">Nouveau Conducteur</a>
         <a class="sky" th:href="@{/register/passager}">Nouveau Passager</a>
     </div>

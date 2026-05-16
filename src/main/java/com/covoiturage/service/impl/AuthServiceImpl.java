@@ -55,30 +55,12 @@ public class AuthServiceImpl implements AuthService {
     public Optional<Object> authenticateAny(LoginRequest request) {
         var adminOpt = admins.findById(request.getCin()).filter(u -> verifyPassword(request.getPassword(), u.getPasswordHash()));
         if (adminOpt.isPresent()) {
+            // Admin can choose passager or conducteur role
             request.setRole("admin");
             return adminOpt.map(Object.class::cast);
         }
-        var conducteurOpt = conducteurs.findById(request.getCin()).filter(u -> {
-            if (Boolean.TRUE.equals(u.getBanned()) || "rouge".equalsIgnoreCase(u.getCarte())) {
-                throw new IllegalStateException("Votre compte a ete suspendu");
-            }
-            return verifyPassword(request.getPassword(), u.getPasswordHash());
-        });
-        if (conducteurOpt.isPresent()) {
-            request.setRole("conducteur");
-            return conducteurOpt.map(Object.class::cast);
-        }
-        var passagerOpt = passagers.findById(request.getCin()).filter(u -> {
-            if (Boolean.TRUE.equals(u.getBanned())) {
-                throw new IllegalStateException("Votre compte a ete suspendu");
-            }
-            return verifyPassword(request.getPassword(), u.getPasswordHash());
-        });
-        if (passagerOpt.isPresent()) {
-            request.setRole("passager");
-            return passagerOpt.map(Object.class::cast);
-        }
-        return Optional.empty();
+        // Non-admin users must select the correct role matching their account type
+        return authenticate(request);
     }
 
     @Transactional

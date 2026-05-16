@@ -203,18 +203,33 @@ public class TrajetServiceImpl implements TrajetService {
     @Transactional
     public Trajet finishTrajet(Long id) {
         Trajet trajet = trajets.findById(id).orElseThrow();
+        if (!Trajet.STATUS_FINISHED.equals(trajet.getStatus())) {
+            restorePlaces(trajet.getConducteurCin(), trajet.getAcceptedCount());
+        }
         trajet.setStatus(Trajet.STATUS_FINISHED);
         return trajets.save(trajet);
     }
 
     @Transactional
     public void deleteTrajet(Long id) {
-        trajets.deleteById(id);
+        Trajet trajet = trajets.findById(id).orElseThrow();
+        restorePlaces(trajet.getConducteurCin(), trajet.getAcceptedCount());
+        trajets.delete(trajet);
     }
 
     private void incrementPlaces(String conducteurCin) {
         conducteurs.findById(conducteurCin).ifPresent(c -> {
             c.setPlacesDisponibles((c.getPlacesDisponibles() == null ? 0 : c.getPlacesDisponibles()) + 1);
+            conducteurs.save(c);
+        });
+    }
+
+    private void restorePlaces(String conducteurCin, int placesToRestore) {
+        if (placesToRestore <= 0) {
+            return;
+        }
+        conducteurs.findById(conducteurCin).ifPresent(c -> {
+            c.setPlacesDisponibles((c.getPlacesDisponibles() == null ? 0 : c.getPlacesDisponibles()) + placesToRestore);
             conducteurs.save(c);
         });
     }

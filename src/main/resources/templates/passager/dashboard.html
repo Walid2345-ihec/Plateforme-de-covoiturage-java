@@ -18,18 +18,8 @@
             <a class="sky" th:href="@{/passager/reservations}">Voir mes Reservations</a>
             <a class="danger" th:href="@{/passager/notifications}">Voir Notifications <span class="badge" th:text="${notifications}">0</span></a>
             <form th:action="@{/passager/request-help}" method="post"><button class="sky">Demander de l'aide</button></form>
-            <a class="mint" th:href="@{/messages(with='admin')}">Discussion Admin</a>
+            <a class="mint" th:href="@{/messages(with='admin')}">Messagerie</a>
             <a class="secondary" th:href="@{/groups}">Groupes</a>
-        </section>
-        <section class="panel-card">
-            <h2>Reclamation rapide</h2>
-            <form th:action="@{/passager/reclamations}" method="post" class="grid-form">
-                <input type="hidden" name="reservationId" value="GENERAL">
-                <input type="hidden" name="accusedId" value="admin">
-                <select name="preset"><option>Message personnalise</option><option>Probleme general</option><option>Help</option></select>
-                <input name="message" placeholder="Decrivez votre reclamation" required>
-                <button class="danger">Reclamation</button>
-            </form>
         </section>
     </main>
 </div>

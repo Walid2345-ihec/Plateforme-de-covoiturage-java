@@ -15,7 +15,7 @@
             <label>Arrivee date/heure<input type="datetime-local" th:field="*{endDateTime}"></label>
             <label>Places<input type="number" min="1" max="8" th:field="*{maxPlaces}"></label>
             <label class="full"><input type="checkbox" th:field="*{recurring}" id="isRecurring"> Trajet recurrent</label>
-            <section class="panel-card full" id="weeklyScheduleSection">
+            <section class="panel-card full weekly-schedule" id="weeklyScheduleSection">
                 <h2>Planning hebdomadaire</h2>
                 <label><input type="checkbox" th:field="*{weekly.lundi}"> Lundi <input type="time" th:field="*{weekly.heureDepartLundi}"> <input type="time" th:field="*{weekly.heureRetourLundi}"></label>
                 <label><input type="checkbox" th:field="*{weekly.mardi}"> Mardi <input type="time" th:field="*{weekly.heureDepartMardi}"> <input type="time" th:field="*{weekly.heureRetourMardi}"></label>

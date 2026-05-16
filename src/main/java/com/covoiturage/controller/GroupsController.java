@@ -35,9 +35,10 @@ public class GroupsController {
         if (!SessionUser.isLogged(session)) return "redirect:/";
         model.addAttribute("groups", groups.groupsFor(SessionUser.role(session), SessionUser.cin(session)));
         model.addAttribute("role", SessionUser.role(session));
+        model.addAttribute("passagers", users.passagers());
+        model.addAttribute("conducteurs", users.conducteurs());
         if (SessionUser.hasRole(session, "conducteur")) {
             model.addAttribute("trajets", trajets.getTrajetsConducteur(SessionUser.cin(session)));
-            model.addAttribute("passagers", users.passagers());
         }
         return "groups/list";
     }
@@ -55,6 +56,8 @@ public class GroupsController {
         model.addAttribute("group", groups.group(id));
         model.addAttribute("messages", groups.messages(id));
         model.addAttribute("role", SessionUser.role(session));
+        model.addAttribute("passagers", users.passagers());
+        model.addAttribute("conducteurs", users.conducteurs());
         return "groups/chat";
     }
 

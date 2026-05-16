@@ -1,12 +1,5 @@
 package com.covoiturage.controller;
 
-import com.covoiturage.security.SessionUser;
-import com.covoiturage.service.EvaluationService;
-import com.covoiturage.service.NotificationService;
-import com.covoiturage.service.ReclamationService;
-import com.covoiturage.service.TrajetService;
-import com.covoiturage.service.UserService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +7,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.covoiturage.security.SessionUser;
+import com.covoiturage.service.EvaluationService;
+import com.covoiturage.service.MessagingService;
+import com.covoiturage.service.NotificationService;
+import com.covoiturage.service.ReclamationService;
+import com.covoiturage.service.TrajetService;
+import com.covoiturage.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/admin")
@@ -23,13 +26,15 @@ public class AdminController {
     private final EvaluationService evals;
     private final ReclamationService recs;
     private final NotificationService notifs;
+    private final MessagingService messages;
 
-    public AdminController(UserService users, TrajetService trajets, EvaluationService evals, ReclamationService recs, NotificationService notifs) {
+    public AdminController(UserService users, TrajetService trajets, EvaluationService evals, ReclamationService recs, NotificationService notifs, MessagingService messages) {
         this.users = users;
         this.trajets = trajets;
         this.evals = evals;
         this.recs = recs;
         this.notifs = notifs;
+        this.messages = messages;
     }
 
     private String guard(HttpSession session) {
@@ -106,8 +111,8 @@ public class AdminController {
         if (redirect != null) return redirect;
         model.addAttribute("notifications", notifs.adminNotifications());
         model.addAttribute("helpRequests", notifs.adminNotificationsByType("HELP"));
-        model.addAttribute("complaints", notifs.adminNotificationsByType("COMPLAINT"));
         model.addAttribute("reclamations", notifs.adminNotificationsByType("RECLAMATION"));
+        model.addAttribute("adminMessages", messages.adminConversations());
         model.addAttribute("unreadCount", notifs.unreadAdmin());
         return "admin/notifications";
     }

@@ -1,14 +1,5 @@
 package com.covoiturage.controller;
 
-import com.covoiturage.dto.TrajetForm;
-import com.covoiturage.security.SessionUser;
-import com.covoiturage.service.EvaluationService;
-import com.covoiturage.service.NotificationService;
-import com.covoiturage.service.ReclamationService;
-import com.covoiturage.service.TrajetService;
-import com.covoiturage.service.UserService;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +11,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.covoiturage.dto.TrajetForm;
+import com.covoiturage.security.SessionUser;
+import com.covoiturage.service.EvaluationService;
+import com.covoiturage.service.MessagingService;
+import com.covoiturage.service.NotificationService;
+import com.covoiturage.service.ReclamationService;
+import com.covoiturage.service.TrajetService;
+import com.covoiturage.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+
 @Controller
 @RequestMapping("/conducteur")
 public class ConducteurController {
@@ -28,13 +31,15 @@ public class ConducteurController {
     private final EvaluationService evals;
     private final ReclamationService recs;
     private final UserService users;
+    private final MessagingService messages;
 
-    public ConducteurController(TrajetService trajets, NotificationService notifs, EvaluationService evals, ReclamationService recs, UserService users) {
+    public ConducteurController(TrajetService trajets, NotificationService notifs, EvaluationService evals, ReclamationService recs, UserService users, MessagingService messages) {
         this.trajets = trajets;
         this.notifs = notifs;
         this.evals = evals;
         this.recs = recs;
         this.users = users;
+        this.messages = messages;
     }
 
     private String guard(HttpSession session) {
@@ -148,6 +153,19 @@ public class ConducteurController {
         if (redirect != null) return redirect;
         recs.submit(reservationId, SessionUser.cin(session), "conducteur", accusedId, "passager", preset, message);
         return "redirect:/conducteur/trajets";
+    }
+
+    @PostMapping("/request-help")
+    public String requestHelp(HttpSession session, RedirectAttributes redirectAttributes) {
+        String redirect = guard(session);
+        if (redirect != null) return redirect;
+        String cin = SessionUser.cin(session);
+        var user = users.conducteur(cin).orElseThrow();
+        var admin = users.defaultAdmin();
+        notifs.addAdminNotification("Aide demandee par " + user.getPrenom() + " " + user.getNom() + " (CIN: " + cin + ")", "HELP");
+        messages.getOrCreateAdminConversation(cin, admin.getCin(), "HELP");
+        redirectAttributes.addFlashAttribute("success", "Demande d'aide envoyee a l'administrateur");
+        return "redirect:/messages?with=admin";
     }
 
     @GetMapping("/notifications")

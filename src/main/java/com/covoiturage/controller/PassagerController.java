@@ -1,13 +1,5 @@
 package com.covoiturage.controller;
 
-import com.covoiturage.security.SessionUser;
-import com.covoiturage.service.EvaluationService;
-import com.covoiturage.service.NotificationService;
-import com.covoiturage.service.ReclamationService;
-import com.covoiturage.service.TrajetService;
-import com.covoiturage.service.UserService;
-import com.covoiturage.service.MessagingService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +8,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.covoiturage.security.SessionUser;
+import com.covoiturage.service.EvaluationService;
+import com.covoiturage.service.MessagingService;
+import com.covoiturage.service.NotificationService;
+import com.covoiturage.service.ReclamationService;
+import com.covoiturage.service.TrajetService;
+import com.covoiturage.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/passager")
@@ -106,7 +108,7 @@ public class PassagerController {
         notifs.addAdminNotification("Aide demandee par " + user.getPrenom() + " " + user.getNom() + " (CIN: " + cin + ")", "HELP");
         messages.getOrCreateAdminConversation(cin, admin.getCin(), "HELP");
         redirectAttributes.addFlashAttribute("success", "Demande d'aide envoyee a l'administrateur");
-        return "redirect:/passager/dashboard";
+        return "redirect:/messages?with=admin";
     }
 
     @GetMapping("/notifications")

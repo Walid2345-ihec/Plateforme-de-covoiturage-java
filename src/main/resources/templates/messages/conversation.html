@@ -8,7 +8,7 @@
 <body>
 <div class="app">
     <nav th:replace="~{fragments/layout :: sidebar(${role},'Messagerie','Discussions directes','messages')}"></nav>
-    <main class="messaging-shell">
+    <main class="messaging-shell two-column-messaging">
         <aside class="conversation-list">
             <div class="conversation-toolbar">
                 <h2>Messagerie</h2>
@@ -28,10 +28,7 @@
                    th:href="@{/messages(with=${role == 'admin' ? c.userId : c['userId']})}" 
                    class="conversation-item" 
                    th:classappend="${(role == 'admin' and c.userId == otherCin) or (role != 'admin' and c['userId'] == otherCin)} ? ' selected'">
-                    <strong th:text="${role == 'admin' ? c.userId : c['userName']}">Utilisateur</strong>
-                    <span th:text="${role == 'admin' ? c.triggeredBy : c['userType']}">Type</span>
-                    <p th:text="${role == 'admin' ? '' : c['lastMessage']}">Message</p>
-                    <small th:text="${role == 'admin' ? c.createdAt : c['lastMessageTime']}">date</small>
+                    <span th:text="${role == 'admin' ? c.userName : c['userName']}">Utilisateur</span>
                 </a>
                 <p class="empty-state" th:if="${conversations != null and conversations.isEmpty()}">Aucune conversation</p>
             </div>
@@ -47,16 +44,16 @@
             </header>
 
             <div th:if="${role != 'admin'}" class="message-recipient-bar">
-                <div class="new-conversation-form" id="userSearchFormPassenger" style="display: flex; gap: 10px; align-items: flex-start;">
-                    <div style="flex: 1; position: relative;">
+                <div class="new-conversation-form" id="userSearchFormPassenger">
+                    <div>
                         <input type="text" id="userSearchFieldPassenger" placeholder="Taper le nom du destinataire..." class="search-input">
                         <div id="userSearchResultsPassenger" class="user-search-dropdown" style="display: none;">
                             <ul id="userListPassenger"></ul>
                         </div>
                         <input type="hidden" id="selectedUserCinPassenger">
                     </div>
-                    <input type="text" id="trajetIdInput" th:value="${trajetId}" placeholder="Trajet ID (optionnel)" style="flex: 0.5;">
-                    <button id="startConversationBtnPassenger" class="mint" disabled style="white-space: nowrap;">Ouvrir</button>
+                    <input type="text" id="trajetIdInput" th:value="${trajetId}" placeholder="Trajet ID (optionnel)">
+                    <button id="startConversationBtnPassenger" class="mint" disabled>Ouvrir</button>
                 </div>
             </div>
 

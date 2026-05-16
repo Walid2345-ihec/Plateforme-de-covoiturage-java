@@ -10,24 +10,21 @@
             <form th:action="@{/admin/notifications/read-all}" method="post"><button class="gold">Marquer tout comme lu</button></form>
         </div>
         <section class="panel-card">
-            <h2>Demandes d'aide</h2>
-            <article class="message-row" th:each="n : ${helpRequests}"><strong class="badge" style="background:#3498DB">HELP</strong><p th:text="${n.message}"></p><small th:text="${n.dateCreation}"></small></article>
+            <h2>Aide</h2>
+            <article class="message-row" th:each="n : ${helpRequests}"><strong class="badge badge-sky">HELP</strong><p th:text="${n.message}"></p><small th:text="${n.dateCreation}"></small></article>
         </section>
         <section class="panel-card">
             <h2>Reclamations</h2>
-            <article class="message-row" th:each="n : ${reclamations}"><strong class="badge" style="background:#E74C3C">RECLAMATION</strong><p th:text="${n.message}"></p><small th:text="${n.dateCreation}"></small></article>
+            <article class="message-row" th:each="n : ${reclamations}"><strong class="badge badge-danger">RECLAMATION</strong><p th:text="${n.message}"></p><small th:text="${n.dateCreation}"></small></article>
         </section>
         <section class="panel-card">
-            <h2>Plaintes</h2>
-            <article class="message-row" th:each="n : ${complaints}"><strong class="badge" style="background:#E74C3C">COMPLAINT</strong><p th:text="${n.message}"></p><small th:text="${n.dateCreation}"></small></article>
-        </section>
-        <div class="list">
-            <article class="message-row" th:each="n : ${notifications}">
-                <strong th:text="${n.type}"></strong>
-                <p th:text="${n.message}"></p>
-                <small th:text="${n.dateCreation}"></small>
+            <h2>Messages</h2>
+            <article class="message-row" th:each="c : ${adminMessages}" style="background-color: #e8f5e9; border-left: 4px solid #4caf50;">
+                <strong class="badge" style="background: #4caf50;">MESSAGE</strong>
+                <p th:text="${'Conversation avec ' + c.userName}"></p>
+                <small th:text="${c.createdAt}"></small>
             </article>
-        </div>
+        </section>
     </main>
 </div>
 </body>

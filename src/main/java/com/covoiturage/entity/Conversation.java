@@ -1,8 +1,16 @@
 package com.covoiturage.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name="conversations")
@@ -19,4 +27,6 @@ public class Conversation{
  private String triggeredBy;
  @Column(name="created_at")
  private LocalDateTime createdAt;
+ @Transient
+ private String userName;
 }

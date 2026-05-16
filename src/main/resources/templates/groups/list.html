@@ -13,11 +13,13 @@
             <h2>Creer un groupe</h2>
             <div th:if="${!trajets.isEmpty()}">
                 <p>Selectionnez un trajet pour creer un groupe avec ses passagers acceptes:</p>
-                <div th:each="t : ${trajets}" style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                    <strong th:text="${t.depart + ' -> ' + t.arrivee}"></strong>
-                    <span th:if="${t.acceptedCins}" th:text="${'(' + t.acceptedCins + ')'}"></span>
-                    <form th:action="@{/groups}" method="post" style="margin-top: 8px;">
-                        <input name="groupName" placeholder="Nom du groupe" required style="padding: 8px; margin-right: 8px;">
+                <div th:each="t : ${trajets}" class="trip-option">
+                    <div>
+                        <strong th:text="${t.depart + ' -> ' + t.arrivee}"></strong>
+                        <span th:if="${t.acceptedCins}" class="mask-cins" th:text="${t.acceptedCins}"></span>
+                    </div>
+                    <form th:action="@{/groups}" method="post">
+                        <input name="groupName" placeholder="Nom du groupe" required>
                         <input name="memberCins" th:value="${t.acceptedCins}" type="hidden">
                         <button class="primary" th:disabled="${t.acceptedCins == null || t.acceptedCins.isEmpty()}">Creer le groupe</button>
                     </form>
@@ -31,9 +33,9 @@
             <article class="group-card" th:each="g : ${groups}">
                 <div>
                     <h2 th:text="${g.groupName}">Groupe</h2>
-                    <p>Membres: <span th:text="${g.memberCins}">-</span></p>
+                    <p>Membres: <span class="mask-cins" th:text="${g.memberCins}">-</span></p>
                     <p th:text="${'Cree le ' + g.dateCreation}">Date</p>
-                    <p>Conducteur: <span th:text="${g.conducteurCin}"></span></p>
+                    <p>Conducteur: <span class="mask-cins" th:text="${g.conducteurCin}"></span></p>
                 </div>
                 <a class="primary" th:href="@{/groups/{id}(id=${g.groupId})}">Ouvrir la discussion</a>
             </article>
@@ -41,5 +43,48 @@
         </section>
     </main>
 </div>
+
+<script th:src="@{/js/app.js}"></script>
+<script th:inline="javascript">
+// Convert CINs to names
+const usersMap = {};
+[[${#lists.isEmpty(passagers) ? 'null' : passagers}]] && [[${passagers}]].forEach(u => {
+    usersMap[u.cin] = u.prenom + ' ' + u.nom;
+});
+[[${#lists.isEmpty(conducteurs) ? 'null' : conducteurs}]] && [[${conducteurs}]].forEach(u => {
+    usersMap[u.cin] = u.prenom + ' ' + u.nom;
+});
+
+function convertCinsToNames(cinsString) {
+    if (!cinsString || cinsString === '-') return cinsString;
+    return cinsString.split(',').map(cin => {
+        const c = cin.trim();
+        return usersMap[c] || maskCin(c);
+    }).join(', ');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle trip CINs in "Create Group" section
+    document.querySelectorAll('.trip-option span.mask-cins').forEach(el => {
+        const cinsString = el.textContent.trim();
+        if (cinsString) {
+            el.textContent = convertCinsToNames(cinsString);
+        }
+    });
+    
+    // Handle group members and conductors
+    document.querySelectorAll('.group-card').forEach(card => {
+        const memberSpan = card.querySelector('p:nth-child(2) span');
+        const conductorSpan = card.querySelector('p:nth-child(4) span');
+        
+        if (memberSpan && memberSpan.textContent) {
+            memberSpan.textContent = convertCinsToNames(memberSpan.textContent.trim());
+        }
+        if (conductorSpan && conductorSpan.textContent) {
+            conductorSpan.textContent = convertCinsToNames(conductorSpan.textContent.trim());
+        }
+    });
+});
+</script>
 </body>
 </html>
