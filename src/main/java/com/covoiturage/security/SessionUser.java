@@ -27,4 +27,8 @@ public final class SessionUser {
     public static String role(HttpSession session) {
         return (String) session.getAttribute("role");
     }
+
+    public static String name(HttpSession session) {
+        return (String) session.getAttribute("name");
+    }
 }

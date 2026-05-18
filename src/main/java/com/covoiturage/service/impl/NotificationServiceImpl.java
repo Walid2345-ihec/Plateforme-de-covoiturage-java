@@ -6,13 +6,8 @@ import com.covoiturage.entity.*;import com.covoiturage.repository.*;import com.c
  @Transactional public void notifyAdmin(String type,String msg,String p,String c,String t){an.save(AdminNotification.builder().notificationId("NOTIF_"+System.currentTimeMillis()+"_ADMIN").passagerId(p).conducteurId(c).trajetId(t).type(type).message(msg).dateCreation(LocalDateTime.now()).estLue(false).build());}
  @Transactional public void addAdminNotification(String message,String type){notifyAdmin(type,message,null,null,null);}
  public List<Notification> passagerNotifications(String cin){return n.findByPassagerIdOrderByDateCreationDesc(cin);} public List<ConducteurNotification> conducteurNotifications(String cin){return cn.findByConducteurIdOrderByDateCreationDesc(cin);} public List<AdminNotification> adminNotifications(){return an.findAllByOrderByDateCreationDesc();} public List<AdminNotification> adminNotificationsByType(String type){return an.findByTypeOrderByDateCreationDesc(type);} public long unreadPassager(String cin){return n.countByPassagerIdAndEstLueFalse(cin);} public long unreadConducteur(String cin){return cn.countByConducteurIdAndEstLueFalse(cin);} public long unreadAdmin(){return an.countByEstLueFalse();}
- // Source Swing : NotificationPanel.java -> gestion.marquerCommelue()
  @Transactional public void marquerCommelue(String cinPassager,String notificationId){n.markAsReadByIdAndPassager(notificationId,cinPassager);}
- // Source Swing : NotificationPanel.java -> bouton Back -> gestion.marquerToutesCommelues()
  @Transactional public void marquerToutesCommelues(String cinPassager){n.markAllAsReadForPassager(cinPassager);}
- // Source Swing : DriverNotificationPanel.java -> gestion.marquerCommelueConducteur()
  @Transactional public void marquerCommelueConducteur(String cinConducteur,String notificationId){cn.markAsReadByIdAndConducteur(notificationId,cinConducteur);}
- // Source Swing : DriverNotificationPanel.java -> bouton Back -> gestion.marquerToutesCommelueConducteur()
  @Transactional public void marquerToutesCommelueConducteur(String cinConducteur){cn.markAllAsReadForConducteur(cinConducteur);}
- @Transactional public void marquerToutesAdminCommelues(){an.markAllAsRead();}
-}
+ @Transactional public void marquerToutesAdminCommelues(){an.markAllAsRead();}}

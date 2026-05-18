@@ -4,24 +4,73 @@
 <body class="login-page">
 <main class="form-card wide">
     <h1 th:text="${form.role == 'conducteur' ? 'Inscription Conducteur' : 'Inscription Passager'}">Inscription</h1>
+    <div class="alert danger" th:if="${error}" th:text="${error}"></div>
     <form th:action="@{/register}" th:object="${form}" method="post" class="grid-form">
         <input type="hidden" th:field="*{role}">
         <h3 class="full">Informations Personnelles</h3>
-        <label>CIN<input th:field="*{cin}" placeholder="12345678"></label>
-        <label>Nom<input th:field="*{nom}" placeholder="Votre nom"></label>
-        <label>Prenom<input th:field="*{prenom}" placeholder="Votre prenom"></label>
-        <label>Telephone<input th:field="*{tel}" placeholder="12 345 678"></label>
-        <label>Annee Univ.<input th:field="*{anneeUniv}" placeholder="2024"></label>
-        <label>Email<input th:field="*{mail}" placeholder="email@gmail.com"></label>
-        <label class="full">Adresse<input th:field="*{adresse}" placeholder="Votre adresse"></label>
+        <div class="form-group">
+            <label>CIN<input th:field="*{cin}" placeholder="12345678" th:classappend="${#fields.hasErrors('cin') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('cin')}" class="error-message" th:errors="*{cin}"></span>
+            <span class="field-hint">Format: 8 chiffres (ex: 12345678)</span>
+        </div>
+        <div class="form-group">
+            <label>Nom<input th:field="*{nom}" placeholder="Votre nom" th:classappend="${#fields.hasErrors('nom') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('nom')}" class="error-message" th:errors="*{nom}"></span>
+            <span class="field-hint">Lettres, espaces, apostrophes et tirets uniquement</span>
+        </div>
+        <div class="form-group">
+            <label>Prenom<input th:field="*{prenom}" placeholder="Votre prenom" th:classappend="${#fields.hasErrors('prenom') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('prenom')}" class="error-message" th:errors="*{prenom}"></span>
+            <span class="field-hint">Lettres, espaces, apostrophes et tirets uniquement</span>
+        </div>
+        <div class="form-group">
+            <label>Telephone<input th:field="*{tel}" placeholder="12 345 678" th:classappend="${#fields.hasErrors('tel') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('tel')}" class="error-message" th:errors="*{tel}"></span>
+            <span class="field-hint">Format: 8 chiffres (ex: 12345678)</span>
+        </div>
+        <div class="form-group">
+            <label>Annee Univ.<input th:field="*{anneeUniv}" placeholder="2024" th:classappend="${#fields.hasErrors('anneeUniv') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('anneeUniv')}" class="error-message" th:errors="*{anneeUniv}"></span>
+            <span class="field-hint">Année minimum: 2000</span>
+        </div>
+        <div class="form-group">
+            <label>Email<input th:field="*{mail}" placeholder="email@gmail.com" th:classappend="${#fields.hasErrors('mail') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('mail')}" class="error-message" th:errors="*{mail}"></span>
+            <span class="field-hint">Email valide: xxx@gmail.com ou xxx@ihec.ucar.tn</span>
+        </div>
+        <div class="form-group full">
+            <label>Adresse<input th:field="*{adresse}" placeholder="Votre adresse" th:classappend="${#fields.hasErrors('adresse') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('adresse')}" class="error-message" th:errors="*{adresse}"></span>
+        </div>
         <h3 class="full">Creer un mot de passe</h3>
-        <label>Mot de passe<input th:field="*{password}" type="password" placeholder="Mot de passe"></label>
-        <label>Confirmer<input name="confirmPassword" type="password" placeholder="Confirmer"></label>
+        <div class="form-group full">
+            <label>Mot de passe<input th:field="*{password}" type="password" placeholder="Mot de passe" th:classappend="${#fields.hasErrors('password') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('password')}" class="error-message" th:errors="*{password}"></span>
+            <span class="field-hint">Min 8 caractères, 1 minuscule, 1 majuscule, 1 chiffre, 1 caractère spécial</span>
+        </div>
+        <div class="form-group full">
+            <label>Confirmer<input name="confirmPassword" type="password" placeholder="Confirmer"></label>
+        </div>
         <h3 class="full" th:if="${form.role == 'conducteur'}">Informations Vehicule</h3>
-        <label th:if="${form.role == 'conducteur'}">Nom Vehicule<input th:field="*{nomVoiture}" placeholder="Golf 7, Clio 4..."></label>
-        <label th:if="${form.role == 'conducteur'}">Marque<input th:field="*{marqueVoiture}" placeholder="Peugeot, Renault..."></label>
-        <label th:if="${form.role == 'conducteur'}">Matricule<input th:field="*{matricule}" placeholder="123TU4567"></label>
-        <label th:if="${form.role == 'conducteur'}">Places<input th:field="*{placesDisponibles}" type="number" min="1" max="8"></label>
+        <div class="form-group" th:if="${form.role == 'conducteur'}">
+            <label>Nom Vehicule<input th:field="*{nomVoiture}" placeholder="Golf 7, Clio 4..." th:classappend="${#fields.hasErrors('nomVoiture') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('nomVoiture')}" class="error-message" th:errors="*{nomVoiture}"></span>
+            <span class="field-hint">Lettres, chiffres, espaces uniquement</span>
+        </div>
+        <div class="form-group" th:if="${form.role == 'conducteur'}">
+            <label>Marque<input th:field="*{marqueVoiture}" placeholder="Peugeot, Renault..." th:classappend="${#fields.hasErrors('marqueVoiture') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('marqueVoiture')}" class="error-message" th:errors="*{marqueVoiture}"></span>
+        </div>
+        <div class="form-group" th:if="${form.role == 'conducteur'}">
+            <label>Matricule<input th:field="*{matricule}" placeholder="123TU4567" th:classappend="${#fields.hasErrors('matricule') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('matricule')}" class="error-message" th:errors="*{matricule}"></span>
+            <span class="field-hint">Format: XXXTUYYYYou vide (ex: 123TU4567)</span>
+        </div>
+        <div class="form-group" th:if="${form.role == 'conducteur'}">
+            <label>Places<input th:field="*{placesDisponibles}" type="number" min="1" max="8" th:classappend="${#fields.hasErrors('placesDisponibles') ? 'input-error' : ''}"></label>
+            <span th:if="${#fields.hasErrors('placesDisponibles')}" class="error-message" th:errors="*{placesDisponibles}"></span>
+            <span class="field-hint">Entre 1 et 8 places</span>
+        </div>
         <div class="full actions">
             <a class="secondary" th:href="@{/}">Annuler</a>
             <button class="primary">S'inscrire</button>

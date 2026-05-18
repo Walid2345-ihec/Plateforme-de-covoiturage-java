@@ -5,7 +5,7 @@
 <div class="app">
     <nav th:replace="~{fragments/layout :: sidebar('conducteur','Espace Conducteur','Gerez vos trajets','dashboard')}"></nav>
     <main class="content">
-        <div class="page-header"><div><h1>Tableau de Bord</h1><p>Bienvenue sur votre espace conducteur</p></div></div>
+        <div class="page-header"><div><h1 th:text="${userName}">Tableau de Bord</h1><p>Bienvenue sur votre espace conducteur</p></div></div>
         <section class="stats">
             <article class="stat-card"><span>Places Disponibles</span><strong th:text="${placesDisponibles}">0</strong></article>
             <article class="stat-card"><span>Mes Trajets</span><strong th:text="${trajets.size()}">0</strong></article>

@@ -53,6 +53,7 @@ public class ConducteurController {
         String cin = SessionUser.cin(session);
         var list = trajets.getTrajetsConducteur(cin);
         model.addAttribute("trajets", list);
+        model.addAttribute("userName", SessionUser.name(session));
         users.conducteur(cin).ifPresent(c -> model.addAttribute("placesDisponibles", c.getPlacesDisponibles()));
         model.addAttribute("demandes", list.stream().mapToInt(t -> (t.getPendingCins() == null || t.getPendingCins().isBlank()) ? 0 : t.getPendingCins().split(",").length).sum());
         model.addAttribute("evaluations", evals.forConducteur(cin));

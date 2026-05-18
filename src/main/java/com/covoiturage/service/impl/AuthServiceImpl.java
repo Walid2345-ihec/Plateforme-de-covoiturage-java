@@ -65,11 +65,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional
     public Conducteur registerConducteur(UserRegistrationForm f) {
+        if (conducteurs.existsById(f.getCin())) {
+            throw new IllegalArgumentException("Ce CIN est deja utilise par un conducteur");
+        }
+        if (passagers.existsById(f.getCin())) {
+            throw new IllegalArgumentException("Ce CIN est deja utilise par un passager");
+        }
         return conducteurs.save(Conducteur.builder().cin(f.getCin()).nom(f.getNom()).prenom(f.getPrenom()).tel(f.getTel()).anneeUniv(f.getAnneeUniv()).adresse(f.getAdresse()).mail(f.getMail()).passwordHash(hashPassword(f.getPassword())).nomVoiture(f.getNomVoiture()).marqueVoiture(f.getMarqueVoiture()).matricule(f.getMatricule()).placesDisponibles(f.getPlacesDisponibles()).weeklySchedule("").moyenneEvaluation(0.0).carte("verte").banned(false).build());
     }
 
     @Transactional
     public Passager registerPassager(UserRegistrationForm f) {
+        if (passagers.existsById(f.getCin())) {
+            throw new IllegalArgumentException("Ce CIN est deja utilise par un passager");
+        }
+        if (conducteurs.existsById(f.getCin())) {
+            throw new IllegalArgumentException("Ce CIN est deja utilise par un conducteur");
+        }
         return passagers.save(Passager.builder().cin(f.getCin()).nom(f.getNom()).prenom(f.getPrenom()).tel(f.getTel()).anneeUniv(f.getAnneeUniv()).adresse(f.getAdresse()).mail(f.getMail()).passwordHash(hashPassword(f.getPassword())).chercheCovoit(true).carte("verte").banned(false).build());
     }
 

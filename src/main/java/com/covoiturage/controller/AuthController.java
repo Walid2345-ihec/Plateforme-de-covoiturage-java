@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.covoiturage.dto.LoginRequest;
 import com.covoiturage.dto.UserRegistrationForm;
@@ -64,12 +63,20 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerPost(@Valid @ModelAttribute("form") UserRegistrationForm form, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
-        if (bindingResult.hasErrors()) return "register";
-        if ("conducteur".equals(form.getRole())) auth.registerConducteur(form);
-        else auth.registerPassager(form);
-        redirectAttributes.addFlashAttribute("success", "Compte cree. Vous pouvez vous connecter.");
-        return "redirect:/";
+    public String registerPost(@Valid @ModelAttribute("form") UserRegistrationForm form, BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            return "register";
+        }
+        try {
+            if ("conducteur".equals(form.getRole())) auth.registerConducteur(form);
+            else auth.registerPassager(form);
+            model.addAttribute("success", "Compte cree. Vous pouvez vous connecter.");
+            model.addAttribute("loginRequest", new LoginRequest());
+            return "login";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+            return "register";
+        }
     }
 
     @PostMapping("/logout")

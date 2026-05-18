@@ -1,5 +1,8 @@
 package com.covoiturage.repository;
-import com.covoiturage.entity.Trajet;import org.springframework.data.jpa.repository.JpaRepository;import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.covoiturage.entity.Trajet;
 @Repository public interface TrajetRepository extends JpaRepository<Trajet,Long>{java.util.List<Trajet> findByConducteurCin(String conducteurCin);
  java.util.List<Trajet> findByConducteurCinAndWeeklyScheduleIsNotNull(String conducteurCin);
  java.util.List<Trajet> findByConducteurCinAndWeeklyScheduleIsNull(String conducteurCin);

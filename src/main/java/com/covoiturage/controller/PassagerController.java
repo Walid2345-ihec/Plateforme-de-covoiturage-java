@@ -48,6 +48,7 @@ public class PassagerController {
         if (redirect != null) return redirect;
         String cin = SessionUser.cin(session);
         model.addAttribute("trajets", trajets.getAllTrajets());
+        model.addAttribute("userName", SessionUser.name(session));
         model.addAttribute("reservations", trajets.getAllTrajets().stream().filter(t -> t.hasAccepted(cin) || t.hasPending(cin)).count());
         model.addAttribute("notifications", notifs.unreadPassager(cin));
         return "passager/dashboard";
