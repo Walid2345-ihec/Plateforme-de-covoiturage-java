@@ -3,6 +3,8 @@ package com.covoiturage.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 @Entity
 @Table(name="trajets")
@@ -39,8 +41,15 @@ public class Trajet{
  @Column(name="weekly_schedule", columnDefinition="TEXT")
  private String weeklySchedule;
  public static final String STATUS_PENDING="PENDING",STATUS_PENDING_APPROVAL="PENDING_APPROVAL",STATUS_IN_PROGRESS="IN_PROGRESS",STATUS_FINISHED="FINISHED";
+ private static final DateTimeFormatter DATE_TIME_FORMATTER=DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+ private static final Map<String,String> DAY_LABELS=Map.of("MON","Lundi","TUE","Mardi","WED","Mercredi","THU","Jeudi","FRI","Vendredi","SAT","Samedi","SUN","Dimanche");
  public int getAcceptedCount(){if(acceptedCins==null||acceptedCins.isBlank())return 0;return (int)java.util.Arrays.stream(acceptedCins.split(",")).filter(x->!x.isBlank()).count();}
  public int getAvailablePlaces(){return Math.max(0,(maxPlaces==null?1:maxPlaces)-getAcceptedCount());}
+ public boolean isRecurring(){return weeklySchedule!=null&&!weeklySchedule.isBlank();}
+ public String getTypeLabel(){return isRecurring()?"Recurrent":"Ponctuel";}
+ public String getScheduleLabel(){if(!isRecurring())return "-";return java.util.Arrays.stream(weeklySchedule.split("\\|")).filter(x->!x.isBlank()).map(Trajet::formatSchedulePart).collect(java.util.stream.Collectors.joining(", "));}
+ public String getTimeLabel(){if(isRecurring())return getScheduleLabel();if(startDateTime==null&&endDateTime==null)return "-";String start=startDateTime==null?"-":startDateTime.format(DATE_TIME_FORMATTER);String end=endDateTime==null?"-":endDateTime.format(DATE_TIME_FORMATTER);return start+" -> "+end;}
+ private static String formatSchedulePart(String part){String[] dayAndTime=part.split(":",2);if(dayAndTime.length<2)return part;return DAY_LABELS.getOrDefault(dayAndTime[0],dayAndTime[0])+" "+dayAndTime[1];}
  public boolean hasAccepted(String cin){return containsCin(acceptedCins,cin);}
  public boolean hasPending(String cin){return containsCin(pendingCins,cin);}
  public String buildReservationId(String passagerCin){String id=(conducteurCin+"_"+depart.replace(" ","-")+"_"+arrivee.replace(" ","-")+"_"+passagerCin);return id.replaceAll("[^a-zA-Z0-9_\\-]","");}

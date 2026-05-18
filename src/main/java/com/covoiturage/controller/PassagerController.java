@@ -58,7 +58,10 @@ public class PassagerController {
     public String search(@RequestParam(defaultValue = "") String depart, @RequestParam(defaultValue = "") String arrivee, HttpSession session, Model model) {
         String redirect = guard(session);
         if (redirect != null) return redirect;
-        model.addAttribute("trajets", trajets.search(depart, arrivee));
+        var results = trajets.search(depart, arrivee);
+        model.addAttribute("trajets", results);
+        model.addAttribute("trajetsRecurrents", results.stream().filter(t -> t.getWeeklySchedule() != null && !t.getWeeklySchedule().isBlank()).toList());
+        model.addAttribute("trajetsNormaux", results.stream().filter(t -> t.getWeeklySchedule() == null || t.getWeeklySchedule().isBlank()).toList());
         model.addAttribute("depart", depart);
         model.addAttribute("arrivee", arrivee);
         return "passager/trajets";

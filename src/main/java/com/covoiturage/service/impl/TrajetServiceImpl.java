@@ -64,7 +64,11 @@ public class TrajetServiceImpl implements TrajetService {
 
     @Transactional
     public Trajet createTrajet(String cin, TrajetForm form) {
-        String requestedSchedule = form.isRecurring() ? form.getWeekly().toScheduleString() : form.getWeeklySchedule();
+        String requestedSchedule = form.isRecurring()
+                ? form.getWeekly().toScheduleString(
+                        form.getStartDateTime() == null ? null : form.getStartDateTime().toLocalTime(),
+                        form.getEndDateTime() == null ? null : form.getEndDateTime().toLocalTime())
+                : form.getWeeklySchedule();
         if (requestedSchedule == null || requestedSchedule.isBlank()) {
             requestedSchedule = null;
         }
@@ -203,18 +207,27 @@ public class TrajetServiceImpl implements TrajetService {
     @Transactional
     public Trajet finishTrajet(Long id) {
         Trajet trajet = trajets.findById(id).orElseThrow();
-        if (!Trajet.STATUS_FINISHED.equals(trajet.getStatus())) {
+        boolean shouldRestorePlaces = canRestorePlaces(trajet.getStatus());
+        trajet.setStatus(Trajet.STATUS_FINISHED);
+        if (shouldRestorePlaces) {
             restorePlaces(trajet.getConducteurCin(), trajet.getAcceptedCount());
         }
-        trajet.setStatus(Trajet.STATUS_FINISHED);
         return trajets.save(trajet);
     }
 
     @Transactional
     public void deleteTrajet(Long id) {
         Trajet trajet = trajets.findById(id).orElseThrow();
-        restorePlaces(trajet.getConducteurCin(), trajet.getAcceptedCount());
+        if (canRestorePlaces(trajet.getStatus())) {
+            restorePlaces(trajet.getConducteurCin(), trajet.getAcceptedCount());
+        }
         trajets.delete(trajet);
+    }
+
+    private boolean canRestorePlaces(String status) {
+        return Trajet.STATUS_IN_PROGRESS.equals(status)
+                || Trajet.STATUS_PENDING.equals(status)
+                || Trajet.STATUS_PENDING_APPROVAL.equals(status);
     }
 
     private void incrementPlaces(String conducteurCin) {

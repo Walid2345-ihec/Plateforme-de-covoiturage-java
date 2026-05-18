@@ -13,21 +13,43 @@
             <button class="sky">Filtrer</button>
             <a class="secondary" th:href="@{/passager/trajets}">Reset</a>
         </form>
+        <h2>Trajets recurrents</h2>
         <table>
-            <thead><tr><th>Conducteur</th><th>Depart</th><th>Arrivee</th><th>Duree</th><th>Prix (TND)</th><th>Places</th><th>Voiture</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Conducteur</th><th>Depart</th><th>Arrivee</th><th>Planning</th><th>Prix (TND)</th><th>Places</th><th>Voiture</th><th>Actions</th></tr></thead>
             <tbody>
-            <tr th:each="t : ${trajets}">
+            <tr th:each="t : ${trajetsRecurrents}">
                 <td th:text="${t.conducteurCin == null || t.conducteurCin.isEmpty() ? '-' : ('*****' + #strings.substring(t.conducteurCin, #strings.length(t.conducteurCin) - 3))}"></td>
                 <td th:text="${t.depart}"></td>
                 <td th:text="${t.arrivee}"></td>
-                <td th:text="${t.dureeMinutes + ' min'}"></td>
+                <td th:text="${t.scheduleLabel}"></td>
                 <td th:text="${t.prix}"></td>
                 <td th:text="${t.availablePlaces}"></td>
                 <td>Voiture</td>
                 <td class="row-actions">
-                    <button type="button" class="mint" th:disabled="${t.availablePlaces <= 0}" th:attr="onclick=|openConfirmation(${t.id}, '${t.depart}', '${t.arrivee}', ${t.prix}, ${t.availablePlaces}, '${t.conducteurCin}')|">Reserver ce Trajet</button>
+                    <button type="button" class="mint reserve-btn" th:disabled="${t.availablePlaces <= 0}" th:data-id="${t.id}" th:data-depart="${t.depart}" th:data-arrivee="${t.arrivee}" th:data-prix="${t.prix}" th:data-places="${t.availablePlaces}" th:data-conducteur="${t.conducteurCin}" th:data-type="${t.typeLabel}" th:data-timing="${t.scheduleLabel}">Reserver ce Trajet</button>
                 </td>
             </tr>
+            <tr th:if="${trajetsRecurrents.isEmpty()}"><td colspan="8">Aucun trajet recurrent disponible.</td></tr>
+            </tbody>
+        </table>
+        <h2>Trajets ponctuels</h2>
+        <table>
+            <thead><tr><th>Conducteur</th><th>Depart</th><th>Arrivee</th><th>Duree</th><th>Horaire</th><th>Prix (TND)</th><th>Places</th><th>Voiture</th><th>Actions</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${trajetsNormaux}">
+                <td th:text="${t.conducteurCin == null || t.conducteurCin.isEmpty() ? '-' : ('*****' + #strings.substring(t.conducteurCin, #strings.length(t.conducteurCin) - 3))}"></td>
+                <td th:text="${t.depart}"></td>
+                <td th:text="${t.arrivee}"></td>
+                <td th:text="${t.dureeMinutes + ' min'}"></td>
+                <td th:text="${t.timeLabel}"></td>
+                <td th:text="${t.prix}"></td>
+                <td th:text="${t.availablePlaces}"></td>
+                <td>Voiture</td>
+                <td class="row-actions">
+                    <button type="button" class="mint reserve-btn" th:disabled="${t.availablePlaces <= 0}" th:data-id="${t.id}" th:data-depart="${t.depart}" th:data-arrivee="${t.arrivee}" th:data-prix="${t.prix}" th:data-places="${t.availablePlaces}" th:data-conducteur="${t.conducteurCin}" th:data-type="${t.typeLabel}" th:data-timing="${t.timeLabel}">Reserver ce Trajet</button>
+                </td>
+            </tr>
+            <tr th:if="${trajetsNormaux.isEmpty()}"><td colspan="9">Aucun trajet ponctuel disponible.</td></tr>
             </tbody>
         </table>
     </main>
@@ -41,6 +63,8 @@
             <div><strong>Conducteur:</strong> <span id="modalConducteur"></span></div>
             <div><strong>Départ:</strong> <span id="modalDepart"></span></div>
             <div><strong>Arrivée:</strong> <span id="modalArrivee"></span></div>
+            <div><strong>Type:</strong> <span id="modalType"></span></div>
+            <div><strong>Horaire:</strong> <span id="modalTiming"></span></div>
             <div><strong>Prix:</strong> <span id="modalPrix"></span> TND</div>
             <div><strong>Places:</strong> <span id="modalPlaces"></span></div>
         </div>
@@ -57,11 +81,13 @@
 <script>
 let currentTrajetId = null;
 
-function openConfirmation(id, depart, arrivee, prix, places, conducteur) {
+function openConfirmation(id, depart, arrivee, prix, places, conducteur, type, timing) {
     currentTrajetId = id;
     document.getElementById('modalConducteur').textContent = maskCin(conducteur);
     document.getElementById('modalDepart').textContent = depart;
     document.getElementById('modalArrivee').textContent = arrivee;
+    document.getElementById('modalType').textContent = type;
+    document.getElementById('modalTiming').textContent = timing;
     document.getElementById('modalPrix').textContent = prix;
     document.getElementById('modalPlaces').textContent = places;
     document.getElementById('confirmationModal').classList.add('active');
@@ -79,6 +105,24 @@ function submitReservation() {
         form.submit();
     }
 }
+
+// Attach click handlers to reserve buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const reserveButtons = document.querySelectorAll('.reserve-btn');
+    reserveButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const depart = this.getAttribute('data-depart');
+            const arrivee = this.getAttribute('data-arrivee');
+            const prix = this.getAttribute('data-prix');
+            const places = this.getAttribute('data-places');
+            const conducteur = this.getAttribute('data-conducteur');
+            const type = this.getAttribute('data-type');
+            const timing = this.getAttribute('data-timing');
+            openConfirmation(id, depart, arrivee, prix, places, conducteur, type, timing);
+        });
+    });
+});
 
 document.getElementById('confirmationModal').addEventListener('click', function(e) {
     if (e.target === this) closeConfirmation();

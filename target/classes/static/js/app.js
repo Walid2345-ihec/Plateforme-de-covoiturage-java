@@ -13,7 +13,7 @@ const validationPatterns = {
     nom: /^[a-zA-ZÀ-ÿ\s'-]+$/,
     prenom: /^[a-zA-ZÀ-ÿ\s'-]+$/,
     tel: /^[0-9]{8}$/,
-    mail: /(?i)^[A-Z0-9._%+-]+@((gmail\.com)|([A-Z0-9.-]+\.tn))$/,
+    mail: /^[A-Z0-9._%+-]+@((gmail\.com)|([A-Z0-9.-]+\.tn))$/i,
     password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/,
     nomVoiture: /^$|^[a-zA-Z0-9À-ÿ\s'-]+$/,
     matricule: /^$|^[0-9]{1,3}TU[0-9]{4}$/
